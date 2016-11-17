@@ -21,3 +21,10 @@ def printMetrics(model, X_dev, Y_dev, X_test, Y_test, dev_scores, test_scores):
 
     print "Accuracy dev: %.2f%%" % ((dev_acc * 100))
     print "Accuracy test: %.2f%%" % ((test_acc * 100))
+
+def createBatchTrainAccCallback(train_scores):
+    def log_lambda(batch, logs):
+        #print '\n', 'Current batch:', batch
+        #print 'log: ', logs
+        train_scores.append(logs['acc'])
+    return LambdaCallback(on_batch_end=log_lambda)
