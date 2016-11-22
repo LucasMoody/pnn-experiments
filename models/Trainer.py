@@ -3,7 +3,7 @@ import numpy as np
 import Sampler
 
 sample_fun = Sampler.sampleEqualRanges
-no_samples = 2
+no_samples = 10
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, callbacks=[]):
     print "%d epochs" % number_of_epochs
@@ -36,7 +36,6 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
 
 
 def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, callbacks=[]):
-
     ranges = sample_fun(X_train, no_samples)
     dev_scores = [0]
     test_scores = [0]
