@@ -149,7 +149,7 @@ metric_results.append((test_scores_ner_3, 'ner_test_3'))
 LearningCurve.plotLearningCurve(metric_results)
 
 # experiment 1
-model_pos_1, dev_scores_pos_1, test_scores_pos_1 = buildAndTrainPOSModel(transfer=True)
+'''model_pos_1, dev_scores_pos_1, test_scores_pos_1 = buildAndTrainPOSModel(transfer=True)
 # add results for plotting
 metric_results.append((dev_scores_pos_1, 'pos_dev_1'))
 metric_results.append((test_scores_pos_1, 'pos_test_1'))
@@ -166,4 +166,4 @@ model_pos_3, dev_scores_pos_3, test_scores_pos_3 = buildAndTrainPOSModel(transfe
 metric_results.append((dev_scores_pos_3, 'pos_dev_3'))
 metric_results.append((test_scores_pos_3, 'pos_test_3'))
 
-LearningCurve.plotLearningCurve(metric_results)
+LearningCurve.plotLearningCurve(metric_results)'''

@@ -3,7 +3,7 @@ import numpy as np
 import Sampler
 
 sample_fun = Sampler.sampleEqualRanges
-no_samples = 10
+no_samples = 20
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, callbacks=[]):
     print "%d epochs" % number_of_epochs

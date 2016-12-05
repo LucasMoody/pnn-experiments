@@ -29,6 +29,27 @@ def readFile(filepath, wordPosition, tagPosition, max_sentences=-1):
 
     return sentences
 
+def readFileExt(filepath, max_sentences=-1):
+    sentences = []
+    sentence = []
+
+    for line in open(filepath):
+        line = line.strip()
+        splits = line.split()
+
+        if len(line) == 0 or line[0] == '#' or splits[0].upper() == '-DOCSTART-':
+            if len(sentence) > 0:
+                sentences.append(np.array(sentence))
+                sentence = []
+
+                if max_sentences > 0 and len(sentences) >= max_sentences:
+                    return sentences
+            continue
+
+        #np.vstack([ sentence, [splits[pos] for pos in positions] ])
+        sentence.append(splits)
+    return sentences
+
 
 
 def createNumpyArrayWithCasing(sentences, windowsize, word2Idx, label2Idx, caseLookup):
@@ -86,6 +107,51 @@ def createNumpyArrayWithCasing(sentences, windowsize, word2Idx, label2Idx, caseL
 
     print "Unknowns: %.2f%%" % (unknownWordCount/(float(wordCount))*100)
     return (np.asarray(xMatrix), np.asarray(caseMatrix), np.asarray(yVector))
+
+def createNumpyArray(sentences, windowsize, source2Idx):
+    paddingIdx = source2Idx['PADDING']
+
+    xMatrix = []
+
+    wordCount = 0
+    unknownWordCount = 0
+
+    for sentence in sentences:
+        targetWordIdx = 0
+
+        for targetWordIdx in xrange(len(sentence)):
+
+            # Get the context of the target word and map these words to the index in the embeddings matrix
+            wordIndices = []
+            for wordPosition in xrange(targetWordIdx - windowsize, targetWordIdx + windowsize + 1):
+                if wordPosition < 0 or wordPosition >= len(sentence):
+                    wordIndices.append(paddingIdx)
+                    continue
+
+                wordIndices.append(sentence[wordPosition])
+
+
+            #Get the casing
+            xMatrix.append(wordIndices)
+
+    return np.asarray(xMatrix)
+
+def convertValue2Idx(column, value2Idx, convertFunction):
+    return map(lambda sentence: np.vectorize(convertFunction)(sentence, value2Idx), column)
+
+def labelConverter(label, label2Idx):
+    return label2Idx[label]
+
+def wordConverter(value, value2Idx):
+    unknownIdx = value2Idx['UNKNOWN']
+    if value in value2Idx:
+        return value2Idx[value]
+    elif value.lower() in value2Idx:
+        return value2Idx[value.lower()]
+    elif normalizeWord(value) in value2Idx:
+        return value2Idx[normalizeWord(value)]
+    else:
+        return unknownIdx
 
 def getCasing(word, caseLookup):
     casing = 'other'
@@ -149,6 +215,23 @@ def normalizeWord(line):
 
 # Create a mapping for our labels
 def getLabelDict(trainFile, tagPosition=3):
+    label2Idx = {}
+    for line in open(trainFile):
+        line = line.strip()
+        if len(line) > 0:
+            splits = line.split()
+
+            if len(splits) > tagPosition:
+                tag = splits[tagPosition]
+
+                if tag not in label2Idx:
+                    label2Idx[tag] = len(label2Idx)
+
+    idx2Label = {v: k for k, v in label2Idx.items()}
+
+    return label2Idx, idx2Label
+
+def getLabelDictExt(trainFile, tagPosition=3):
     label2Idx = {}
     for line in open(trainFile):
         line = line.strip()

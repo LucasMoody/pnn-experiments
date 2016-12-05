@@ -11,14 +11,14 @@ from transfer import Extender
 #####################################
 def buildNERModel(n_in, embeddings, n_in_case, numHiddenUnitsNER, ner_n_out, metrics=[], additional_models_for_input=[], useModelInput=False, useHiddenWeights=False):
     words_input = Input(shape=(n_in,), dtype='int32', name='words_input')
-    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in,  weights=[embeddings])
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in,  weights=[embeddings], trainable=False)
     words = wordEmbeddingLayer(words_input)
     words = Flatten(name='words_flatten')(words)
 
     caseMatrix = np.identity(n_in_case, dtype=theano.config.floatX)
 
     case_input = Input(shape=(n_in,), dtype='int32', name='case_input')
-    caseEmbeddingLayer = Embedding(output_dim=caseMatrix.shape[1], input_dim=caseMatrix.shape[0], input_length=n_in, weights=[caseMatrix])
+    caseEmbeddingLayer = Embedding(output_dim=caseMatrix.shape[1], input_dim=caseMatrix.shape[0], input_length=n_in, weights=[caseMatrix], trainable=False)
     casing = caseEmbeddingLayer(case_input)
     casing = Flatten(name='casing_flatten')(casing)
 
@@ -49,9 +49,22 @@ def buildNERModel(n_in, embeddings, n_in_case, numHiddenUnitsNER, ner_n_out, met
 
     model = Model(input=input, output=[ner_output])
 
-    #Don't update embeddings
-    wordEmbeddingLayer.trainable_weights = []
-    caseEmbeddingLayer.trainable_weights = []
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=metrics)
+
+    print model.summary()
+
+    return model
+
+
+def buildNERModelGivenInput(input_layers, inputs, numHiddenUnitsNER, ner_n_out, metrics=[]):
+
+    ner_hidden_layer = Dense(numHiddenUnitsNER, activation='tanh', name='ner_hidden')
+    ner_hidden = ner_hidden_layer(input_layers)
+
+    ner_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='ner_output')
+    ner_output = ner_output_layer(ner_hidden)
+
+    model = Model(input=inputs, output=[ner_output])
 
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=metrics)
 
