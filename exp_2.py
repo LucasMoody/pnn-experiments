@@ -116,8 +116,15 @@ def buildAndTrainNERModel():
 
     model_ner = NER.buildNERModelGivenInput(input_layers_merged, inputs, numHiddenUnitsNER, ner_n_out)
 
-    dev_scores_ner, test_scores_ner = Trainer.trainModelWithIncreasingData(model_ner, input_train, ner_train_y_cat, number_of_epochs, n_minibatches, input_dev, ner_dev_y, input_test, ner_test_y)
+    dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner = Trainer.trainModelWithIncreasingData(model_ner, input_train, ner_train_y_cat, number_of_epochs, n_minibatches, input_dev, ner_dev_y, input_test, ner_test_y)
 
-    print dev_scores_ner, test_scores_ner
+    return dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner
 
-buildAndTrainNERModel()
+dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner = buildAndTrainNERModel()
+
+metric_results.append((dev_accs_ner, 'ner_dev_acc'))
+metric_results.append((test_accs_ner, 'ner_test_acc'))
+metric_results.append((dev_f1s_ner, 'ner_dev_f1'))
+metric_results.append((test_f1s_ner, 'ner_test_f1'))
+
+LearningCurve.plotLearningCurve(metric_results)
