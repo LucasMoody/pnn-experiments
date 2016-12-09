@@ -3,7 +3,9 @@ import numpy as np
 import Sampler
 
 sample_fun = Sampler.sampleEqualRanges
-no_samples = 20
+#sample_fun = Sampler.sampleLog2Ranges
+
+no_samples = 5
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, callbacks=[]):
     print "%d epochs" % number_of_epochs
@@ -18,7 +20,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
 
-        model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=1, shuffle=True)
+        model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
 
         print "%.2f sec for training" % (time.time() - start_time)
 
@@ -147,4 +149,4 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
         dev_f1s.append(best_dev_f1)
         test_f1s.append(best_test_f1)
 
-    return dev_accs, test_accs, dev_f1s, test_f1s
+    return dev_accs, test_accs, dev_f1s, test_f1s, ranges

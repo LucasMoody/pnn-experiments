@@ -34,7 +34,8 @@ caseLookup = {'numeric': 0, 'allLower':1, 'allUpper':2, 'initialUpper':3, 'other
 n_in_case = len(caseLookup)
 
 # Read in embeddings
-embeddings, word2Idx = Embeddings.readEmbeddings()
+embeddings = Embeddings.embeddings
+word2Idx = Embeddings.word2Idx
 
 def extendCoNLLNer():
     (ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
@@ -116,15 +117,15 @@ def buildAndTrainNERModel():
 
     model_ner = NER.buildNERModelGivenInput(input_layers_merged, inputs, numHiddenUnitsNER, ner_n_out)
 
-    dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner = Trainer.trainModelWithIncreasingData(model_ner, input_train, ner_train_y_cat, number_of_epochs, n_minibatches, input_dev, ner_dev_y, input_test, ner_test_y)
+    dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner, ranges = Trainer.trainModelWithIncreasingData(model_ner, input_train, ner_train_y_cat, number_of_epochs, n_minibatches, input_dev, ner_dev_y, input_test, ner_test_y)
 
-    return dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner
+    return dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner, ranges
 
-dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner = buildAndTrainNERModel()
+'''dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner = buildAndTrainNERModel()
 
 metric_results.append((dev_accs_ner, 'ner_dev_acc'))
 metric_results.append((test_accs_ner, 'ner_test_acc'))
 metric_results.append((dev_f1s_ner, 'ner_dev_f1'))
 metric_results.append((test_f1s_ner, 'ner_test_f1'))
 
-LearningCurve.plotLearningCurve(metric_results)
+LearningCurve.plotLearningCurve(metric_results)'''

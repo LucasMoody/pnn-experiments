@@ -59,3 +59,23 @@ def buildPosModel(n_in, embeddings, n_in_case, numHiddenUnitsPOS, pos_n_out, met
     print model.summary()
 
     return model
+
+def buildPosModelGivenInput(input_layers, inputs, numHiddenUnitsPOS, pos_n_out, useHiddenWeights=False, additional_models=[]):
+
+    if(useHiddenWeights):
+        pos_hidden_layer = Dense(numHiddenUnitsPOS, activation='tanh', name='pos_hidden',
+                                 weights=Extender.getHiddenLayerWeights(additional_models[0]))
+    else:
+        pos_hidden_layer = Dense(numHiddenUnitsPOS, activation='tanh', name='pos_hidden')
+    pos_hidden = pos_hidden_layer(input_layers)
+
+    pos_output_layer = Dense(output_dim=pos_n_out, activation='softmax', name='pos_output')
+    pos_output = pos_output_layer(pos_hidden)
+
+    model = Model(input=inputs, output=[pos_output])
+
+    model.compile(loss='categorical_crossentropy', optimizer='adam')
+
+    print model.summary()
+
+    return model

@@ -16,3 +16,5 @@ def readEmbeddings():
             idx += 1
     embeddings = np.asarray(embeddings, dtype=theano.config.floatX)
     return embeddings, word2Idx
+
+embeddings, word2Idx = readEmbeddings()

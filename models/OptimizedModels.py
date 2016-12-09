@@ -6,7 +6,7 @@ import numpy as np
 import models.POS.SennaPOS as POS
 import models.NER.SennaNER as NER
 import models.Trainer as Trainer
-from keras.layers import Input
+from keras.layers import Input, Dense
 from keras.models import Model
 
 from keras.utils import np_utils
@@ -83,7 +83,34 @@ def getPOSModel(embeddings, word2Idx):
     minibatch_size_pos = 128
 
     # ----- Train Model ----- #
-    dev_scores_pos, test_scores_pos = Trainer.trainModel(model_pos, model_train_input_pos, pos_train_y_cat,
+    result = Trainer.trainModel(model_pos, model_train_input_pos, pos_train_y_cat,
+                                                             number_of_epochs, minibatch_size_pos, model_dev_input_pos,
+                                                             pos_dev_y, model_test_input_pos, pos_test_y)
+
+    return model_pos
+
+def getPOSModelGivenInput(word2Idx, input_layers, inputs):
+    # Read in files
+    (pos_train_x, pos_train_case_x, pos_train_y, pos_train_y_cat), (pos_dev_x, pos_dev_case_x, pos_dev_y), (
+        pos_test_x, pos_test_case_x, pos_test_y) = UDPos.readDataset(windowSize, word2Idx, caseLookup)
+    pos_n_out = pos_train_y_cat.shape[1]
+
+    model_train_input_pos = [pos_train_x, pos_train_case_x]
+    model_dev_input_pos = [pos_dev_x, pos_dev_case_x]
+    model_test_input_pos = [pos_test_x, pos_test_case_x]
+
+    # ----- Build Model ----- #
+    model_pos = POS.buildPosModelGivenInput(input_layers, inputs, numHiddenUnitsPOS, pos_n_out)
+
+    print pos_train_x.shape[0], ' train samples'
+    print pos_train_x.shape[1], ' train dimension'
+    print pos_test_x.shape[0], ' test samples'
+
+    # minibatch_size_pos = len(pos_train_x) / n_minibatches
+    minibatch_size_pos = 128
+
+    # ----- Train Model ----- #
+    result = Trainer.trainModel(model_pos, model_train_input_pos, pos_train_y_cat,
                                                              number_of_epochs, minibatch_size_pos, model_dev_input_pos,
                                                              pos_dev_y, model_test_input_pos, pos_test_y)
 
