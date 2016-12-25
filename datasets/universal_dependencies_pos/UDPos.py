@@ -1,5 +1,4 @@
-from .. import GermEvalReader
-from .. import GermEvalReader_with_casing
+from datasets import GermEvalReader
 from keras.utils import np_utils
 
 pos_trainFile = 'datasets/universal_dependencies_pos/data/en-ud-train.conllu'
