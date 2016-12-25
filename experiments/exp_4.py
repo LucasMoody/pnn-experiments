@@ -1,9 +1,8 @@
-from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
-from models import OptimizedModels
-from models.NER import SennaNER as NER
 from datasets.conll_ner import CoNLLNer
-from keras.layers import Input, Embedding, Flatten, merge
+from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
 from models import Trainer, InputBuilder
+from models.NER import SennaNER as NER
+from optimizer import OptimizedModels
 
 #import plots.LearningCurve as LearningCurve
 

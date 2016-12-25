@@ -5,18 +5,20 @@ import Sampler
 sample_fun = Sampler.sampleEqualRanges
 #sample_fun = Sampler.sampleLog2Ranges
 
-no_samples = 5
+no_samples = 20
 
-def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, callbacks=[]):
+def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[]):
     print "%d epochs" % number_of_epochs
     print "%d mini batches" % (len(X_train[0]) / minibatch_size)
 
-    best_dev_acc = 0
+    '''best_dev_acc = 0
     best_test_acc = 0
     best_acc_epoch = 0
     best_dev_f1 = 0
     best_test_f1 = 0
-    best_f1_epoch = 0
+    best_f1_epoch = 0'''
+    best_dev_scores = [(0, 0) for i in xrange(len(measurements))]
+    best_test_scores = [(0, 0) for i in xrange(len(measurements))]
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
 
@@ -25,6 +27,19 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         print "%.2f sec for training" % (time.time() - start_time)
 
         pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        pred_test = model.predict(X_test, verbose=0).argmax(axis=-1)  # test_case_x
+        measurements_dev = map(lambda func: func(pred_dev, Y_dev), measurements)
+        measurements_test = map(lambda func: func(pred_test, Y_test), measurements)
+        # update best scores
+        for i in xrange(len(best_dev_scores)):
+            score_dev = measurements_dev[i]
+            score_test = measurements_test[i]
+            if score_dev > best_dev_scores[i][0]:
+                best_dev_scores[i] = (score_dev, epoch)
+                best_test_scores[i] = (score_test, epoch)
+
+
+        '''pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
         dev_acc = np.sum(pred_dev == Y_dev) / float(len(Y_dev))
         dev_micro_precision, dev_micro_recall, dev_macro_precision, dev_macro_recall, dev_micro_f1, dev_macro_f1, dev_accuracy = calculateMatrix(
             pred_dev, Y_dev, Y_train.shape[1])
@@ -47,7 +62,9 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     print "Best f1 epoch: %d" % best_f1_epoch
     print "Best f1 dev: %.2f%%" % (best_dev_f1 * 100)
     print "Best f1 test: %.2f%%" % (best_test_f1 * 100)
-    return best_dev_acc, best_test_acc, best_dev_f1, best_test_f1
+    return best_dev_acc, best_test_acc, best_dev_f1, best_test_f1'''
+
+    return best_dev_scores, best_test_scores
 
 def calculateAcc(prediction, observation):
     return np.sum(prediction == observation) / float(len(observation))

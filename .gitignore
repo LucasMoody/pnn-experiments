@@ -1,2 +1,5 @@
 .idea/
 temp-plot.html
+*.pyc
+*.DS_Store
+reporting.html

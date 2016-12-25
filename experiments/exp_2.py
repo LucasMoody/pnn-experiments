@@ -1,21 +1,11 @@
-from datasets.universal_dependencies_pos import UDPos
-from datasets.conll_ner import CoNLLNer
-import embeddings.dependency_based_word_embeddings.DependencyBasedWordEmbeddings as Embeddings
-from transfer import Extender
-import numpy as np
-import models.POS.SennaPOS as POS
-import models.NER.SennaNER as NER
-import models.Trainer as Trainer
-from models import OptimizedModels
 from keras.layers import Input, Embedding, Flatten, merge
-from keras.models import Model
-import theano
-from models.POS import SennaPOS as POS
-from models.NER import SennaNER as NER
 
-from keras.utils import np_utils
-from measurements import Measurer
-import plots.LearningCurve as LearningCurve
+import embeddings.dependency_based_word_embeddings.DependencyBasedWordEmbeddings as Embeddings
+import models.Trainer as Trainer
+from datasets.conll_ner import CoNLLNer
+from datasets.universal_dependencies_pos import UDPos
+from models.NER import SennaNER as NER
+from optimizer import OptimizedModels
 
 # settings
 windowSize = 3 # n to the left, n to the right
