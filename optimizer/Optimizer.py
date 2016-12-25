@@ -1,4 +1,4 @@
-from optimizer import OptimizedModels
+import OptimizedModels
 import random
 from parameters import parameter_space
 from logs import Logger
