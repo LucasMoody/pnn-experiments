@@ -42,10 +42,19 @@ def readDataset(windowSize, word2Idx, caseLookup):
                                                                                                     ner_label2Idx,
                                                                                                     caseLookup)
 
-    ner_train_y_cat = np_utils.to_categorical(ner_train_y, len(ner_label2Idx))
+    '''ner_train_y_cat = np_utils.to_categorical(ner_train_y, len(ner_label2Idx))
 
     return (ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
-    ner_test_x, ner_test_case_x, ner_test_y)
+    ner_test_x, ner_test_case_x, ner_test_y)'''
+
+    ner_input_train = [ner_train_x, ner_train_case_x]
+    ner_input_dev = [ner_dev_x, ner_dev_case_x]
+    ner_input_test = [ner_test_x, ner_test_case_x]
+
+    ner_train_y_cat = np_utils.to_categorical(ner_train_y, len(ner_label2Idx))
+
+    ner_dicts = [word2Idx, caseLookup, ner_label2Idx, ner_idx2Label]
+    return [ner_input_train, ner_train_y_cat], [ner_input_dev, ner_dev_y], [ner_input_test, ner_test_y], ner_dicts
 
 def readDatasetExt(windowSize, word2Idx, caseLookup):
     # load data

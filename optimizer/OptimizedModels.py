@@ -19,12 +19,6 @@ default_params = {
     'optimizer': 'adam'
 }
 
-
-'''windowSize = 3 # n to the left, n to the right
-n_in = 2 * windowSize + 1
-numHiddenUnitsPOS = 100
-numHiddenUnitsNER = 100
-n_minibatches = 1000'''
 number_of_epochs = config.number_of_epochs
 metrics = []
 
@@ -35,10 +29,12 @@ metric_results = []
 case2Idx = {'numeric': 0, 'allLower':1, 'allUpper':2, 'initialUpper':3, 'other':4, 'mainly_numeric':5, 'contains_digit': 6, 'PADDING':7}
 n_in_case = len(case2Idx)
 
-embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
+embeddings = Embeddings.embeddings
 
 def getNERModel(learning_params = None):
+    word2Idx = Embeddings.word2Idx
+    # load params
     if learning_params is None:
         params = default_params
     else:
@@ -46,31 +42,39 @@ def getNERModel(learning_params = None):
 
     n_in = 2 * params['window_size'] + 1
 
-    #   ----- NER ----- #
-    (ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
-        ner_test_x, ner_test_case_x, ner_test_y) = CoNLLNer.readDataset(params['window_size'], word2Idx, case2Idx)
+    # load dataset
+    '''(ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
+       ner_test_x, ner_test_case_x, ner_test_y) = CoNLLNer.readDataset(params['window_size'], word2Idx, case2Idx)'''
+    [ner_input_train, ner_train_y_cat], [ner_input_dev, ner_dev_y], [ner_input_test, ner_test_y], ner_dicts = CoNLLNer.readDataset(params['window_size'], word2Idx, case2Idx)
+    [ner_train_x, ner_train_case_x] = ner_input_train
+    [ner_dev_x, ner_dev_case_x] = ner_input_dev
+    [ner_test_x, ner_test_case_x] = ner_input_test
+    [word2Idx, caseLookup, ner_label2Idx, ner_idx2Label] = ner_dicts
     ner_n_out = ner_train_y_cat.shape[1]
 
     model_train_input_ner = [ner_train_x, ner_train_case_x]
     model_dev_input_ner = [ner_dev_x, ner_dev_case_x]
     model_test_input_ner = [ner_test_x, ner_test_case_x]
 
+    n_in_x = ner_train_x.shape[1]
+    n_in_casing = ner_train_case_x.shape[1]
 
     # ----- Build Model ----- #
-    model_ner = NER.buildNERModel(n_in, embeddings, n_in_case, params, ner_n_out, metrics=metrics)
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+    model_ner = NER.buildNERModelGivenInput(input_layers, inputs, params, ner_n_out)
 
     print ner_train_x.shape[0], ' train samples'
     print ner_train_x.shape[1], ' train dimension'
     print ner_test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-
+    biof1 = Measurer.create_compute_IOf1(ner_idx2Label)
     best_dev_scores, best_test_scores = Trainer.trainModel(model_ner, model_train_input_ner,
                                                                                ner_train_y_cat, number_of_epochs,
                                                                                params['batch_size'],
                                                                                model_dev_input_ner,
                                                                                ner_dev_y, model_test_input_ner,
-                                                                               ner_test_y, measurements=[Measurer.measureAccuracy])
+                                                                               ner_test_y, measurements=[biof1])
     return model_ner, best_dev_scores, best_test_scores
 
 def getPOSModel(learning_params = None):

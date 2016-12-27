@@ -1,4 +1,4 @@
-from keras.layers import Input, Embedding, Flatten, Dense, merge
+from keras.layers import Input, Embedding, Flatten, Dense, merge, Dropout
 from keras.models import Model
 import theano
 import numpy as np
@@ -56,13 +56,13 @@ def buildNERModel(n_in, embeddings, n_in_case, params, ner_n_out, metrics=[], ad
     return model
 
 
-def buildNERModelGivenInput(input_layers, inputs, numHiddenUnitsNER, ner_n_out, metrics=[], useHiddenWeights=False, usePNN=False, additional_models=[]):
+def buildNERModelGivenInput(input_layers, inputs, params, ner_n_out, metrics=[], useHiddenWeights=False, usePNN=False, additional_models=[]):
 
     if(useHiddenWeights):
-        ner_hidden_layer = Dense(numHiddenUnitsNER, activation='tanh', name='ner_hidden',
+        ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden',
                                  weights=Extender.getHiddenLayerWeights(additional_models[0]))
     else:
-        ner_hidden_layer = Dense(numHiddenUnitsNER, activation='tanh', name='ner_hidden')
+        ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden')
     ner_hidden = ner_hidden_layer(input_layers)
 
     ner_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='ner_output')
@@ -72,13 +72,14 @@ def buildNERModelGivenInput(input_layers, inputs, numHiddenUnitsNER, ner_n_out, 
         pos_hidden = pos_model.get_layer(name='pos_hidden').output
         pos_hidden.trainable_weights = []
         ner_hidden_merged_layer = merge([ner_hidden, pos_hidden], mode='concat')
-        ner_output = ner_output_layer(ner_hidden_merged_layer)
+        ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden_merged_layer)
     else:
-        ner_output = ner_output_layer(ner_hidden)
+        ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden)
+    ner_output = ner_output_layer(ner_hidden_dropout)
 
     model = Model(input=inputs, output=[ner_output])
 
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=metrics)
+    model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'], metrics=metrics)
 
     print model.summary()
 
