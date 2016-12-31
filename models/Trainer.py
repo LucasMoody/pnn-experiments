@@ -1,11 +1,12 @@
 import time
 import numpy as np
 import Sampler
+import config
 
 sample_fun = Sampler.sampleEqualRanges
 #sample_fun = Sampler.sampleLog2Ranges
 
-no_samples = 4
+no_samples = config.number_of_samples
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[]):
     print "%d epochs" % number_of_epochs
