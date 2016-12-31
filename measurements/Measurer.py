@@ -27,8 +27,6 @@ def compute_BIOf1(predictions, dataset_y, idx2Label):
 def compute_IOf1(predictions, dataset_y, idx2Label):
     label_y = np.asarray([idx2Label[element] for element in dataset_y])
     pred_labels = np.asarray([idx2Label[element] for element in predictions])
-    label_y = label_y[0:30]
-    pred_labels = pred_labels[0:30]
     prec = compute_IO_precision(pred_labels, label_y)
     rec = compute_IO_precision(label_y, pred_labels)
 

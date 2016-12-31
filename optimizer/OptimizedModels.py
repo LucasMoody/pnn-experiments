@@ -16,10 +16,65 @@ default_params = {
     'hidden_dims': 100,
     'activation': 'tanh',
     'dropout': 0.3,
-    'optimizer': 'adam'
+    'optimizer': 'adam',
+    'number_of_epochs': 10
 }
 
-number_of_epochs = config.number_of_epochs
+params_pos_ws_0 = {
+    'update_word_embeddings': True,
+    'window_size': 0,
+    'batch_size': 128,
+    'hidden_dims': 180,
+    'activation': 'relu',
+    'dropout': 0.25,
+    'optimizer': 'nadam',
+    'number_of_epochs': 11
+}
+
+params_pos_ws_1 = {
+    'update_word_embeddings': True,
+    'window_size': 1,
+    'batch_size': 128,
+    'hidden_dims': 300,
+    'activation': 'relu',
+    'dropout': 0.25,
+    'optimizer': 'adamax',
+    'number_of_epochs': 13
+}
+
+params_pos_ws_2 = {
+    'update_word_embeddings': True,
+    'window_size': 2,
+    'batch_size': 32,
+    'hidden_dims': 230,
+    'activation': 'sigmoid',
+    'dropout': 0.45,
+    'optimizer': 'nadam',
+    'number_of_epochs': 11
+}
+
+params_pos_ws_3 = {
+    'update_word_embeddings': False,
+    'window_size': 3,
+    'batch_size': 64,
+    'hidden_dims': 280,
+    'activation': 'relu',
+    'dropout': 0.6,
+    'optimizer': 'adamax',
+    'number_of_epochs': 19
+}
+
+params_pos_ws_4 = {
+    'update_word_embeddings': False,
+    'window_size': 4,
+    'batch_size': 128,
+    'hidden_dims': 255,
+    'activation': 'sigmoid',
+    'dropout': 0.65,
+    'optimizer': 'nadam',
+    'number_of_epochs': 19
+}
+
 metrics = []
 
 # ----- metric results -----#
@@ -68,13 +123,13 @@ def getNERModel(learning_params = None):
     print ner_test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_IOf1(ner_idx2Label)
+    iof1 = Measurer.create_compute_IOf1(ner_idx2Label)
     best_dev_scores, best_test_scores = Trainer.trainModel(model_ner, model_train_input_ner,
-                                                                               ner_train_y_cat, number_of_epochs,
+                                                                               ner_train_y_cat, params['number_of_epochs'],
                                                                                params['batch_size'],
                                                                                model_dev_input_ner,
                                                                                ner_dev_y, model_test_input_ner,
-                                                                               ner_test_y, measurements=[biof1])
+                                                                               ner_test_y, measurements=[iof1])
     return model_ner, best_dev_scores, best_test_scores
 
 def getPOSModel(learning_params = None):
@@ -86,13 +141,12 @@ def getPOSModel(learning_params = None):
 
     n_in = 2 * params['window_size'] + 1
 
-    (pos_train_x, pos_train_case_x, pos_train_y, pos_train_y_cat), (pos_dev_x, pos_dev_case_x, pos_dev_y), (
-        pos_test_x, pos_test_case_x, pos_test_y) = UDPos.readDataset(params['window_size'], word2Idx, case2Idx)
+    [pos_input_train, pos_train_y_cat], [pos_input_dev, pos_dev_y], [pos_input_test, pos_test_y] = UDPos.readDataset(params['window_size'], word2Idx, case2Idx)
     pos_n_out = pos_train_y_cat.shape[1]
 
-    model_train_input_pos = [pos_train_x, pos_train_case_x]
-    model_dev_input_pos = [pos_dev_x, pos_dev_case_x]
-    model_test_input_pos = [pos_test_x, pos_test_case_x]
+    [pos_train_x, pos_train_case_x] = pos_input_train
+    [pos_dev_x, pos_dev_case_x] = pos_input_dev
+    [pos_test_x, pos_test_case_x] = pos_input_test
 
     n_in_x = pos_train_x.shape[1]
     n_in_casing = pos_train_case_x.shape[1]
@@ -107,26 +161,27 @@ def getPOSModel(learning_params = None):
     print pos_test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    best_dev_scores, best_test_scores = Trainer.trainModel(model_pos, model_train_input_pos, pos_train_y_cat,
-                                                             number_of_epochs, params['batch_size'], model_dev_input_pos,
-                                                             pos_dev_y, model_test_input_pos, pos_test_y, measurements=[Measurer.measureAccuracy])
+    best_dev_scores, best_test_scores = Trainer.trainModel(model_pos, pos_input_train, pos_train_y_cat,
+                                                             params['number_of_epochs'], params['batch_size'], pos_input_dev,
+                                                             pos_dev_y, pos_input_test, pos_test_y, measurements=[Measurer.measureAccuracy])
 
     return model_pos, best_dev_scores, best_test_scores
 
-def getPOSModelGivenInput(input_layers, inputs, learning_params = None):
+def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = default_params
+        params['window_size'] = window_size
     else:
         params = learning_params
 
     # Read in files
-    (pos_train_x, pos_train_case_x, pos_train_y, pos_train_y_cat), (pos_dev_x, pos_dev_case_x, pos_dev_y), (
-        pos_test_x, pos_test_case_x, pos_test_y) = UDPos.readDataset(params['window_size'], word2Idx, case2Idx)
+    [pos_input_train, pos_train_y_cat], [pos_input_dev, pos_dev_y], [pos_input_test, pos_test_y] = UDPos.readDataset(
+        params['window_size'], word2Idx, case2Idx)
     pos_n_out = pos_train_y_cat.shape[1]
 
-    model_train_input_pos = [pos_train_x, pos_train_case_x]
-    model_dev_input_pos = [pos_dev_x, pos_dev_case_x]
-    model_test_input_pos = [pos_test_x, pos_test_case_x]
+    [pos_train_x, pos_train_case_x] = pos_input_train
+    [pos_dev_x, pos_dev_case_x] = pos_input_dev
+    [pos_test_x, pos_test_case_x] = pos_input_test
 
     # ----- Build Model ----- #
     model_pos = POS.buildPosModelGivenInput(input_layers, inputs, params, pos_n_out)
@@ -136,9 +191,9 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None):
     print pos_test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    best_dev_scores, best_test_scores = Trainer.trainModel(model_pos, model_train_input_pos, pos_train_y_cat,
-                                                           number_of_epochs, params['batch_size'], model_dev_input_pos,
-                                                           pos_dev_y, model_test_input_pos, pos_test_y,
+    best_dev_scores, best_test_scores = Trainer.trainModel(model_pos, pos_input_train, pos_train_y_cat,
+                                                           params['number_of_epochs'], params['batch_size'], pos_input_dev,
+                                                           pos_dev_y, pos_input_test, pos_test_y,
                                                            measurements=[Measurer.measureAccuracy])
 
     return model_pos, best_dev_scores, best_test_scores

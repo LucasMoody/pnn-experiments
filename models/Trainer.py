@@ -5,7 +5,7 @@ import Sampler
 sample_fun = Sampler.sampleEqualRanges
 #sample_fun = Sampler.sampleLog2Ranges
 
-no_samples = 20
+no_samples = 4
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[]):
     print "%d epochs" % number_of_epochs
@@ -141,13 +141,11 @@ def calculateMatrix(prediction, observation, numberOfClasses):
 
     return micro_precision, micro_recall, macro_precision, macro_recall, micro_f1, macro_f1, accuracy
 
-def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, callbacks=[]):
+def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[]):
     ranges = sample_fun(X_train, no_samples)
 
-    dev_accs = []
-    test_accs = []
-    dev_f1s = []
-    test_f1s = []
+    dev_scores = []
+    test_scores = []
 
     print "%d samples" % no_samples
 
@@ -158,12 +156,10 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
         sampled_train_x = map(lambda x: x[0:sample], X_train)
         sampled_train_y = Y_train[0:sample]
 
-        best_dev_acc, best_test_acc, best_dev_f1, best_test_f1 = trainModel(model, sampled_train_x, sampled_train_y, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test)
+        best_dev_scores, best_test_scores = trainModel(model, sampled_train_x, sampled_train_y, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements)
 
         print "%.2f sec for sample training" % (time.time() - start_time)
-        dev_accs.append(best_dev_acc)
-        test_accs.append(best_test_acc)
-        dev_f1s.append(best_dev_f1)
-        test_f1s.append(best_test_f1)
+        dev_scores.append((best_dev_scores, sample))
+        test_scores.append((best_test_scores, sample))
 
-    return dev_accs, test_accs, dev_f1s, test_f1s, ranges
+    return dev_scores, test_scores

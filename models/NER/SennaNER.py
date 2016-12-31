@@ -85,15 +85,15 @@ def buildNERModelGivenInput(input_layers, inputs, params, ner_n_out, metrics=[],
 
     return model
 
-def buildNERModelWithPNN2(input_layers, inputs, numHiddenUnitsNER, ner_n_out, metrics=[], additional_models=[]):
+def buildNERModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
     pos_model = additional_models[0]
     num_layers = len(pos_model.layers)
-    pos_hidden = pos_model.layers[num_layers - 2].output
+    pos_hidden = pos_model.layers[num_layers - 3].output
     pos_output = pos_model.layers[num_layers - 1].output
 
     embeddings_hidden_merged = merge([input_layers, pos_hidden], mode='concat')
 
-    ner_hidden_layer = Dense(numHiddenUnitsNER, activation='tanh', name='ner_hidden')
+    ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden')
     ner_hidden = ner_hidden_layer(embeddings_hidden_merged)
 
     ner_hidden_merged = merge([ner_hidden, pos_output], mode='concat')
@@ -103,7 +103,7 @@ def buildNERModelWithPNN2(input_layers, inputs, numHiddenUnitsNER, ner_n_out, me
 
     model = Model(input=inputs, output=[ner_output])
 
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=metrics)
+    model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'], metrics=metrics)
 
     print model.summary()
 
