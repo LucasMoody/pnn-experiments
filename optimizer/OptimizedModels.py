@@ -9,15 +9,16 @@ from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbed
 from measurements import Measurer
 
 # settings
-default_params = {
-    'update_word_embeddings': False,
-    'window_size': 3,
+
+params_quick = {
+    'update_word_embeddings': True,
+    'window_size': 0,
     'batch_size': 128,
-    'hidden_dims': 100,
-    'activation': 'tanh',
-    'dropout': 0.3,
-    'optimizer': 'adam',
-    'number_of_epochs': 10
+    'hidden_dims': 180,
+    'activation': 'relu',
+    'dropout': 0.25,
+    'optimizer': 'nadam',
+    'number_of_epochs': 1
 }
 
 params_pos_ws_0 = {
@@ -75,6 +76,14 @@ params_pos_ws_4 = {
     'number_of_epochs': 19
 }
 
+pos_default_params = {
+    0: params_pos_ws_0,
+    1: params_pos_ws_1,
+    2: params_pos_ws_2,
+    3: params_pos_ws_3,
+    4: params_pos_ws_4
+}
+
 metrics = []
 
 # ----- metric results -----#
@@ -91,7 +100,7 @@ def getNERModel(learning_params = None):
     word2Idx = Embeddings.word2Idx
     # load params
     if learning_params is None:
-        params = default_params
+        params = params_pos_ws_0
     else:
         params = learning_params
 
@@ -134,7 +143,7 @@ def getNERModel(learning_params = None):
 
 def getPOSModel(learning_params = None):
     if learning_params is None:
-        params = default_params
+        params = params_pos_ws_0
     else:
         params = learning_params
     # Read in files
@@ -169,8 +178,7 @@ def getPOSModel(learning_params = None):
 
 def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
-        params = default_params
-        params['window_size'] = window_size
+        params = pos_default_params[window_size]
     else:
         params = learning_params
 

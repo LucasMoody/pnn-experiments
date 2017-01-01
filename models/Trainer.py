@@ -3,8 +3,9 @@ import numpy as np
 import Sampler
 import config
 
-sample_fun = Sampler.sampleEqualRanges
+#sample_fun = Sampler.sampleEqualRanges
 #sample_fun = Sampler.sampleLog2Ranges
+sample_fun = Sampler.sampleLog2AndEqualRanges
 
 no_samples = config.number_of_samples
 
