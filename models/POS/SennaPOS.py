@@ -81,3 +81,27 @@ def buildPosModelGivenInput(input_layers, inputs, params, pos_n_out, useHiddenWe
     print model.summary()
 
     return model
+
+def buildPOSModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+    ner_model = additional_models[0]
+    num_layers = len(ner_model.layers)
+    ner_hidden = ner_model.layers[num_layers - 3].output
+    ner_output = ner_model.layers[num_layers - 1].output
+
+    embeddings_hidden_merged = merge([input_layers, ner_hidden], mode='concat')
+
+    pos_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='pos_hidden')
+    pos_hidden = pos_hidden_layer(embeddings_hidden_merged)
+
+    pos_hidden_merged = merge([ner_hidden, ner_output], mode='concat')
+
+    pos_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='pos_output')
+    pos_output = pos_output_layer(pos_hidden_merged)
+
+    model = Model(input=inputs, output=[pos_output])
+
+    model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'], metrics=metrics)
+
+    print model.summary()
+
+    return model

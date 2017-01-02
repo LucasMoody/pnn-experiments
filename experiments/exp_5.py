@@ -1,7 +1,9 @@
 from datasets.conll_ner import CoNLLNer
+from datasets.universal_dependencies_pos import UDPos
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
 from models import Trainer, InputBuilder
 from models.NER import SennaNER as NER
+from models.POS import SennaPOS as POS
 from optimizer import OptimizedModels
 from measurements import Measurer
 import config
@@ -81,6 +83,40 @@ def buildAndTrainNERModel(learning_params=None):
 
     return dev_scores, test_scores
 
+def buildAndTrainPOSModel(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    word2Idx = Embeddings.word2Idx
+    [pos_input_train, pos_train_y_cat], [pos_input_dev, pos_dev_y], [pos_input_test, pos_test_y] = UDPos.readDataset(
+        params['window_size'], word2Idx, case2Idx)
+
+    [pos_train_x, pos_train_case_x] = pos_input_train
+    [pos_dev_x, pos_dev_case_x] = pos_input_dev
+    [pos_test_x, pos_test_case_x] = pos_input_test
+    pos_n_out = pos_train_y_cat.shape[1]
+
+
+    n_in_x = pos_train_x.shape[1]
+    n_in_casing = pos_train_case_x.shape[1]
+
+    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+
+    model_ner, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs, window_size=params['window_size'])
+
+    model_pos = POS.buildPOSModelWithPNN2(input_layers_merged, inputs, params, pos_n_out, additional_models=[model_ner])
+
+    # ----- Train Model ----- #
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, pos_input_train,
+                                                                   pos_train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], pos_input_dev,
+                                                                   pos_dev_y, pos_input_test, pos_test_y,
+                                                                   measurements=[Measurer.measureAccuracy])
+
+    return dev_scores, test_scores
+
 max_evals = config.number_of_evals
 
 for model_nr in xrange(max_evals):
@@ -90,12 +126,23 @@ for model_nr in xrange(max_evals):
 
     print "Model nr. ", model_nr
     best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+    best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
     print params
     for (sample_scores, sample) in best_dev_scores_ner:
         for score in sample_scores:
-            print "Max acc dev ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
+            print "Max f1 dev ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'dev', params, score[0][2], score[1], sample)
     for (sample_scores, sample) in best_test_scores_ner:
         for score in sample_scores:
-            print "Max acc test ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
+            print "Max f1 test ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'test', params, score[0][2], score[1], sample)
+
+    for (sample_scores, sample) in best_dev_scores_pos:
+        for score in sample_scores:
+            print "Max acc dev pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'dev', params, score[0], score[1], sample)
+    for (sample_scores, sample) in best_test_scores_pos:
+        for score in sample_scores:
+            print "Max acc test pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'test', params, score[0],
+                                                 score[1], sample)

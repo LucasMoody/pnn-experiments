@@ -148,7 +148,7 @@ for model_nr in xrange(max_evals):
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'ner', 'test', params, score[0][2], score[1], sample)
     for (sample_scores, sample) in best_dev_scores_pos:
         for score in sample_scores:
-            print "Max acc test pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
+            print "Max acc dev pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'pos', 'dev', params, score[0], score[1], sample)
     for (sample_scores, sample) in best_test_scores_pos:
         for score in sample_scores:
