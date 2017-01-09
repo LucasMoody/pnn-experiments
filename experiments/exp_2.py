@@ -1,44 +1,80 @@
 from keras.layers import Input, Embedding, Flatten, merge
 
 import embeddings.dependency_based_word_embeddings.DependencyBasedWordEmbeddings as Embeddings
-import models.Trainer as Trainer
+from models import Trainer, InputBuilder
 from datasets.conll_ner import CoNLLNer
 from datasets.universal_dependencies_pos import UDPos
 from models.NER import SennaNER as NER
 from optimizer import OptimizedModels
+from parameters import parameter_space
+from measurements import Measurer
+import config
+from logs import Logger
+import random
 
 # settings
-windowSize = 3 # n to the left, n to the right
+default_params = {
+    'update_word_embeddings': False,
+    'window_size': 3,
+    'batch_size': 128,
+    'hidden_dims': 100,
+    'activation': 'tanh',
+    'dropout': 0.3,
+    'optimizer': 'adam'
+}
+
+best_pos_window_size = 2
+best_ner_window_size = 2
+
+number_of_epochs = config.number_of_epochs
+
+'''windowSize = 3 # n to the left, n to the right
 n_in = 2 * windowSize + 1
 numHiddenUnitsPOS = 100
 numHiddenUnitsNER = 100
 n_minibatches = 1000
 number_of_epochs = 1
-metrics = []
+metrics = []'''
 
 # ----- metric results -----#
 metric_results = []
 
 #Casing matrix
-caseLookup = {'numeric': 0, 'allLower':1, 'allUpper':2, 'initialUpper':3, 'other':4, 'mainly_numeric':5, 'contains_digit': 6, 'PADDING':7}
-n_in_case = len(caseLookup)
+case2Idx = {'numeric': 0, 'allLower':1, 'allUpper':2, 'initialUpper':3, 'other':4, 'mainly_numeric':5, 'contains_digit': 6, 'PADDING':7}
+n_in_case = len(case2Idx)
 
 # Read in embeddings
 embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
 
 def extendCoNLLNer():
-    (ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
-            ner_test_x, ner_test_case_x, ner_test_y) = CoNLLNer.readDataset(windowSize, word2Idx, caseLookup)
+    '''(ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
+            ner_test_x, ner_test_case_x, ner_test_y) = CoNLLNer.readDataset(best_pos_window_size, word2Idx, caseLookup)
 
     model_train_input_ner = [ner_train_x, ner_train_case_x]
     model_dev_input_ner = [ner_dev_x, ner_dev_case_x]
-    model_test_input_ner = [ner_test_x, ner_test_case_x]
+    model_test_input_ner = [ner_test_x, ner_test_case_x]'''
 
-    pos_model = OptimizedModels.getPOSModel(embeddings, word2Idx)
-    pred_train = pos_model.predict(model_train_input_ner, verbose=0).argmax(axis=-1)
-    pred_dev = pos_model.predict(model_dev_input_ner, verbose=0).argmax(axis=-1)
-    pred_test = pos_model.predict(model_test_input_ner, verbose=0).argmax(axis=-1)
+    word2Idx = Embeddings.word2Idx
+    [input_train, ner_train_y_cat], [ner_input_dev, ner_dev_y], [ner_input_test, ner_test_y], ner_dicts = CoNLLNer.readDataset(best_pos_window_size, word2Idx, case2Idx)
+
+    [ner_train_x, ner_train_case_x] = input_train
+    [ner_dev_x, ner_dev_case_x] = ner_input_dev
+    [ner_test_x, ner_test_case_x] = ner_input_test
+    [word2Idx, caseLookup, ner_label2Idx, ner_idx2Label] = ner_dicts
+    ner_n_out = ner_train_y_cat.shape[1]
+
+    n_in_x = ner_train_x.shape[1]
+    n_in_casing = ner_train_case_x.shape[1]
+
+    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+
+    pos_model, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=best_pos_window_size)
+
+    #pos_model = OptimizedModels.getPOSModel(embeddings, word2Idx)
+    pred_train = pos_model.predict(input_train, verbose=0).argmax(axis=-1)
+    pred_dev = pos_model.predict(ner_input_dev, verbose=0).argmax(axis=-1)
+    pred_test = pos_model.predict(ner_input_test, verbose=0).argmax(axis=-1)
 
     pos_label2Idx, pos_idx2Label = UDPos.getLabelDict()
     pred_train_labels = map(lambda idx: pos_idx2Label[idx], pred_train)
@@ -53,28 +89,49 @@ def extendCoNLLNer():
 
 def extendUDPOS():
     # Read in files
-    (pos_train_x, pos_train_case_x, pos_train_y, pos_train_y_cat), (pos_dev_x, pos_dev_case_x, pos_dev_y), (
-        pos_test_x, pos_test_case_x, pos_test_y) = UDPos.readDataset(windowSize, word2Idx, caseLookup)
+    word2Idx = Embeddings.word2Idx
+    [pos_input_train, pos_train_y_cat], [pos_input_dev, pos_dev_y], [pos_input_test, pos_test_y] = UDPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
+
+    [pos_train_x, pos_train_case_x] = pos_input_train
+    [pos_dev_x, pos_dev_case_x] = pos_input_dev
+    [pos_test_x, pos_test_case_x] = pos_input_test
     pos_n_out = pos_train_y_cat.shape[1]
 
-    model_train_input_pos = [pos_train_x, pos_train_case_x]
-    model_dev_input_pos = [pos_dev_x, pos_dev_case_x]
-    model_test_input_pos = [pos_test_x, pos_test_case_x]
+    n_in_x = pos_train_x.shape[1]
+    n_in_casing = pos_train_case_x.shape[1]
 
-    ner_model = OptimizedModels.getNERModel(embeddings, word2Idx)
-    #pred_train = pos_model.predict(model_train_input_pos, verbose=0).argmax(axis=-1)
-    #pred_dev = pos_model.predict(model_dev_input_pos, verbose=0).argmax(axis=-1)
-    pred_test = ner_model.predict(model_test_input_pos, verbose=0).argmax(axis=-1)
+    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-#extendCoNLLNer()
+    ner_model, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+                                                            window_size=best_ner_window_size)
+    pred_train = ner_model.predict(pos_input_train, verbose=0).argmax(axis=-1)
+    pred_dev = ner_model.predict(pos_input_dev, verbose=0).argmax(axis=-1)
+    pred_test = ner_model.predict(pos_input_test, verbose=0).argmax(axis=-1)
 
-def buildAndTrainNERModel():
-    [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts = CoNLLNer.readDatasetExt(windowSize, word2Idx, caseLookup)
+    ner_label2Idx, ner_idx2Label = CoNLLNer.getLabelDict()
+    pred_train_labels = map(lambda idx: ner_idx2Label[idx], pred_train)
+    pred_dev_labels = map(lambda idx: ner_idx2Label[idx], pred_dev)
+    pred_test_labels = map(lambda idx: ner_idx2Label[idx], pred_test)
+
+    train_extensions = [pred_train_labels]
+    dev_extensions = [pred_dev_labels]
+    test_extensions = [pred_test_labels]
+
+    UDPos.extendDataset("./datasets/universal_dependencies_pos/data/en-ud.conllu", train_extensions, dev_extensions, test_extensions)
+
+def buildAndTrainNERModel(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts = UDPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
 
     [ner_train_x, ner_train_pos_x, ner_train_casing_x] = input_train
     [ner_dev_x, ner_dev_pos_x, ner_dev_casing_x] = input_dev
     [ner_test_x, ner_test_pos_x, ner_test_casing_x] = input_test
-    [unused, pos2Idx, case2Idx] = dicts
+    [_, pos2Idx, _, ner_label2Idx, ner_idx2Label] = dicts
+
 
     ner_n_out = ner_train_y_cat.shape[1]
     n_in_x = ner_train_x.shape[1]
@@ -105,17 +162,103 @@ def buildAndTrainNERModel():
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model_ner = NER.buildNERModelGivenInput(input_layers_merged, inputs, numHiddenUnitsNER, ner_n_out)
+    model_ner = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, ner_n_out)
 
-    dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner, ranges = Trainer.trainModelWithIncreasingData(model_ner, input_train, ner_train_y_cat, number_of_epochs, n_minibatches, input_dev, ner_dev_y, input_test, ner_test_y)
+    # ----- Train Model ----- #
+    iof1 = Measurer.create_compute_IOf1(ner_idx2Label)
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_ner, input_train,
+                                                                   ner_train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], input_dev,
+                                                                   ner_dev_y, input_test, ner_test_y,
+                                                                   measurements=[iof1])
 
-    return dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner, ranges
+    return dev_scores, test_scores
 
-'''dev_accs_ner, test_accs_ner, dev_f1s_ner, test_f1s_ner = buildAndTrainNERModel()
+def buildAndTrainPOSModel(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
 
-metric_results.append((dev_accs_ner, 'ner_dev_acc'))
-metric_results.append((test_accs_ner, 'ner_test_acc'))
-metric_results.append((dev_f1s_ner, 'ner_dev_f1'))
-metric_results.append((test_f1s_ner, 'ner_test_f1'))
+        [input_train, pos_train_y_cat], [input_dev, pos_dev_y], [input_test, pos_test_y], dicts = CoNLLNer.readDatasetExt(params['window_size'], word2Idx, case2Idx)
 
-LearningCurve.plotLearningCurve(metric_results)'''
+    [pos_train_x, pos_train_ner_x, pos_train_casing_x] = input_train
+    [pos_dev_x, pos_dev_ner_x, pos_dev_casing_x] = input_dev
+    [pos_test_x, pos_test_ner_x, pos_test_casing_x] = input_test
+    [_, ner2Idx, _, pos_label2Idx, pos_idx2Label] = dicts
+
+    pos_n_out = pos_train_y_cat.shape[1]
+    n_in_x = pos_train_x.shape[1]
+    n_in_ner = pos_train_ner_x.shape[1]
+    n_in_casing = pos_train_casing_x.shape[1]
+
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    ner_input = Input(shape=(n_in_ner,), dtype='int32', name='ner_input')
+    nerEmbeddingLayer = Embedding(output_dim=len(ner2Idx), input_dim=len(ner2Idx), input_length=n_in_ner,
+                                   trainable=True)
+    ner = nerEmbeddingLayer(ner_input)
+    ner = Flatten(name='ner_flatten')(ner)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, ner, casing]
+    inputs = [words_input, ner_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model_ner = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+
+    # ----- Train Model ----- #
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_ner, input_train,
+                                                                   pos_train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], input_dev,
+                                                                   pos_dev_y, input_test, pos_test_y,
+                                                                   measurements=[Measurer.measureAccuracy])
+
+    return dev_scores, test_scores
+
+
+def run_exp_2():
+    max_evals = config.number_of_evals
+
+    for model_nr in xrange(max_evals):
+        params = {}
+        for key, values in parameter_space.space.iteritems():
+            params[key] = random.choice(values)
+
+        print "Model nr. ", model_nr
+        best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+        best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
+        print params
+        for (sample_scores, sample) in best_dev_scores_ner:
+            for score in sample_scores:
+                print "Max f1 dev ner: %.4f in epoch %d with %d samples" % (score[0][2], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'dev', params, score[0][2], score[1], sample)
+        for (sample_scores, sample) in best_test_scores_ner:
+            for score in sample_scores:
+                print "Max f1 test ner: %.4f in epoch %d with %d samples" % (score[0][2], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'test', params, score[0][2], score[1], sample)
+
+        for (sample_scores, sample) in best_dev_scores_pos:
+            for score in sample_scores:
+                print "Max acc dev pos: %.4f in epoch %d with %d samples" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'dev', params, score[0], score[1], sample)
+        for (sample_scores, sample) in best_test_scores_pos:
+            for score in sample_scores:
+                print "Max acc test pos: %.4f in epoch %d with %d samples" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'test', params, score[0],
+                                                     score[1], sample)
+
+run_exp_2()
+#extendCoNLLNer()
+#extendUDPOS()

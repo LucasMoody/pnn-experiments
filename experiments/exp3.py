@@ -2,47 +2,61 @@ from keras.layers import Input, Embedding, Flatten, merge
 
 from datasets.conll_ner import CoNLLNer
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
-from models import Trainer
+from models import Trainer, InputBuilder
 from models.NER import SennaNER as NER
 from optimizer import OptimizedModels
 
 # settings
-windowSize = 3 # n to the left, n to the right
+default_params = {
+    'update_word_embeddings': False,
+    'window_size': 3,
+    'batch_size': 128,
+    'hidden_dims': 100,
+    'activation': 'tanh',
+    'dropout': 0.3,
+    'optimizer': 'adam'
+}
+'''windowSize = 3 # n to the left, n to the right
 n_in = 2 * windowSize + 1
 numHiddenUnitsPOS = 100
 numHiddenUnitsNER = 100
 n_minibatches = 1000
 number_of_epochs = 1
-metrics = []
+metrics = []'''
 
 # ----- metric results -----#
 metric_results = []
 
 #Casing matrix
-caseLookup = {'numeric': 0, 'allLower':1, 'allUpper':2, 'initialUpper':3, 'other':4, 'mainly_numeric':5, 'contains_digit': 6, 'PADDING':7}
-n_in_case = len(caseLookup)
+case2Idx = {'numeric': 0, 'allLower':1, 'allUpper':2, 'initialUpper':3, 'other':4, 'mainly_numeric':5, 'contains_digit': 6, 'PADDING':7}
+n_in_case = len(case2Idx)
 
 # Read in embeddings
 embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
 
-def buildAndTrainNERModel():
-    (ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
-        ner_test_x, ner_test_case_x, ner_test_y) = CoNLLNer.readDataset(windowSize, word2Idx, caseLookup)
+def buildAndTrainNERModel(learning_params = None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
 
-    input_train = [ner_train_x, ner_train_case_x]
-    input_dev = [ner_dev_x, ner_dev_case_x]
-    input_test = [ner_test_x, ner_test_case_x]
+    word2Idx = Embeddings.word2Idx
+    [ner_input_train, ner_train_y_cat], [ner_input_dev, ner_dev_y], [ner_input_test,
+                                                                     ner_test_y], ner_dicts = CoNLLNer.readDataset(
+        params['window_size'], word2Idx, case2Idx)
 
+    [ner_train_x, ner_train_case_x] = ner_input_train
+    [ner_dev_x, ner_dev_case_x] = ner_input_dev
+    [ner_test_x, ner_test_case_x] = ner_input_test
+    [word2Idx, caseLookup, ner_label2Idx, ner_idx2Label] = ner_dicts
     ner_n_out = ner_train_y_cat.shape[1]
+
     n_in_x = ner_train_x.shape[1]
     n_in_casing = ner_train_case_x.shape[1]
 
-    model_train_input_ner = [ner_train_x, ner_train_case_x]
-    model_dev_input_ner = [ner_dev_x, ner_dev_case_x]
-    model_test_input_ner = [ner_test_x, ner_test_case_x]
-
-    pos_model = OptimizedModels.getPOSModel(embeddings, word2Idx)
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+    pos_model = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size)
 
     words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
     wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,

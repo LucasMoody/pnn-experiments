@@ -93,10 +93,14 @@ def buildPOSModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], a
     pos_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='pos_hidden')
     pos_hidden = pos_hidden_layer(embeddings_hidden_merged)
 
-    pos_hidden_merged = merge([ner_hidden, ner_output], mode='concat')
+    pos_hidden_merged = merge([pos_hidden, ner_output], mode='concat')
+    ner_hidden_dropout = Dropout(params['dropout'])(pos_hidden_merged)
 
     pos_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='pos_output')
-    pos_output = pos_output_layer(pos_hidden_merged)
+    pos_output = pos_output_layer(ner_hidden_dropout)
+
+    ner_hidden.trainable_weights = []
+    ner_output.trainable_weights = []
 
     model = Model(input=inputs, output=[pos_output])
 

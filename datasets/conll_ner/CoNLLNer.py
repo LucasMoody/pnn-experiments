@@ -56,7 +56,7 @@ def readDataset(windowSize, word2Idx, caseLookup):
     ner_dicts = [word2Idx, caseLookup, ner_label2Idx, ner_idx2Label]
     return [ner_input_train, ner_train_y_cat], [ner_input_dev, ner_dev_y], [ner_input_test, ner_test_y], ner_dicts
 
-def readDatasetExt(windowSize, word2Idx, caseLookup):
+def readDatasetExt(windowSize, word2Idx, case2Idx):
     # load data
     ner_train_sentences = GermEvalReader.readFileExt(ner_trainFileExt)
     ner_dev_sentences = GermEvalReader.readFileExt(ner_devFileExt)
@@ -82,33 +82,33 @@ def readDatasetExt(windowSize, word2Idx, caseLookup):
     # convert value to index
     words_train = GermEvalReader.convertValue2Idx(word_column_train, word2Idx, GermEvalReader.wordConverter)
     pos_train = GermEvalReader.convertValue2Idx(pos_column_train, ner_pos2Idx, GermEvalReader.wordConverter)
-    casing_train = GermEvalReader.convertValue2Idx(word_column_train, caseLookup, GermEvalReader.getCasing)
+    casing_train = GermEvalReader.convertValue2Idx(word_column_train, case2Idx, GermEvalReader.getCasing)
     labels_train = GermEvalReader.convertValue2Idx(label_column_train, ner_label2Idx, GermEvalReader.labelConverter)
 
     words_dev = GermEvalReader.convertValue2Idx(word_column_dev, word2Idx, GermEvalReader.wordConverter)
     pos_dev = GermEvalReader.convertValue2Idx(pos_column_dev, ner_pos2Idx, GermEvalReader.wordConverter)
-    casing_dev = GermEvalReader.convertValue2Idx(word_column_dev, caseLookup, GermEvalReader.getCasing)
+    casing_dev = GermEvalReader.convertValue2Idx(word_column_dev, case2Idx, GermEvalReader.getCasing)
     labels_dev = GermEvalReader.convertValue2Idx(label_column_dev, ner_label2Idx, GermEvalReader.labelConverter)
 
     words_test = GermEvalReader.convertValue2Idx(word_column_test, word2Idx, GermEvalReader.wordConverter)
     pos_test = GermEvalReader.convertValue2Idx(pos_column_test, ner_pos2Idx, GermEvalReader.wordConverter)
-    casing_test = GermEvalReader.convertValue2Idx(word_column_test, caseLookup, GermEvalReader.getCasing)
+    casing_test = GermEvalReader.convertValue2Idx(word_column_test, case2Idx, GermEvalReader.getCasing)
     labels_test = GermEvalReader.convertValue2Idx(label_column_test, ner_label2Idx, GermEvalReader.labelConverter)
 
     # create numpy datasets
     ner_train_x = GermEvalReader.createNumpyArray(words_train, windowSize, word2Idx)
     ner_train_pos_x = GermEvalReader.createNumpyArray(pos_train, windowSize, ner_pos2Idx)
-    ner_train_casing_x = GermEvalReader.createNumpyArray(casing_train, windowSize, caseLookup)
+    ner_train_casing_x = GermEvalReader.createNumpyArray(casing_train, windowSize, case2Idx)
     ner_train_y = np.concatenate(labels_train)
 
     ner_dev_x = GermEvalReader.createNumpyArray(words_dev, windowSize, word2Idx)
     ner_dev_pos_x = GermEvalReader.createNumpyArray(pos_dev, windowSize, ner_pos2Idx)
-    ner_dev_casing_x = GermEvalReader.createNumpyArray(casing_dev, windowSize, caseLookup)
+    ner_dev_casing_x = GermEvalReader.createNumpyArray(casing_dev, windowSize, case2Idx)
     ner_dev_y = np.concatenate(labels_dev)
 
     ner_test_x = GermEvalReader.createNumpyArray(words_test, windowSize, word2Idx)
     ner_test_pos_x = GermEvalReader.createNumpyArray(pos_test, windowSize, ner_pos2Idx)
-    ner_test_casing_x = GermEvalReader.createNumpyArray(casing_test, windowSize, caseLookup)
+    ner_test_casing_x = GermEvalReader.createNumpyArray(casing_test, windowSize, case2Idx)
     ner_test_y = np.concatenate(labels_test)
 
     print "shape of ner_train_x:", ner_train_x.shape
@@ -159,7 +159,7 @@ def readDatasetExt(windowSize, word2Idx, caseLookup):
 
     ner_train_y_cat = np_utils.to_categorical(ner_train_y, len(ner_label2Idx))
 
-    dicts = [word2Idx, ner_pos2Idx, caseLookup]
+    dicts = [word2Idx, ner_pos2Idx, case2Idx, ner_label2Idx, ner_idx2Label]
     return [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts
 
 def filterColumn(sentences, position):

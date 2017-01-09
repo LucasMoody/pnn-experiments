@@ -97,9 +97,13 @@ def buildNERModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], a
     ner_hidden = ner_hidden_layer(embeddings_hidden_merged)
 
     ner_hidden_merged = merge([ner_hidden, pos_output], mode='concat')
+    ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden_merged)
 
     ner_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='ner_output')
-    ner_output = ner_output_layer(ner_hidden_merged)
+    ner_output = ner_output_layer(ner_hidden_dropout)
+
+    pos_hidden.trainable_weights = []
+    pos_output.trainable_weights = []
 
     model = Model(input=inputs, output=[ner_output])
 
