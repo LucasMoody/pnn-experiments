@@ -3,6 +3,8 @@ from datasets.conll_ner import CoNLLNer
 from datasets.universal_dependencies_pos import UDPos
 from models.NER import SennaNER as NER
 from models.POS import SennaPOS as POS
+from models.Chunking import SennaChunking as Chunking
+from datasets.conll_chunking import CoNLLChunking
 from models import Trainer, InputBuilder
 from measurements import Measurer
 import random
@@ -127,31 +129,81 @@ def buildAndTrainPOSModel(learning_params = None):
 
     return dev_scores, test_scores
 
-max_evals = config.number_of_evals
+def buildAndTrainChunkingModel(learning_params = None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
 
-for model_nr in xrange(max_evals):
-    params = {}
-    for key, values in parameter_space.space.iteritems():
-        params[key] = random.choice(values)
+    word2Idx = Embeddings.word2Idx
+    # ----- NER ----- #
 
-    print "Model nr. ", model_nr
-    best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
-    best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
-    print params
-    for (sample_scores, sample) in best_dev_scores_ner:
-        for score in sample_scores:
-            print "Max acc dev ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'ner', 'dev', params, score[0][2], score[1], sample)
-    for (sample_scores, sample) in best_test_scores_ner:
-        for score in sample_scores:
-            print "Max acc test ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'ner', 'test', params, score[0][2], score[1], sample)
-    for (sample_scores, sample) in best_dev_scores_pos:
-        for score in sample_scores:
-            print "Max acc dev pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'pos', 'dev', params, score[0], score[1], sample)
-    for (sample_scores, sample) in best_test_scores_pos:
-        for score in sample_scores:
-            print "Max acc test pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'pos', 'test', params, score[0],
-                                                 score[1], sample)
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts= CoNLLChunking.readDataset(params['window_size'], word2Idx, case2Idx)
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    [word2Idx, _, label2Idx, idx2Label] = dicts
+    n_out = train_y_cat.shape[1]
+
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
+
+    # ----- Build Model ----- #
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+    model = Chunking.buildChunkingModelGivenInput(input_layers, inputs, params, n_out)
+
+    print train_x.shape[0], ' train samples'
+    print train_x.shape[1], ' train dimension'
+    print test_x.shape[0], ' test samples'
+
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(idx2Label)
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+                                                                           train_y_cat, number_of_epochs,
+                                                                           params['batch_size'], input_dev,
+                                                                           dev_y, input_test, test_y,
+                                                                   measurements=[biof1])
+
+
+    return dev_scores, test_scores
+
+def run_exp_1():
+    max_evals = config.number_of_evals
+    for model_nr in range(max_evals):
+        params = {}
+        for key, values in parameter_space.space.iteritems():
+            params[key] = random.choice(values)
+
+        print "Model nr. ", model_nr
+        #best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+        #best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
+        best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel()
+        print params
+        '''for (sample_scores, sample) in best_dev_scores_ner:
+            for score in sample_scores:
+                print "Max acc dev ner: %.4f in epoch %d with %d samples" % (score[0][2], score[1], sample)
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'ner', 'dev', params, score[0][2], score[1], sample)
+        for (sample_scores, sample) in best_test_scores_ner:
+            for score in sample_scores:
+                print "Max acc test ner: %.4f in epoch %d with %d samples" % (score[0][2], score[1], sample)
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'ner', 'test', params, score[0][2], score[1], sample)
+        for (sample_scores, sample) in best_dev_scores_pos:
+            for score in sample_scores:
+                print "Max acc dev pos: %.4f in epoch %d with %d samples" % (score[0], score[1], sample)
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'pos', 'dev', params, score[0], score[1], sample)
+        for (sample_scores, sample) in best_test_scores_pos:
+            for score in sample_scores:
+                print "Max acc test pos: %.4f in epoch %d with %d samples" % (score[0], score[1], sample)
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'pos', 'test', params, score[0],
+                                                     score[1], sample)'''
+        for (sample_scores, sample) in best_dev_scores_chunking:
+            for score in sample_scores:
+                print "Max acc dev chunking: %.4f in epoch %d with %d samples" % (score[0][2], score[1], sample)
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'chunking', 'dev', params, score[0][2], score[1], sample)
+        for (sample_scores, sample) in best_test_scores_chunking:
+            for score in sample_scores:
+                print "Max acc test chunking: %.4f in epoch %d with %d samples" % (score[0][2], score[1], sample)
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'chunking', 'test', params, score[0][2], score[1], sample)
+
+run_exp_1()

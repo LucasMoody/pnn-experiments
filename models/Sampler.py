@@ -11,7 +11,7 @@ def sampleEqualRanges(train, no_ranges):
 def sampleLog2Ranges(train, no_ranges):
     n_rows = train[0].shape[0]
     no_ranges = int(math.floor(math.log(n_rows, 2)))
-    ranges = [math.pow(2, i) for i in xrange(no_ranges)]
+    ranges = [int(math.pow(2, i)) for i in xrange(no_ranges)]
     return ranges
 
 def sampleLog2AndEqualRanges(train, no_ranges):
