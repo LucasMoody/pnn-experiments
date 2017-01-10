@@ -1,7 +1,9 @@
 import datasets.universal_dependencies_pos.UDPos as UDPos
 import datasets.conll_ner.CoNLLNer as CoNLLNer
+import datasets.conll_chunking.CoNLLChunking as CoNLLChunking
 import models.POS.SennaPOS as POS
 import models.NER.SennaNER as NER
+import models.Chunking.SennaChunking as Chunking
 from models import Trainer, InputBuilder
 import config
 
@@ -239,6 +241,46 @@ def getPOSModel(learning_params = None):
 
     return model_pos, best_dev_scores, best_test_scores
 
+def getChunkingModel(learning_params = None):
+    if learning_params is None:
+        params = params_pos_ws_0
+    else:
+        params = learning_params
+
+    word2Idx = Embeddings.word2Idx
+    # ----- NER ----- #
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts= CoNLLChunking.readDataset(params['window_size'], word2Idx, case2Idx)
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    [word2Idx, _, label2Idx, idx2Label] = dicts
+    n_out = train_y_cat.shape[1]
+
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
+
+    # ----- Build Model ----- #
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+    model = Chunking.buildChunkingModelGivenInput(input_layers, inputs, params, n_out)
+
+    print train_x.shape[0], ' train samples'
+    print train_x.shape[1], ' train dimension'
+    print test_x.shape[0], ' test samples'
+
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(idx2Label)
+    dev_scores, test_scores = Trainer.trainModel(model, input_train,
+                                                           train_y_cat, params['number_of_epochs'],
+                                                           params['batch_size'],
+                                                           input_dev,
+                                                           dev_y, input_test,
+                                                           test_y, measurements=[biof1])
+
+
+    return dev_scores, test_scores
+
 def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = pos_default_params[window_size]
@@ -307,3 +349,41 @@ def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_s
                                                            measurements=[iof1])
 
     return model_ner, best_dev_scores, best_test_scores
+
+def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
+    if learning_params is None:
+        params = ner_default_params[window_size]
+    else:
+        params = learning_params
+
+    word2Idx = Embeddings.word2Idx
+    # ----- Chunking ----- #
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts= CoNLLChunking.readDataset(params['window_size'], word2Idx, case2Idx)
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    [word2Idx, _, label2Idx, idx2Label] = dicts
+    n_out = train_y_cat.shape[1]
+
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
+
+    # ----- Build Model ----- #
+    model = Chunking.buildChunkingModelGivenInput(input_layers, inputs, params, n_out)
+
+    print train_x.shape[0], ' train samples'
+    print train_x.shape[1], ' train dimension'
+    print test_x.shape[0], ' test samples'
+
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(idx2Label)
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+                                                                           train_y_cat, number_of_epochs,
+                                                                           params['batch_size'], input_dev,
+                                                                           dev_y, input_test, test_y,
+                                                                   measurements=[biof1])
+
+
+    return model, dev_scores, test_scores
