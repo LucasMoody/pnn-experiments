@@ -31,27 +31,34 @@ def buildChunkingModelGivenInput(input_layers, inputs, params, ner_n_out, metric
 
     return model
 
-def buildNERModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+def buildChunkingModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
     pos_model = additional_models[0]
-    num_layers = len(pos_model.layers)
-    pos_hidden = pos_model.layers[num_layers - 3].output
-    pos_output = pos_model.layers[num_layers - 1].output
+    pos_num_layers = len(pos_model.layers)
+    pos_hidden = pos_model.layers[pos_num_layers - 3].output
+    pos_output = pos_model.layers[pos_num_layers - 1].output
 
-    embeddings_hidden_merged = merge([input_layers, pos_hidden], mode='concat')
+    ner_model = additional_models[1]
+    ner_num_layers = len(ner_model.layers)
+    ner_hidden = ner_model.layers[ner_num_layers - 3].output
+    ner_output = ner_model.layers[ner_num_layers - 1].output
 
-    ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden')
-    ner_hidden = ner_hidden_layer(embeddings_hidden_merged)
+    embeddings_hidden_merged = merge([input_layers, pos_hidden, ner_hidden], mode='concat')
 
-    ner_hidden_merged = merge([ner_hidden, pos_output], mode='concat')
-    ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden_merged)
+    chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
+    chunking_hidden = chunking_hidden_layer(embeddings_hidden_merged)
 
-    ner_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='ner_output')
-    ner_output = ner_output_layer(ner_hidden_dropout)
+    chunking_hidden_merged = merge([chunking_hidden, pos_output, ner_output], mode='concat')
+    chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
+
+    chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
+    chunking_output = chunking_output_layer(chunking_hidden_dropout)
 
     pos_hidden.trainable_weights = []
     pos_output.trainable_weights = []
+    ner_hidden.trainable_weights = []
+    ner_output.trainable_weights = []
 
-    model = Model(input=inputs, output=[ner_output])
+    model = Model(input=inputs, output=[chunking_output])
 
     model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'], metrics=metrics)
 

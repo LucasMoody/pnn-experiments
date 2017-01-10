@@ -30,8 +30,8 @@ for model_nr in xrange(max_evals):
         Logger.save_results(config.optimized_models_log_path, 'ner', 'test', params, score[0][2], score[1])'''
     for score in best_dev_scores_chunking:
         print "Max f1 dev chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-        Logger.save_results(config.optimized_models_log_path, 'ner', 'dev', params, score[0][2], score[1])
+        Logger.save_results(config.optimized_models_log_path, 'chunking', 'dev', params, score[0][2], score[1])
     for score in best_test_scores_chunking:
         print "Max f1 test chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-        Logger.save_results(config.optimized_models_log_path, 'ner', 'test', params, score[0][2], score[1])
+        Logger.save_results(config.optimized_models_log_path, 'chunking', 'test', params, score[0][2], score[1])
 

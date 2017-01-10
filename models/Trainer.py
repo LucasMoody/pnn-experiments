@@ -150,7 +150,7 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
     test_scores = []
 
     print "%d samples" % no_samples
-
+    weights = model.get_weights()
     for sample in ranges:
         print "Current sample: 0:%d" % sample
         start_time = time.time()
@@ -159,7 +159,7 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
         sampled_train_y = Y_train[0:sample]
 
         best_dev_scores, best_test_scores = trainModel(model, sampled_train_x, sampled_train_y, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements)
-
+        model.set_weights(weights)
         print "%.2f sec for sample training" % (time.time() - start_time)
         dev_scores.append((best_dev_scores, sample))
         test_scores.append((best_test_scores, sample))

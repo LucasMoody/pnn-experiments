@@ -1,9 +1,11 @@
 from datasets.conll_ner import CoNLLNer
 from datasets.universal_dependencies_pos import UDPos
+from datasets.conll_chunking import CoNLLChunking
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
 from models import Trainer, InputBuilder
 from models.NER import SennaNER as NER
 from models.POS import SennaPOS as POS
+from models.Chunking import SennaChunking as Chunking
 from optimizer import OptimizedModels
 from measurements import Measurer
 import config
@@ -41,7 +43,7 @@ n_in_case = len(case2Idx)
 
 # Read in embeddings
 embeddings = Embeddings.embeddings
-
+word2Idx = Embeddings.word2Idx
 
 def buildAndTrainNERModel(learning_params=None):
     if learning_params is None:
@@ -49,36 +51,30 @@ def buildAndTrainNERModel(learning_params=None):
     else:
         params = learning_params
 
-    word2Idx = Embeddings.word2Idx
-    [ner_input_train, ner_train_y_cat], [ner_input_dev, ner_dev_y], [ner_input_test,
-                                                                     ner_test_y], ner_dicts = CoNLLNer.readDataset(
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = CoNLLNer.readDataset(
         params['window_size'], word2Idx, case2Idx)
 
-    [ner_train_x, ner_train_case_x] = ner_input_train
-    [ner_dev_x, ner_dev_case_x] = ner_input_dev
-    [ner_test_x, ner_test_case_x] = ner_input_test
-    [word2Idx, caseLookup, ner_label2Idx, ner_idx2Label] = ner_dicts
-    ner_n_out = ner_train_y_cat.shape[1]
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    [_, caseLookup, label2Idx, idx2Label] = dicts
+    n_out = train_y_cat.shape[1]
 
-    model_train_input_ner = [ner_train_x, ner_train_case_x]
-    model_dev_input_ner = [ner_dev_x, ner_dev_case_x]
-    model_test_input_ner = [ner_test_x, ner_test_case_x]
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
 
-    n_in_x = ner_train_x.shape[1]
-    n_in_casing = ner_train_case_x.shape[1]
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+    model_pos, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=params['window_size'])
-
-    model_ner = NER.buildNERModelWithPNN2(input_layers_merged, inputs, params, ner_n_out, additional_models=[model_pos])
+    model_ner = NER.buildNERModelWithPNN2(input_layers, inputs, params, n_out, additional_models=[model_pos])
 
     # ----- Train Model ----- #
-    iof1 = Measurer.create_compute_IOf1(ner_idx2Label)
-    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_ner, model_train_input_ner,
-                                                                   ner_train_y_cat, number_of_epochs,
-                                                                   params['batch_size'], model_dev_input_ner,
-                                                                   ner_dev_y, model_test_input_ner, ner_test_y,
+    iof1 = Measurer.create_compute_IOf1(idx2Label)
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_ner, input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], input_dev,
+                                                                   dev_y, input_test, test_y,
                                                                    measurements=[iof1])
 
     return dev_scores, test_scores
@@ -89,31 +85,65 @@ def buildAndTrainPOSModel(learning_params=None):
     else:
         params = learning_params
 
-    word2Idx = Embeddings.word2Idx
-    [pos_input_train, pos_train_y_cat], [pos_input_dev, pos_dev_y], [pos_input_test, pos_test_y] = UDPos.readDataset(
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(
         params['window_size'], word2Idx, case2Idx)
 
-    [pos_train_x, pos_train_case_x] = pos_input_train
-    [pos_dev_x, pos_dev_case_x] = pos_input_dev
-    [pos_test_x, pos_test_case_x] = pos_input_test
-    pos_n_out = pos_train_y_cat.shape[1]
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    n_out = train_y_cat.shape[1]
 
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
 
-    n_in_x = pos_train_x.shape[1]
-    n_in_casing = pos_train_case_x.shape[1]
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+
+    model_ner, _, _ = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
+
+    model_pos = POS.buildPOSModelWithPNN2(input_layers, inputs, params, n_out, additional_models=[model_ner])
+
+    # ----- Train Model ----- #
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], input_dev,
+                                                                   dev_y, input_test, test_y,
+                                                                   measurements=[Measurer.measureAccuracy])
+
+    return dev_scores, test_scores
+
+def buildAndTrainChunkingModel(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = CoNLLChunking.readDataset(
+        params['window_size'], word2Idx, case2Idx)
+
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    [_, caseLookup, label2Idx, idx2Label] = dicts
+    n_out = train_y_cat.shape[1]
+
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
 
     input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-    model_ner, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs, window_size=params['window_size'])
+    model_pos, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=params['window_size'])
+    model_ner, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+                                                            window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithPNN2(input_layers_merged, inputs, params, pos_n_out, additional_models=[model_ner])
+    model_chunking = Chunking.buildChunkingModelWithPNN2(input_layers_merged, inputs, params, n_out, additional_models=[model_pos, model_ner])
 
     # ----- Train Model ----- #
-    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, pos_input_train,
-                                                                   pos_train_y_cat, number_of_epochs,
-                                                                   params['batch_size'], pos_input_dev,
-                                                                   pos_dev_y, pos_input_test, pos_test_y,
-                                                                   measurements=[Measurer.measureAccuracy])
+    biof1 = Measurer.create_compute_BIOf1(idx2Label)
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_chunking, input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], input_dev,
+                                                                   dev_y, input_test, test_y,
+                                                                   measurements=[biof1])
 
     return dev_scores, test_scores
 
@@ -125,24 +155,34 @@ for model_nr in xrange(max_evals):
         params[key] = random.choice(values)
 
     print "Model nr. ", model_nr
-    best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
-    best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
+    #best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+    #best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
+    best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(params)
     print params
-    for (sample_scores, sample) in best_dev_scores_ner:
+    '''for (sample_scores, sample) in best_dev_scores_ner:
         for score in sample_scores:
-            print "Max f1 dev ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
+            print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'dev', params, score[0][2], score[1], sample)
     for (sample_scores, sample) in best_test_scores_ner:
         for score in sample_scores:
-            print "Max f1 test ner: %.4f in epoch with %d samples: %d" % (score[0][2], sample, score[1])
+            print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'test', params, score[0][2], score[1], sample)
 
     for (sample_scores, sample) in best_dev_scores_pos:
         for score in sample_scores:
-            print "Max acc dev pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
+            print "Max acc dev pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'dev', params, score[0], score[1], sample)
     for (sample_scores, sample) in best_test_scores_pos:
         for score in sample_scores:
-            print "Max acc test pos: %.4f in epoch with %d samples: %d" % (score[0], sample, score[1])
+            print "Max acc test pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'test', params, score[0],
-                                                 score[1], sample)
+                                                 score[1], sample)'''
+
+    for (sample_scores, sample) in best_dev_scores_chunking:
+        for score in sample_scores:
+            print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'dev', params, score[0][2], score[1], sample)
+    for (sample_scores, sample) in best_test_scores_chunking:
+        for score in sample_scores:
+            print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'test', params, score[0][2], score[1], sample)

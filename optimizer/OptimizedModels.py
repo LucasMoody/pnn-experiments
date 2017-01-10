@@ -284,6 +284,7 @@ def getChunkingModel(learning_params = None):
 def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = pos_default_params[window_size]
+        #params['number_of_epochs'] = 1
     else:
         params = learning_params
 
@@ -314,6 +315,7 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_s
 def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = ner_default_params[window_size]
+        #params['number_of_epochs'] = 1
     else:
         params = learning_params
     word2Idx = Embeddings.word2Idx
@@ -380,7 +382,7 @@ def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, win
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
     dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
-                                                                           train_y_cat, number_of_epochs,
+                                                                           train_y_cat, params['number_of_epochs'],
                                                                            params['batch_size'], input_dev,
                                                                            dev_y, input_test, test_y,
                                                                    measurements=[biof1])
