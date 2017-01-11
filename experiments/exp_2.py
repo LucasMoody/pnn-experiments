@@ -7,6 +7,7 @@ from datasets.conll_chunking import CoNLLChunking
 from datasets.universal_dependencies_pos import UDPos
 from models.NER import SennaNER as NER
 from models.POS import SennaPOS as POS
+from models.Chunking import SennaChunking as Chunking
 from optimizer import OptimizedModels
 from parameters import parameter_space
 from measurements import Measurer
@@ -214,6 +215,67 @@ def buildAndTrainNERModel(learning_params=None):
 
     return dev_scores, test_scores
 
+def buildAndTrainChunkingModel(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = CoNLLChunking.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [chunking_train_x, chunking_train_pos_x, chunking_train_ner_x, chunking_train_casing_x] = input_train
+    [chunking_dev_x, chunking_dev_pos_x, chunking_dev_ner_x, chunking_dev_casing_x] = input_dev
+    [chunking_test_x, chunking_test_pos_x, chunking_test_ner_x, chunking_test_casing_x] = input_test
+    [_, pos2Idx, ner2Idx, _, chunking_label2Idx, chunking_idx2Label] = dicts
+
+    chunking_n_out = train_y_cat.shape[1]
+    n_in_x = chunking_train_x.shape[1]
+    n_in_pos = chunking_train_pos_x.shape[1]
+    n_in_ner = chunking_train_ner_x.shape[1]
+    n_in_casing = chunking_train_casing_x.shape[1]
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    pos_input = Input(shape=(n_in_pos,), dtype='int32', name='pos_input')
+    posEmbeddingLayer = Embedding(output_dim=len(pos2Idx), input_dim=len(pos2Idx), input_length=n_in_pos,
+                                   trainable=True)
+    pos = posEmbeddingLayer(pos_input)
+    pos = Flatten(name='pos_flatten')(pos)
+
+    ner_input = Input(shape=(n_in_ner,), dtype='int32', name='ner_input')
+    nerEmbeddingLayer = Embedding(output_dim=len(ner2Idx), input_dim=len(ner2Idx), input_length=n_in_ner,
+                                   trainable=True)
+    ner = nerEmbeddingLayer(ner_input)
+    ner = Flatten(name='ner_flatten')(ner)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, pos, ner, casing]
+    inputs = [words_input, pos_input, ner_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = Chunking.buildChunkingModelGivenInput(input_layers_merged, inputs, params, chunking_n_out)
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
+    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], input_dev,
+                                                                   dev_y, input_test, test_y,
+                                                                   measurements=[biof1])
+
+    return dev_scores, test_scores
+
+
 def buildAndTrainPOSModel(learning_params=None):
     if learning_params is None:
         params = default_params
@@ -289,6 +351,19 @@ def run_exp_2():
                 print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'test', params, score[0][2], score[1], sample, 'pos')
 
+        best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(params)
+        print params
+        for (sample_scores, sample) in best_dev_scores_chunking:
+            for score in sample_scores:
+                print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'dev', params,
+                                                     score[0][2], score[1], sample, 'pos-ner')
+        for (sample_scores, sample) in best_test_scores_chunking:
+            for score in sample_scores:
+                print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'test', params,
+                                                     score[0][2], score[1], sample, 'pos-ner')
+
         best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
         print params
         for (sample_scores, sample) in best_dev_scores_pos:
@@ -301,7 +376,7 @@ def run_exp_2():
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'test', params, score[0],
                                                      score[1], sample, 'ner')
 
-#run_exp_2()
+run_exp_2()
 #extendCoNLLNer()
 #extendUDPOS()
-extendCoNLLChunking()
+#extendCoNLLChunking()

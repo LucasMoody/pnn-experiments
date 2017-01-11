@@ -82,6 +82,14 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
     ner_column_test = filterColumn(test_sentences, ner_position)
 
     chunking_label2Idx, chunking_idx2Label = DatasetExtender.getDict(label_column_train)
+    # there is a tag in the test file which does not appear in the train file
+    # so the dictionaries have to be updated in order not to get an error
+    test_label_dicts = GermEvalReader.getLabelDict(chunk_testFile, 2)
+    for tag in test_label_dicts[0]:
+        if tag not in chunking_label2Idx:
+            chunking_label2Idx[tag] = len(chunking_label2Idx)
+    chunking_idx2Label = {v: k for k, v in chunking_label2Idx.items()}
+
     chunking_pos2Idx, chunking_idx2pos = DatasetExtender.getDict(pos_column_train, withAddLabels=True)
     chunking_ner2Idx, chunking_ner2pos = DatasetExtender.getDict(ner_column_train, withAddLabels=True)
 
