@@ -166,15 +166,15 @@ def filterColumn(sentences, position):
     return map(lambda sentence: sentence[:, position], sentences)
 
 def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
-    ner_train_sentences = GermEvalReader.readFile(ner_trainFile, 0, 3)
-    ner_dev_sentences = GermEvalReader.readFile(ner_devFile, 0, 3)
-    ner_test_sentences = GermEvalReader.readFile(ner_testFile, 0, 3)
+    train_sentences = GermEvalReader.readFile(ner_trainFile, 0, 3)
+    dev_sentences = GermEvalReader.readFile(ner_devFile, 0, 3)
+    test_sentences = GermEvalReader.readFile(ner_testFile, 0, 3)
 
     filename, file_extension = path.splitext(filename)
 
-    DatasetExtender.extendDataset("{0}_train_ext{1}".format(filename, file_extension), ner_train_sentences, train_extensions)
-    DatasetExtender.extendDataset("{0}_dev_ext{1}".format(filename, file_extension), ner_dev_sentences, dev_extensions)
-    DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), ner_test_sentences, test_extensions)
+    DatasetExtender.extendDataset("{0}_train_ext{1}".format(filename, file_extension), train_sentences, train_extensions)
+    DatasetExtender.extendDataset("{0}_dev_ext{1}".format(filename, file_extension), dev_sentences, dev_extensions)
+    DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
 
 def getLabelDict():
     return GermEvalReader.getLabelDict(ner_trainFile)

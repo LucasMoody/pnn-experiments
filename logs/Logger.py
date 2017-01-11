@@ -11,13 +11,13 @@ def save_results(path, task, set, params, score, score_epoch):
         f.write(line)
 
 
-def save_reduced_datasets_results(path, experiment, task, set, params, score, score_epoch, dataset_size):
+def save_reduced_datasets_results(path, experiment, task, set, params, score, score_epoch, dataset_size, add_models='none'):
     line = '{experiment}, {task}, {set}, {dataset_size}, {update_word_embeddings}, {window_size}, {batch_size}, {hidden_dims}, {activation},' \
-           '{dropout}, {optimizer}, {score}, {score_epoch}, {datetime}\n'.format(
+           '{dropout}, {optimizer}, {score}, {score_epoch}, {datetime}, {add_models}\n'.format(
         task=task, set=set, update_word_embeddings=params['update_word_embeddings'], window_size=params['window_size'],
         batch_size=params['batch_size'], hidden_dims=params['hidden_dims'], activation=params['activation'],
         dropout=params['dropout'], optimizer=params['optimizer'], score=score, score_epoch=score_epoch,
-        datetime=str(datetime.datetime.now()), dataset_size=dataset_size, experiment=experiment
+        datetime=str(datetime.datetime.now()), dataset_size=dataset_size, experiment=experiment, add_models=add_models
     )
     with open(path, 'a') as f:
         f.write(line)
