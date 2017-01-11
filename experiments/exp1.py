@@ -160,6 +160,7 @@ def run_exp_1():
             params[key] = random.choice(values)
 
         print "Model nr. ", model_nr
+        print params
         '''best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
         print params
         for (sample_scores, sample) in best_dev_scores_ner:

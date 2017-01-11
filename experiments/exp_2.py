@@ -30,14 +30,6 @@ best_ner_window_size = 2
 
 number_of_epochs = config.number_of_epochs
 
-'''windowSize = 3 # n to the left, n to the right
-n_in = 2 * windowSize + 1
-numHiddenUnitsPOS = 100
-numHiddenUnitsNER = 100
-n_minibatches = 1000
-number_of_epochs = 1
-metrics = []'''
-
 # ----- metric results -----#
 metric_results = []
 
@@ -114,41 +106,56 @@ def extendUDPOS():
     UDPos.extendDataset("./datasets/universal_dependencies_pos/data/en-ud.conllu", train_extensions, dev_extensions, test_extensions)
 
 def extendCoNLLChunking():
+    # ----- read Data for pos with best pos window ----- #
     [input_train_for_pos, train_y_cat_for_pos], [input_dev_for_pos, dev_y_for_pos], [input_test_for_pos, test_y_for_pos], dicts_for_pos = CoNLLChunking.readDataset(best_pos_window_size, word2Idx, case2Idx)
 
+    # calculate dims for model building
     [train_x_for_pos, train_case_x_for_pos] = input_train_for_pos
-
     n_in_x_for_pos = train_x_for_pos.shape[1]
     n_in_casing_for_pos = train_case_x_for_pos.shape[1]
 
+    # build pos model
     input_layers_for_pos, inputs_for_pos = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_pos, n_in_casing_for_pos)
-
     pos_model, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
 
+    # predict pos on chunking data
+    pos_pred_train = pos_model.predict(input_train_for_pos, verbose=0).argmax(axis=-1)
+    pos_pred_dev = pos_model.predict(input_dev_for_pos, verbose=0).argmax(axis=-1)
+    pos_pred_test = pos_model.predict(input_test_for_pos, verbose=0).argmax(axis=-1)
+
+    #
+    pos_label2Idx, pos_idx2Label = UDPos.getLabelDict()
+    pos_pred_train_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_train)
+    pos_pred_dev_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_dev)
+    pos_pred_test_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_test)
+
+    # ----- read Data for ner with best ner window ----- #
     [input_train_for_ner, train_y_cat_for_ner], [input_dev_for_ner, dev_y_for_ner], [input_test_for_ner, test_y_for_ner], dicts_for_ner = CoNLLChunking.readDataset(best_ner_window_size, word2Idx, case2Idx)
 
+    # calculate dims for model building
     [train_x_for_ner, train_case_x_for_ner] = input_train_for_ner
     n_in_x_for_ner = train_x_for_ner.shape[1]
     n_in_casing_for_ner = train_case_x_for_ner.shape[1]
 
+    # build pos model
     input_layers_for_ner, inputs_for_ner = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_ner,
                                                                                 n_in_casing_for_ner)
-
     ner_model, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_for_ner, inputs_for_ner, window_size=best_ner_window_size)
 
-    #pos_model = OptimizedModels.getPOSModel(embeddings, word2Idx)
-    pred_train = pos_model.predict(input_train_for_pos, verbose=0).argmax(axis=-1)
-    pred_dev = pos_model.predict(input_dev_for_pos, verbose=0).argmax(axis=-1)
-    pred_test = pos_model.predict(input_test_for_pos, verbose=0).argmax(axis=-1)
+    # predict ner on chunking data
+    ner_pred_train = ner_model.predict(input_train_for_ner, verbose=0).argmax(axis=-1)
+    ner_pred_dev = ner_model.predict(input_dev_for_ner, verbose=0).argmax(axis=-1)
+    ner_pred_test = ner_model.predict(input_test_for_ner, verbose=0).argmax(axis=-1)
 
-    pos_label2Idx, pos_idx2Label = UDPos.getLabelDict()
-    pred_train_labels = map(lambda idx: pos_idx2Label[idx], pred_train)
-    pred_dev_labels = map(lambda idx: pos_idx2Label[idx], pred_dev)
-    pred_test_labels = map(lambda idx: pos_idx2Label[idx], pred_test)
+    #
+    ner_label2Idx, ner_idx2Label = CoNLLNer.getLabelDict()
+    ner_pred_train_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_train)
+    ner_pred_dev_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_dev)
+    ner_pred_test_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_test)
 
-    train_extensions = [pred_train_labels]
-    dev_extensions = [pred_dev_labels]
-    test_extensions = [pred_test_labels]
+    train_extensions = [pos_pred_train_labels, ner_pred_train_labels]
+    dev_extensions = [pos_pred_dev_labels, ner_pred_dev_labels]
+    test_extensions = [pos_pred_test_labels, ner_pred_test_labels]
 
     CoNLLChunking.extendDataset("./datasets/conll_chunking/data/chunking.conllu", train_extensions, dev_extensions, test_extensions)
 
@@ -270,6 +277,7 @@ def run_exp_2():
             params[key] = random.choice(values)
 
         print "Model nr. ", model_nr
+        print params
         best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
         print params
         for (sample_scores, sample) in best_dev_scores_ner:
@@ -293,6 +301,7 @@ def run_exp_2():
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'test', params, score[0],
                                                      score[1], sample, 'ner')
 
-run_exp_2()
+#run_exp_2()
 #extendCoNLLNer()
 #extendUDPOS()
+extendCoNLLChunking()
