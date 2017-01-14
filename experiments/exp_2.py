@@ -56,7 +56,7 @@ def extendCoNLLNer():
 
     input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-    pos_model, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=best_pos_window_size)
+    pos_model, _, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=best_pos_window_size)
 
     #pos_model = OptimizedModels.getPOSModel(embeddings, word2Idx)
     pred_train = pos_model.predict(input_train, verbose=0).argmax(axis=-1)
@@ -89,7 +89,7 @@ def extendUDPOS():
 
     input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-    ner_model, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+    ner_model, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
                                                             window_size=best_ner_window_size)
     pred_train = ner_model.predict(input_train, verbose=0).argmax(axis=-1)
     pred_dev = ner_model.predict(input_dev, verbose=0).argmax(axis=-1)
@@ -117,7 +117,7 @@ def extendCoNLLChunking():
 
     # build pos model
     input_layers_for_pos, inputs_for_pos = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_pos, n_in_casing_for_pos)
-    pos_model, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
+    pos_model, _, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
 
     # predict pos on chunking data
     pos_pred_train = pos_model.predict(input_train_for_pos, verbose=0).argmax(axis=-1)
@@ -141,7 +141,7 @@ def extendCoNLLChunking():
     # build pos model
     input_layers_for_ner, inputs_for_ner = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_ner,
                                                                                 n_in_casing_for_ner)
-    ner_model, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_for_ner, inputs_for_ner, window_size=best_ner_window_size)
+    ner_model, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_for_ner, inputs_for_ner, window_size=best_ner_window_size)
 
     # predict ner on chunking data
     ner_pred_train = ner_model.predict(input_train_for_ner, verbose=0).argmax(axis=-1)
@@ -206,14 +206,14 @@ def buildAndTrainNERModel(learning_params=None):
     model = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, ner_n_out)
 
     # ----- Train Model ----- #
-    iof1 = Measurer.create_compute_IOf1(ner_idx2Label)
-    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+    biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
                                                                    ner_train_y_cat, number_of_epochs,
                                                                    params['batch_size'], input_dev,
                                                                    ner_dev_y, input_test, ner_test_y,
-                                                                   measurements=[iof1])
+                                                                   measurements=[biof1])
 
-    return dev_scores, test_scores
+    return train_scores, dev_scores, test_scores
 
 def buildAndTrainChunkingModel(learning_params=None):
     if learning_params is None:
@@ -267,13 +267,13 @@ def buildAndTrainChunkingModel(learning_params=None):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
-    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
                                                                    train_y_cat, number_of_epochs,
                                                                    params['batch_size'], input_dev,
                                                                    dev_y, input_test, test_y,
                                                                    measurements=[biof1])
 
-    return dev_scores, test_scores
+    return train_scores, dev_scores, test_scores
 
 
 def buildAndTrainPOSModel(learning_params=None):
@@ -321,16 +321,16 @@ def buildAndTrainPOSModel(learning_params=None):
     model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
 
     # ----- Train Model ----- #
-    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
                                                                    train_y_cat, number_of_epochs,
                                                                    params['batch_size'], input_dev,
                                                                    dev_y, input_test, test_y,
                                                                    measurements=[Measurer.measureAccuracy])
 
-    return dev_scores, test_scores
+    return train_scores, dev_scores, test_scores
 
 
-def run_exp_2():
+def run_models_as_input_exp_with_random_params():
     max_evals = config.number_of_evals
 
     for model_nr in xrange(max_evals):
@@ -340,8 +340,12 @@ def run_exp_2():
 
         print "Model nr. ", model_nr
         print params
-        best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+        best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
         print params
+        for (sample_scores, sample) in best_train_scores_ner:
+            for score in sample_scores:
+                print "Max f1 train ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'train', params, score[0][2], score[1], sample, 'pos')
         for (sample_scores, sample) in best_dev_scores_ner:
             for score in sample_scores:
                 print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
@@ -351,8 +355,13 @@ def run_exp_2():
                 print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'test', params, score[0][2], score[1], sample, 'pos')
 
-        best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(params)
+        best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(params)
         print params
+        for (sample_scores, sample) in best_train_scores_chunking:
+            for score in sample_scores:
+                print "Max f1 train chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'train', params,
+                                                     score[0][2], score[1], sample, 'pos-ner')
         for (sample_scores, sample) in best_dev_scores_chunking:
             for score in sample_scores:
                 print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
@@ -364,8 +373,12 @@ def run_exp_2():
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'test', params,
                                                      score[0][2], score[1], sample, 'pos-ner')
 
-        best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
+        best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
         print params
+        for (sample_scores, sample) in best_train_scores_pos:
+            for score in sample_scores:
+                print "Max acc train pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'train', params, score[0], score[1], sample, 'ner')
         for (sample_scores, sample) in best_dev_scores_pos:
             for score in sample_scores:
                 print "Max acc dev pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
@@ -375,8 +388,69 @@ def run_exp_2():
                 print "Max acc test pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'test', params, score[0],
                                                      score[1], sample, 'ner')
+def run_models_as_input_exp_with_fixed_params():
+    fixed_params = {
+        'update_word_embeddings': False,
+        'window_size': 3,
+        'batch_size': 128,
+        'hidden_dims': 100,
+        'activation': 'relu',
+        'dropout': 0.3,
+        'optimizer': 'adam',
+        'number_of_epochs': [config.number_of_epochs]
+    }
 
-run_exp_2()
+    best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(fixed_params)
+    print fixed_params
+    for (sample_scores, sample) in best_train_scores_ner:
+        for score in sample_scores:
+            print "Max f1 train ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'train', fixed_params, score[0][2], score[1], sample, 'pos')
+    for (sample_scores, sample) in best_dev_scores_ner:
+        for score in sample_scores:
+            print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'dev', fixed_params, score[0][2], score[1], sample, 'pos')
+    for (sample_scores, sample) in best_test_scores_ner:
+        for score in sample_scores:
+            print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'test', fixed_params, score[0][2], score[1], sample, 'pos')
+
+    best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(fixed_params)
+    print fixed_params
+    for (sample_scores, sample) in best_train_scores_chunking:
+        for score in sample_scores:
+            print "Max f1 train chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'train', fixed_params,
+                                                 score[0][2], score[1], sample, 'pos-ner')
+    for (sample_scores, sample) in best_dev_scores_chunking:
+        for score in sample_scores:
+            print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'dev', fixed_params,
+                                                 score[0][2], score[1], sample, 'pos-ner')
+    for (sample_scores, sample) in best_test_scores_chunking:
+        for score in sample_scores:
+            print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'test', fixed_params,
+                                                 score[0][2], score[1], sample, 'pos-ner')
+
+    best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(fixed_params)
+    print fixed_params
+    for (sample_scores, sample) in best_train_scores_pos:
+        for score in sample_scores:
+            print "Max acc train pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'train', fixed_params, score[0], score[1], sample, 'ner')
+    for (sample_scores, sample) in best_dev_scores_pos:
+        for score in sample_scores:
+            print "Max acc dev pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'dev', fixed_params, score[0], score[1], sample, 'ner')
+    for (sample_scores, sample) in best_test_scores_pos:
+        for score in sample_scores:
+            print "Max acc test pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'pos', 'test', fixed_params, score[0],
+                                                 score[1], sample, 'ner')
+
+#run_models_as_input_exp_with_random_params()
+run_models_as_input_exp_with_fixed_params()
 #extendCoNLLNer()
 #extendUDPOS()
 #extendCoNLLChunking()

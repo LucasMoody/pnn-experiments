@@ -1,4 +1,4 @@
-import datasets.universal_dependencies_pos.UDPos as UDPos
+from datasets.wsj_pos import WSJPos
 import datasets.conll_ner.CoNLLNer as CoNLLNer
 import datasets.conll_chunking.CoNLLChunking as CoNLLChunking
 import models.POS.SennaPOS as POS
@@ -188,14 +188,14 @@ def getNERModel(learning_params = None):
     print test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    iof1 = Measurer.create_compute_IOf1(idx2Label)
-    dev_scores, test_scores = Trainer.trainModel(model, input_train,
+    biof1 = Measurer.create_compute_BIOf1(idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train,
                                                                                train_y_cat, params['number_of_epochs'],
                                                                                params['batch_size'],
                                                                                input_dev,
                                                                                dev_y, input_test,
-                                                                               test_y, measurements=[iof1])
-    return model, dev_scores, test_scores
+                                                                               test_y, measurements=[biof1])
+    return train_scores, dev_scores, test_scores
 
 def getPOSModel(learning_params = None):
     if learning_params is None:
@@ -204,7 +204,7 @@ def getPOSModel(learning_params = None):
         params = learning_params
 
     # Read in files
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(params['window_size'], word2Idx, case2Idx)
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(params['window_size'], word2Idx, case2Idx)
     n_out = train_y_cat.shape[1]
 
     [train_x, train_case_x] = input_train
@@ -223,11 +223,11 @@ def getPOSModel(learning_params = None):
     print test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+    train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                              params['number_of_epochs'], params['batch_size'], input_dev,
                                                              dev_y, input_test, test_y, measurements=[Measurer.measureAccuracy])
 
-    return model, best_dev_scores, best_test_scores
+    return train_scores, best_dev_scores, best_test_scores
 
 def getChunkingModel(learning_params = None):
     if learning_params is None:
@@ -259,7 +259,7 @@ def getChunkingModel(learning_params = None):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    dev_scores, test_scores = Trainer.trainModel(model, input_train,
+    train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train,
                                                            train_y_cat, params['number_of_epochs'],
                                                            params['batch_size'],
                                                            input_dev,
@@ -267,16 +267,18 @@ def getChunkingModel(learning_params = None):
                                                            test_y, measurements=[biof1])
 
 
-    return dev_scores, test_scores
+    return train_scores, dev_scores, test_scores
 
 def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = pos_default_params[window_size]
+        #params['number_of_epochs'] = 1
     else:
         params = learning_params
 
+    print params
     # Read in files
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(
         params['window_size'], word2Idx, case2Idx)
     n_out = train_y_cat.shape[1]
 
@@ -292,18 +294,20 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_s
     print test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+    train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
                                                            dev_y, input_test, test_y,
                                                            measurements=[Measurer.measureAccuracy])
 
-    return model, dev_scores, test_scores
+    return model, train_scores, dev_scores, test_scores
 
 def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = ner_default_params[window_size]
+        #params['number_of_epochs'] = 1
     else:
         params = learning_params
+    print params
     # Read in files
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = CoNLLNer.readDataset(
         params['window_size'], word2Idx, case2Idx)
@@ -325,20 +329,21 @@ def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_s
     print test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    iof1 = Measurer.create_compute_IOf1(idx2Label)
-    best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+    biof1 = Measurer.create_compute_BIOf1(idx2Label)
+    train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
                                                            dev_y, input_test, test_y,
-                                                           measurements=[iof1])
+                                                           measurements=[biof1])
 
-    return model, best_dev_scores, best_test_scores
+    return model, train_scores, best_dev_scores, best_test_scores
 
 def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = ner_default_params[window_size]
+        #params['number_of_epochs'] = 1
     else:
         params = learning_params
-
+    print params
     # ----- Chunking ----- #
 
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts= CoNLLChunking.readDataset(params['window_size'], word2Idx, case2Idx)
@@ -361,11 +366,8 @@ def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, win
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
-                                                                           train_y_cat, params['number_of_epochs'],
-                                                                           params['batch_size'], input_dev,
-                                                                           dev_y, input_test, test_y,
-                                                                   measurements=[biof1])
-
-
-    return model, dev_scores, test_scores
+    train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+                                                           params['number_of_epochs'], params['batch_size'], input_dev,
+                                                           dev_y, input_test, test_y,
+                                                           measurements=[biof1])
+    return model, train_scores, dev_scores, test_scores

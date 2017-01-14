@@ -3,9 +3,9 @@ from keras.utils import np_utils
 from os import path
 import numpy as np
 
-ner_trainFile = 'datasets/conll_ner/data/eng.train'
-ner_devFile = 'datasets/conll_ner/data/eng.testa'
-ner_testFile = 'datasets/conll_ner/data/eng.testb'
+ner_trainFile = 'datasets/conll_ner/data/train.txt'
+ner_devFile = 'datasets/conll_ner/data/dev.txt'
+ner_testFile = 'datasets/conll_ner/data/test.txt'
 
 ner_trainFileExt = 'datasets/conll_ner/data/eng_train_ext.conllu'
 ner_devFileExt = 'datasets/conll_ner/data/eng_dev_ext.conllu'
@@ -41,11 +41,6 @@ def readDataset(windowSize, word2Idx, caseLookup):
                                                                                                     word2Idx,
                                                                                                     ner_label2Idx,
                                                                                                     caseLookup)
-
-    '''ner_train_y_cat = np_utils.to_categorical(ner_train_y, len(ner_label2Idx))
-
-    return (ner_train_x, ner_train_case_x, ner_train_y, ner_train_y_cat), (ner_dev_x, ner_dev_case_x, ner_dev_y), (
-    ner_test_x, ner_test_case_x, ner_test_y)'''
 
     ner_input_train = [ner_train_x, ner_train_case_x]
     ner_input_dev = [ner_dev_x, ner_dev_case_x]

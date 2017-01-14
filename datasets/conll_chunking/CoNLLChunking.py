@@ -4,6 +4,7 @@ from os import path
 import numpy as np
 
 chunk_trainFile = 'datasets/conll_chunking/data/train.txt'
+chunk_devFile = 'datasets/conll_chunking/data/dev.txt'
 chunk_testFile = 'datasets/conll_chunking/data/test.txt'
 
 trainFileExt = 'datasets/conll_chunking/data/chunking_train_ext.conllu'
@@ -23,9 +24,8 @@ def readDataset(windowSize, word2Idx, case2Idx):
     # Read in data
     print "Read in data and create matrices"
     chunk_train_sentences = GermEvalReader.readFile(chunk_trainFile, 0, 2)
-    chunk_all_test_sentences = GermEvalReader.readFile(chunk_testFile, 0, 2)
-    chunk_dev_sentences = chunk_all_test_sentences[len(chunk_all_test_sentences) / 2:]
-    chunk_test_sentences = chunk_all_test_sentences[:len(chunk_all_test_sentences)/2]
+    chunk_dev_sentences = GermEvalReader.readFile(chunk_devFile, 0, 2)
+    chunk_test_sentences = GermEvalReader.readFile(chunk_testFile, 0, 2)
 
     #Label mapping for POS
     chunk_label2Idx, chunk_idx2Label = GermEvalReader.getLabelDict(chunk_trainFile, 2)
@@ -196,9 +196,8 @@ def filterColumn(sentences, position):
 
 def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
     train_sentences = GermEvalReader.readFile(chunk_trainFile, 0, 2)
-    all_test_sentences = GermEvalReader.readFile(chunk_testFile, 0, 2)
-    dev_sentences = all_test_sentences[len(all_test_sentences) / 2:]
-    test_sentences = all_test_sentences[:len(all_test_sentences) / 2]
+    dev_sentences = GermEvalReader.readFile(chunk_devFile, 0, 2)
+    test_sentences = GermEvalReader.readFile(chunk_testFile, 0, 2)
 
     filename, file_extension = path.splitext(filename)
 
@@ -207,4 +206,4 @@ def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
     DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
 
 def getLabelDict():
-    return GermEvalReader.getLabelDict(chunk_trainFile)
+    return GermEvalReader.getLabelDict(chunk_trainFile, 2)

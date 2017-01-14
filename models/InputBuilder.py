@@ -3,7 +3,7 @@ from keras.models import Model
 import theano
 import numpy as np
 
-def buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing):
+def buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, train_word_embeddings=False):
     words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
     wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
                                    weights=[embeddings], trainable=False)
