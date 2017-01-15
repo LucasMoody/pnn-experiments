@@ -1,6 +1,6 @@
 from datasets.conll_ner import CoNLLNer
-from datasets.universal_dependencies_pos import UDPos
 from datasets.conll_chunking import CoNLLChunking
+from datasets.wsj_pos import WSJPos
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
 from models import Trainer, InputBuilder
 from models.NER import SennaNER as NER
@@ -77,7 +77,7 @@ def buildAndTrainPOSModel(learning_params=None):
     else:
         params = learning_params
 
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(
         params['window_size'], word2Idx, case2Idx)
 
     [train_x, train_case_x] = input_train

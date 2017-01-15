@@ -4,7 +4,7 @@ import embeddings.dependency_based_word_embeddings.DependencyBasedWordEmbeddings
 from models import Trainer, InputBuilder
 from datasets.conll_ner import CoNLLNer
 from datasets.conll_chunking import CoNLLChunking
-from datasets.universal_dependencies_pos import UDPos
+from datasets.wsj_pos import WSJPos
 from models.NER import SennaNER as NER
 from models.POS import SennaPOS as POS
 from models.Chunking import SennaChunking as Chunking
@@ -63,7 +63,7 @@ def extendCoNLLNer():
     pred_dev = pos_model.predict(input_dev, verbose=0).argmax(axis=-1)
     pred_test = pos_model.predict(input_test, verbose=0).argmax(axis=-1)
 
-    pos_label2Idx, pos_idx2Label = UDPos.getLabelDict()
+    pos_label2Idx, pos_idx2Label = WSJPos.getLabelDict()
     pred_train_labels = map(lambda idx: pos_idx2Label[idx], pred_train)
     pred_dev_labels = map(lambda idx: pos_idx2Label[idx], pred_dev)
     pred_test_labels = map(lambda idx: pos_idx2Label[idx], pred_test)
@@ -77,7 +77,7 @@ def extendCoNLLNer():
 def extendUDPOS():
     # Read in files
     word2Idx = Embeddings.word2Idx
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
 
     [train_x, train_case_x] = input_train
     [dev_x, dev_case_x] = input_dev
@@ -104,7 +104,7 @@ def extendUDPOS():
     dev_extensions = [pred_dev_labels]
     test_extensions = [pred_test_labels]
 
-    UDPos.extendDataset("./datasets/universal_dependencies_pos/data/en-ud.conllu", train_extensions, dev_extensions, test_extensions)
+    WSJPos.extendDataset("./datasets/universal_dependencies_pos/data/en-ud.conllu", train_extensions, dev_extensions, test_extensions)
 
 def extendCoNLLChunking():
     # ----- read Data for pos with best pos window ----- #
@@ -125,7 +125,7 @@ def extendCoNLLChunking():
     pos_pred_test = pos_model.predict(input_test_for_pos, verbose=0).argmax(axis=-1)
 
     #
-    pos_label2Idx, pos_idx2Label = UDPos.getLabelDict()
+    pos_label2Idx, pos_idx2Label = WSJPos.getLabelDict()
     pos_pred_train_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_train)
     pos_pred_dev_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_dev)
     pos_pred_test_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_test)
@@ -282,7 +282,7 @@ def buildAndTrainPOSModel(learning_params=None):
     else:
         params = learning_params
 
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = UDPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = WSJPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
 
     [pos_train_x, pos_train_ner_x, pos_train_casing_x] = input_train
     [pos_dev_x, pos_dev_ner_x, pos_dev_casing_x] = input_dev
@@ -452,5 +452,5 @@ def run_models_as_input_exp_with_fixed_params():
 #run_models_as_input_exp_with_random_params()
 #run_models_as_input_exp_with_fixed_params()
 extendCoNLLNer()
-extendUDPOS()
-extendCoNLLChunking()
+#extendUDPOS()
+#extendCoNLLChunking()
