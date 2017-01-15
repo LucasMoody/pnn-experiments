@@ -272,7 +272,7 @@ def getChunkingModel(learning_params = None):
 def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
     if learning_params is None:
         params = pos_default_params[window_size]
-        params['number_of_epochs'] = 1
+        #params['number_of_epochs'] = 1
     else:
         params = learning_params
 
