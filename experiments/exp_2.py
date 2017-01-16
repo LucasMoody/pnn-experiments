@@ -5,6 +5,7 @@ from models import Trainer, InputBuilder
 from datasets.conll_ner import CoNLLNer
 from datasets.conll_chunking import CoNLLChunking
 from datasets.wsj_pos import WSJPos
+from datasets.universal_dependencies_pos import UDPos
 from models.NER import SennaNER as NER
 from models.POS import SennaPOS as POS
 from models.Chunking import SennaChunking as Chunking
@@ -77,6 +78,38 @@ def extendCoNLLNer():
 def extendUDPOS():
     # Read in files
     word2Idx = Embeddings.word2Idx
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
+
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    n_out = train_y_cat.shape[1]
+
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
+
+    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+
+    ner_model, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+                                                            window_size=best_ner_window_size)
+    pred_train = ner_model.predict(input_train, verbose=0).argmax(axis=-1)
+    pred_dev = ner_model.predict(input_dev, verbose=0).argmax(axis=-1)
+    pred_test = ner_model.predict(input_test, verbose=0).argmax(axis=-1)
+
+    ner_label2Idx, ner_idx2Label = CoNLLNer.getLabelDict()
+    pred_train_labels = map(lambda idx: ner_idx2Label[idx], pred_train)
+    pred_dev_labels = map(lambda idx: ner_idx2Label[idx], pred_dev)
+    pred_test_labels = map(lambda idx: ner_idx2Label[idx], pred_test)
+
+    train_extensions = [pred_train_labels]
+    dev_extensions = [pred_dev_labels]
+    test_extensions = [pred_test_labels]
+
+    UDPos.extendDataset("./datasets/universal_dependencies_pos/data/en-ud.conllu", train_extensions, dev_extensions, test_extensions)
+
+def extendWSJPOS():
+    # Read in files
+    word2Idx = Embeddings.word2Idx
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
 
     [train_x, train_case_x] = input_train
@@ -104,7 +137,7 @@ def extendUDPOS():
     dev_extensions = [pred_dev_labels]
     test_extensions = [pred_test_labels]
 
-    WSJPos.extendDataset("./datasets/universal_dependencies_pos/data/en-ud.conllu", train_extensions, dev_extensions, test_extensions)
+    WSJPos.extendDataset("./datasets/wsj_pos/data/wsj.conllu", train_extensions, dev_extensions, test_extensions)
 
 def extendCoNLLChunking():
     # ----- read Data for pos with best pos window ----- #
@@ -400,7 +433,7 @@ def run_models_as_input_exp_with_fixed_params():
         'number_of_epochs': [config.number_of_epochs]
     }
 
-    best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(fixed_params)
+    '''best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(fixed_params)
     print fixed_params
     for (sample_scores, sample) in best_train_scores_ner:
         for score in sample_scores:
@@ -431,7 +464,7 @@ def run_models_as_input_exp_with_fixed_params():
         for score in sample_scores:
             print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'test', fixed_params,
-                                                 score[0][2], score[1], sample, 'pos-ner')
+                                                 score[0][2], score[1], sample, 'pos-ner')'''
 
     best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(fixed_params)
     print fixed_params
@@ -450,7 +483,8 @@ def run_models_as_input_exp_with_fixed_params():
                                                  score[1], sample, 'ner')
 
 #run_models_as_input_exp_with_random_params()
-run_models_as_input_exp_with_fixed_params()
 #extendCoNLLNer()
 #extendUDPOS()
 #extendCoNLLChunking()
+extendWSJPOS()
+run_models_as_input_exp_with_fixed_params()
