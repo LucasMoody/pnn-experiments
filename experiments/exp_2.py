@@ -27,8 +27,8 @@ default_params = {
     'optimizer': 'adam'
 }
 
-best_pos_window_size = 2
-best_ner_window_size = 2
+best_pos_window_size = 3
+best_ner_window_size = 3
 
 number_of_epochs = config.number_of_epochs
 
@@ -109,7 +109,6 @@ def extendUDPOS():
 
 def extendWSJPOS():
     # Read in files
-    word2Idx = Embeddings.word2Idx
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
 
     [train_x, train_case_x] = input_train
@@ -484,7 +483,6 @@ def run_models_as_input_exp_with_fixed_params():
 
 #run_models_as_input_exp_with_random_params()
 #extendCoNLLNer()
-#extendUDPOS()
 #extendCoNLLChunking()
-extendWSJPOS()
+#extendWSJPOS()
 run_models_as_input_exp_with_fixed_params()

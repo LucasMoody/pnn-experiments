@@ -241,7 +241,7 @@ def run_baseline_exp_with_fixed_params():
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'pos', 'test', fixed_params, score[0],
                                                  score[1], sample)
 
-    '''best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(fixed_params)
+    best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(fixed_params)
     print fixed_params
     for (sample_scores, sample) in best_train_scores_chunking:
         for score in sample_scores:
@@ -254,6 +254,6 @@ def run_baseline_exp_with_fixed_params():
     for (sample_scores, sample) in best_test_scores_chunking:
         for score in sample_scores:
             print "Max acc test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], score[1], sample)
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'chunking', 'test', fixed_params, score[0][2], score[1], sample)'''
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_1', 'chunking', 'test', fixed_params, score[0][2], score[1], sample)
 
 run_baseline_exp_with_fixed_params()
