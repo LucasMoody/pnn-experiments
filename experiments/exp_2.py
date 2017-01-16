@@ -450,7 +450,7 @@ def run_models_as_input_exp_with_fixed_params():
                                                  score[1], sample, 'ner')
 
 #run_models_as_input_exp_with_random_params()
-#run_models_as_input_exp_with_fixed_params()
-extendCoNLLNer()
-extendUDPOS()
-extendCoNLLChunking()
+run_models_as_input_exp_with_fixed_params()
+#extendCoNLLNer()
+#extendUDPOS()
+#extendCoNLLChunking()
