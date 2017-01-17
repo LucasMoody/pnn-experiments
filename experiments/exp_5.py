@@ -151,7 +151,7 @@ def run_pnn_exp_with_random_params():
 
         print "Model nr. ", model_nr
         print params
-        '''best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+        best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
         print params
         for (sample_scores, sample) in best_dev_scores_ner:
             for score in sample_scores:
@@ -172,7 +172,7 @@ def run_pnn_exp_with_random_params():
             for score in sample_scores:
                 print "Max acc test pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'test', params, score[0],
-                                                     score[1], sample, 'ner')'''
+                                                     score[1], sample, 'ner')
 
         best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(params)
         print params

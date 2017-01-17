@@ -432,7 +432,7 @@ def run_models_as_input_exp_with_fixed_params():
         'number_of_epochs': [config.number_of_epochs]
     }
 
-    '''best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(fixed_params)
+    best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(fixed_params)
     print fixed_params
     for (sample_scores, sample) in best_train_scores_ner:
         for score in sample_scores:
@@ -463,7 +463,7 @@ def run_models_as_input_exp_with_fixed_params():
         for score in sample_scores:
             print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'test', fixed_params,
-                                                 score[0][2], score[1], sample, 'pos-ner')'''
+                                                 score[0][2], score[1], sample, 'pos-ner')
 
     best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(fixed_params)
     print fixed_params
