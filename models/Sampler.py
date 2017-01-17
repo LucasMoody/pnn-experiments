@@ -21,3 +21,6 @@ def sampleLog2AndEqualRanges(train, no_ranges):
     equal = list(set(equal))
     equal.sort()
     return equal
+
+def samplePNNRanges(train, no_ranges):
+    return [500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 8000, 10000, 12000, 16000, 20000, 24000, 28000, 32000]

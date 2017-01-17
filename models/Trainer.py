@@ -5,7 +5,8 @@ import config
 
 #sample_fun = Sampler.sampleEqualRanges
 #sample_fun = Sampler.sampleLog2Ranges
-sample_fun = Sampler.sampleLog2AndEqualRanges
+#sample_fun = Sampler.sampleLog2AndEqualRanges
+sample_fun = Sampler.samplePNNRanges
 
 no_samples = config.number_of_samples
 
@@ -23,6 +24,12 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         # 1. und 2. epoche mit 0.01
         # 3. 4. 0.005
         # Rest 0.001
+        if epoch == 0:
+            model.optimizer.lr.set_value(0.01)
+        if epoch == 2:
+            model.optimizer.lr.set_value(0.005)
+        if epoch == 4:
+            model.optimizer.lr.set_value(0.001)
         model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
 
         print "%.2f sec for training" % (time.time() - start_time)
