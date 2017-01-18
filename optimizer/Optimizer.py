@@ -61,7 +61,7 @@ def run_optimizer_with_fixed_params():
         'activation': 'relu',
         'dropout': 0.3,
         'optimizer': 'adam',
-        'number_of_epochs': [config.number_of_epochs]
+        'number_of_epochs': config.number_of_epochs
     }
 
     print fixed_params
