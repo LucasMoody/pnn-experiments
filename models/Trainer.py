@@ -9,7 +9,7 @@ import config
 sample_fun = Sampler.samplePNNRanges
 
 no_samples = config.number_of_samples
-early_stopping_strike = 7
+early_stopping_strike = 10
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[], all_X_train = [], all_Y_train=[]):
     print "%d epochs" % number_of_epochs
