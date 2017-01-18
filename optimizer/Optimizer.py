@@ -102,3 +102,4 @@ def run_optimizer_with_fixed_params():
         print "Max f1 test chunking: %.4f in epoch: %d" % (score[0][2], score[1])
         Logger.save_results(config.optimized_models_log_path, 'chunking', 'test', fixed_params, score[0][2], score[1])
 
+run_optimizer_with_fixed_params()
