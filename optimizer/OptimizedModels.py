@@ -12,7 +12,7 @@ from measurements import Measurer
 
 # settings
 
-fixed_params = {
+fixed_params_pos = {
         'update_word_embeddings': False,
         'window_size': 3,
         'batch_size': 128,
@@ -20,7 +20,29 @@ fixed_params = {
         'activation': 'relu',
         'dropout': 0.3,
         'optimizer': 'adam',
-        'number_of_epochs': 10
+        'number_of_epochs': 12
+}
+
+fixed_params_chunking = {
+        'update_word_embeddings': False,
+        'window_size': 3,
+        'batch_size': 128,
+        'hidden_dims': 100,
+        'activation': 'relu',
+        'dropout': 0.3,
+        'optimizer': 'adam',
+        'number_of_epochs': 5
+}
+
+fixed_params_ner = {
+        'update_word_embeddings': False,
+        'window_size': 3,
+        'batch_size': 128,
+        'hidden_dims': 100,
+        'activation': 'relu',
+        'dropout': 0.3,
+        'optimizer': 'adam',
+        'number_of_epochs': 7
 }
 
 params_quick = {
@@ -284,7 +306,7 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_s
     if learning_params is None:
         #params = pos_default_params[window_size]
         #params['number_of_epochs'] = 1
-        params = fixed_params
+        params = fixed_params_pos
     else:
         params = learning_params
 
@@ -317,7 +339,7 @@ def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_s
     if learning_params is None:
         #params = ner_default_params[window_size]
         #params['number_of_epochs'] = 1
-        params = fixed_params
+        params = fixed_params_ner
     else:
         params = learning_params
     print params
@@ -354,7 +376,7 @@ def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, win
     if learning_params is None:
         #params = ner_default_params[window_size]
         #params['number_of_epochs'] = 1
-        params = fixed_params
+        params = fixed_params_chunking
     else:
         params = learning_params
     print params

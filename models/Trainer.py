@@ -18,6 +18,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     best_train_scores = [(0, 0) for i in xrange(len(measurements))]
     best_dev_scores = [(0, 0) for i in xrange(len(measurements))]
     best_test_scores = [(0, 0) for i in xrange(len(measurements))]
+    best_model_weights = map(lambda x: x.copy(), model.get_weights())
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
         #model.optimizer.lr.set_value(0.01)
@@ -31,7 +32,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
             model.optimizer.lr.set_value(0.005)
         if epoch == 4:
             model.optimizer.lr.set_value(0.001)
-        model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
+        model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=False)
 
         print "%.2f sec for training" % (time.time() - start_time)
         if(len(all_X_train) == 0):
@@ -55,12 +56,15 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
                 best_train_scores[i] = (score_train, epoch)
                 best_dev_scores[i] = (score_dev, epoch)
                 best_test_scores[i] = (score_test, epoch)
+                best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
         # early stopping
         best_dev_score_epoch = best_dev_scores[0][1]
         if epoch - best_dev_score_epoch > early_stopping_strike:
             break
-
+    model.set_weights(best_model_weights)
+    print 'Weight sum after finished training', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+    print 'best dev score: {0} in epoch: {1}'.format(best_dev_scores[0][0], best_dev_scores[0][1])
     return best_train_scores, best_dev_scores, best_test_scores
 
 def calculateMatrix(prediction, observation, numberOfClasses):
