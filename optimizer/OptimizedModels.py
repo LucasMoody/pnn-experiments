@@ -231,7 +231,7 @@ def getNERModel(learning_params = None):
                                                                                input_dev,
                                                                                dev_y, input_test,
                                                                                test_y, measurements=[biof1])
-    model.save_weights('optimizer/saved_models/ner_{0:.2f}.hd5'.format(dev_scores[0][0][2] * 100))
+    model.save_weights('optimizer/saved_models/ner_{0:.2f}.hd5'.format(dev_scores[0][0] * 100))
     return train_scores, dev_scores, test_scores
 
 def getPOSModel(learning_params = None):
@@ -305,7 +305,7 @@ def getChunkingModel(learning_params = None):
                                                            dev_y, input_test,
                                                            test_y, measurements=[biof1])
 
-    model.save_weights('optimizer/saved_models/chunking_{0:.2f}.hd5'.format(dev_scores[0][0][2] * 100))
+    model.save_weights('optimizer/saved_models/chunking_{0:.2f}.hd5'.format(dev_scores[0][0] * 100))
     return train_scores, dev_scores, test_scores
 
 def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None, use_existing_model = True):

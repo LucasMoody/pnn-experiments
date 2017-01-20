@@ -30,26 +30,26 @@ def run_optimizer_with_random_params():
         best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = OptimizedModels.getNERModel(params)
         print params
         for score in best_train_scores_ner:
-            print "Max f1 train ner: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'ner', 'train', params, score[0][2], score[1])
+            print "Max f1 train ner: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'ner', 'train', params, score[0], score[1])
         for score in best_dev_scores_ner:
-            print "Max f1 dev ner: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'ner', 'dev', params, score[0][2], score[1])
+            print "Max f1 dev ner: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'ner', 'dev', params, score[0], score[1])
         for score in best_test_scores_ner:
-            print "Max f1 test ner: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'ner', 'test', params, score[0][2], score[1])
+            print "Max f1 test ner: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'ner', 'test', params, score[0], score[1])
     
         best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = OptimizedModels.getChunkingModel(params)
         print params
         for score in best_train_scores_chunking:
-            print "Max f1 train chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'chunking', 'train', params, score[0][2], score[1])
+            print "Max f1 train chunking: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'chunking', 'train', params, score[0], score[1])
         for score in best_dev_scores_chunking:
-            print "Max f1 dev chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'chunking', 'dev', params, score[0][2], score[1])
+            print "Max f1 dev chunking: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'chunking', 'dev', params, score[0], score[1])
         for score in best_test_scores_chunking:
-            print "Max f1 test chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'chunking', 'test', params, score[0][2], score[1])
+            print "Max f1 test chunking: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'chunking', 'test', params, score[0], score[1])
 
 
 def run_optimizer_with_fixed_params():
@@ -82,26 +82,26 @@ def run_optimizer_with_fixed_params():
         best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = OptimizedModels.getNERModel(fixed_params)
         print fixed_params
         for score in best_train_scores_ner:
-            print "Max f1 train ner: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'ner', 'train', fixed_params, score[0][2], score[1])
+            print "Max f1 train ner: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'ner', 'train', fixed_params, score[0], score[1])
         for score in best_dev_scores_ner:
-            print "Max f1 dev ner: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'ner', 'dev', fixed_params, score[0][2], score[1])
+            print "Max f1 dev ner: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'ner', 'dev', fixed_params, score[0], score[1])
         for score in best_test_scores_ner:
-            print "Max f1 test ner: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'ner', 'test', fixed_params, score[0][2], score[1])
+            print "Max f1 test ner: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'ner', 'test', fixed_params, score[0], score[1])
 
         best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = OptimizedModels.getChunkingModel(
             fixed_params)
         print fixed_params
         for score in best_train_scores_chunking:
-            print "Max f1 train chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'chunking', 'train', fixed_params, score[0][2], score[1])
+            print "Max f1 train chunking: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'chunking', 'train', fixed_params, score[0], score[1])
         for score in best_dev_scores_chunking:
-            print "Max f1 dev chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'chunking', 'dev', fixed_params, score[0][2], score[1])
+            print "Max f1 dev chunking: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'chunking', 'dev', fixed_params, score[0], score[1])
         for score in best_test_scores_chunking:
-            print "Max f1 test chunking: %.4f in epoch: %d" % (score[0][2], score[1])
-            Logger.save_results(config.optimized_models_log_path, 'chunking', 'test', fixed_params, score[0][2], score[1])
+            print "Max f1 test chunking: %.4f in epoch: %d" % (score[0], score[1])
+            Logger.save_results(config.optimized_models_log_path, 'chunking', 'test', fixed_params, score[0], score[1])
 
 run_optimizer_with_fixed_params()

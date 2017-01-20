@@ -21,7 +21,6 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     best_model_weights = map(lambda x: x.copy(), model.get_weights())
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
-
         if epoch == 0:
             model.optimizer.lr.set_value(0.01)
         if epoch == 2:
@@ -59,7 +58,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         best_dev_score_epoch = best_dev_scores[0][1]
         if epoch - best_dev_score_epoch > early_stopping_strike:
             break
-    print 'Weight sum before settings best epoch:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+    print 'Weight sum before setting best epoch:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
     model.set_weights(best_model_weights)
     print 'Weight sum after finished training:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
     print 'best dev score: {0} in epoch: {1}'.format(best_dev_scores[0][0], best_dev_scores[0][1])

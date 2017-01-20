@@ -150,44 +150,67 @@ def run_pnn_exp_with_random_params():
             params[key] = random.choice(values)
 
         print "Model nr. ", model_nr
+
         print params
-        best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+        best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
         print params
+        for (sample_scores, sample) in best_train_scores_ner:
+            for score in sample_scores:
+                print "Max f1 train ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'train', params,
+                                                     score[0], score[1], sample, 'pos')
         for (sample_scores, sample) in best_dev_scores_ner:
             for score in sample_scores:
-                print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'dev', params, score[0][2], score[1], sample, 'pos')
+                print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'dev', params,
+                                                     score[0], score[1], sample, 'pos')
         for (sample_scores, sample) in best_test_scores_ner:
             for score in sample_scores:
-                print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'test', params, score[0][2], score[1], sample, 'pos')
+                print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'test', params,
+                                                     score[0], score[1], sample, 'pos')
 
-        best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
+        best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
         print params
+        for (sample_scores, sample) in best_train_scores_pos:
+            for score in sample_scores:
+                print "Max acc train pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'train', params,
+                                                     score[0], score[1], sample, 'ner')
         for (sample_scores, sample) in best_dev_scores_pos:
             for score in sample_scores:
                 print "Max acc dev pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'dev', params, score[0], score[1], sample, 'ner')
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'dev', params,
+                                                     score[0], score[1], sample, 'ner')
         for (sample_scores, sample) in best_test_scores_pos:
             for score in sample_scores:
                 print "Max acc test pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'test', params, score[0],
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'pos', 'test', params,
+                                                     score[0],
                                                      score[1], sample, 'ner')
 
-        best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(params)
+        best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(
+            params)
         print params
         for (sample_scores, sample) in best_train_scores_chunking:
             for score in sample_scores:
-                print "Max f1 train chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'train', params, score[0][2], score[1], sample, 'pos-ner')
+                print "Max f1 train chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'train',
+                                                     params,
+                                                     score[0], score[1], sample, 'pos-ner')
         for (sample_scores, sample) in best_dev_scores_chunking:
             for score in sample_scores:
-                print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'dev', params, score[0][2], score[1], sample, 'pos-ner')
+                print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'dev',
+                                                     params,
+                                                     score[0], score[1], sample, 'pos-ner')
         for (sample_scores, sample) in best_test_scores_chunking:
             for score in sample_scores:
-                print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'test', params, score[0][2], score[1], sample, 'pos-ner')
+                print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'test',
+                                                     params,
+
+                                                     score[0], score[1], sample, 'pos-ner')
 
 def run_pnn_exp_with_fixed_params():
     fixed_params = {
@@ -205,16 +228,16 @@ def run_pnn_exp_with_fixed_params():
     print fixed_params
     for (sample_scores, sample) in best_train_scores_ner:
         for score in sample_scores:
-            print "Max f1 train ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'train', fixed_params, score[0][2], score[1], sample, 'pos')
+            print "Max f1 train ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'train', fixed_params, score[0], score[1], sample, 'pos')
     for (sample_scores, sample) in best_dev_scores_ner:
         for score in sample_scores:
-            print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'dev', fixed_params, score[0][2], score[1], sample, 'pos')
+            print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'dev', fixed_params, score[0], score[1], sample, 'pos')
     for (sample_scores, sample) in best_test_scores_ner:
         for score in sample_scores:
-            print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
-            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'test', fixed_params, score[0][2], score[1], sample, 'pos')
+            print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
+            Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'ner', 'test', fixed_params, score[0], score[1], sample, 'pos')
 
     best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(fixed_params)
     print fixed_params
@@ -237,22 +260,22 @@ def run_pnn_exp_with_fixed_params():
     print fixed_params
     for (sample_scores, sample) in best_train_scores_chunking:
         for score in sample_scores:
-            print "Max f1 train chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            print "Max f1 train chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'train',
                                                  fixed_params,
-                                                 score[0][2], score[1], sample, 'pos-ner')
+                                                 score[0], score[1], sample, 'pos-ner')
     for (sample_scores, sample) in best_dev_scores_chunking:
         for score in sample_scores:
-            print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'dev',
                                                  fixed_params,
-                                                 score[0][2], score[1], sample, 'pos-ner')
+                                                 score[0], score[1], sample, 'pos-ner')
     for (sample_scores, sample) in best_test_scores_chunking:
         for score in sample_scores:
-            print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0][2], sample, score[1])
+            print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
             Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_5', 'chunking', 'test',
                                                  fixed_params,
 
-                            score[0][2], score[1], sample, 'pos-ner')
+                            score[0], score[1], sample, 'pos-ner')
 
 run_pnn_exp_with_fixed_params()

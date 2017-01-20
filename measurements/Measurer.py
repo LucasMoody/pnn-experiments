@@ -22,7 +22,7 @@ def compute_BIOf1(predictions, dataset_y, idx2Label):
     if (rec + prec) > 0:
         f1 = 2.0 * prec * rec / (prec + rec);
 
-    return prec, rec, f1
+    return f1
 
 def compute_IOf1(predictions, dataset_y, idx2Label):
     label_y = np.asarray([idx2Label[element] for element in dataset_y])
@@ -34,7 +34,7 @@ def compute_IOf1(predictions, dataset_y, idx2Label):
     if (rec + prec) > 0:
         f1 = 2.0 * prec * rec / (prec + rec);
 
-    return prec, rec, f1
+    return f1
 
 def compute_IO_precision(guessed, correct):
     filterO = guessed != 'O'
