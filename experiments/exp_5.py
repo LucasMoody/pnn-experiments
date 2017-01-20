@@ -57,8 +57,8 @@ def buildAndTrainNERModel(learning_params=None):
 
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
 
-    model_pos, _, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
-    #model_chunking, _, _, _ = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
+    model_pos = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
+    #model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
     model_ner = NER.buildNERModelWithPNN2(input_layers, inputs, params, n_out, additional_models=[model_pos])
 
@@ -91,8 +91,8 @@ def buildAndTrainPOSModel(learning_params=None):
 
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
 
-    model_ner, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
-    #model_chunking, _, _, _ = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
+    model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
+    #model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
     model_pos = POS.buildPOSModelWithPNN2(input_layers, inputs, params, n_out, additional_models=[model_ner])
 
@@ -125,8 +125,8 @@ def buildAndTrainChunkingModel(learning_params=None):
 
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
 
-    model_pos, _, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
-    model_ner, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
+    model_pos = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
+    model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
     model_chunking = Chunking.buildChunkingModelWithPNN2(input_layers, inputs, params, n_out, additional_models=[model_pos, model_ner])
 

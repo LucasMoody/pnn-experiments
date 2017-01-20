@@ -57,7 +57,7 @@ def extendCoNLLNer():
 
     input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-    pos_model, _, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=best_pos_window_size)
+    pos_model = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=best_pos_window_size)
 
     #pos_model = OptimizedModels.getPOSModel(embeddings, word2Idx)
     pred_train = pos_model.predict(input_train, verbose=0).argmax(axis=-1)
@@ -90,7 +90,7 @@ def extendUDPOS():
 
     input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-    ner_model, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+    ner_model = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
                                                             window_size=best_ner_window_size)
     pred_train = ner_model.predict(input_train, verbose=0).argmax(axis=-1)
     pred_dev = ner_model.predict(input_dev, verbose=0).argmax(axis=-1)
@@ -121,7 +121,7 @@ def extendWSJPOS():
 
     input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
 
-    ner_model, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+    ner_model = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
                                                             window_size=best_ner_window_size)
     pred_train = ner_model.predict(input_train, verbose=0).argmax(axis=-1)
     pred_dev = ner_model.predict(input_dev, verbose=0).argmax(axis=-1)
@@ -149,7 +149,7 @@ def extendCoNLLChunking():
 
     # build pos model
     input_layers_for_pos, inputs_for_pos = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_pos, n_in_casing_for_pos)
-    pos_model, _, _, _ = OptimizedModels.getPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
+    pos_model = OptimizedModels.getPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
 
     # predict pos on chunking data
     pos_pred_train = pos_model.predict(input_train_for_pos, verbose=0).argmax(axis=-1)
@@ -173,7 +173,7 @@ def extendCoNLLChunking():
     # build pos model
     input_layers_for_ner, inputs_for_ner = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_ner,
                                                                                 n_in_casing_for_ner)
-    ner_model, _, _, _ = OptimizedModels.getNERModelGivenInput(input_layers_for_ner, inputs_for_ner, window_size=best_ner_window_size)
+    ner_model = OptimizedModels.getNERModelGivenInput(input_layers_for_ner, inputs_for_ner, window_size=best_ner_window_size)
 
     # predict ner on chunking data
     ner_pred_train = ner_model.predict(input_train_for_ner, verbose=0).argmax(axis=-1)

@@ -11,6 +11,9 @@ from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbed
 from measurements import Measurer
 
 # settings
+pos_model_path = 'optimizer/saved_models/pos.hd5'
+ner_model_path = 'optimizer/saved_models/ner.hd5'
+chunking_model_path = 'optimizer/saved_models/chunking.hd5'
 
 fixed_params_pos = {
         'update_word_embeddings': False,
@@ -228,6 +231,7 @@ def getNERModel(learning_params = None):
                                                                                input_dev,
                                                                                dev_y, input_test,
                                                                                test_y, measurements=[biof1])
+    model.save_weights('optimizer/saved_models/ner_{0:.2f}.hd5'.format(dev_scores[0][0][2] * 100))
     return train_scores, dev_scores, test_scores
 
 def getPOSModel(learning_params = None):
@@ -259,6 +263,8 @@ def getPOSModel(learning_params = None):
     train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                              params['number_of_epochs'], params['batch_size'], input_dev,
                                                              dev_y, input_test, test_y, measurements=[Measurer.measureAccuracy])
+
+    model.save_weights('optimizer/saved_models/pos_{0:.2f}.hd5'.format(best_dev_scores[0][0] * 100))
 
     return train_scores, best_dev_scores, best_test_scores
 
@@ -299,10 +305,10 @@ def getChunkingModel(learning_params = None):
                                                            dev_y, input_test,
                                                            test_y, measurements=[biof1])
 
-
+    model.save_weights('optimizer/saved_models/chunking_{0:.2f}.hd5'.format(dev_scores[0][0][2] * 100))
     return train_scores, dev_scores, test_scores
 
-def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
+def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None, use_existing_model = True):
     if learning_params is None:
         #params = pos_default_params[window_size]
         #params['number_of_epochs'] = 1
@@ -328,14 +334,17 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_s
     print test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+    if(use_existing_model):
+        model.load_weights(pos_model_path)
+    else:
+        train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
                                                            dev_y, input_test, test_y,
                                                            measurements=[Measurer.measureAccuracy])
 
-    return model, train_scores, dev_scores, test_scores
+    return model
 
-def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
+def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_size = None, use_existing_model = True):
     if learning_params is None:
         #params = ner_default_params[window_size]
         #params['number_of_epochs'] = 1
@@ -364,15 +373,17 @@ def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_s
     print test_x.shape[0], ' test samples'
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+    if (use_existing_model):
+        model.load_weights(ner_model_path)
+        biof1 = Measurer.create_compute_BIOf1(idx2Label)
+        train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
                                                            dev_y, input_test, test_y,
                                                            measurements=[biof1])
 
-    return model, train_scores, best_dev_scores, best_test_scores
+    return model
 
-def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, window_size = None):
+def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, window_size = None, use_existing_model = True):
     if learning_params is None:
         #params = ner_default_params[window_size]
         #params['number_of_epochs'] = 1
@@ -401,8 +412,11 @@ def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, win
 
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+    if (use_existing_model):
+        model.load_weights(chunking_model_path)
+    else:
+        biof1 = Measurer.create_compute_BIOf1(idx2Label)
+        train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
                                                            dev_y, input_test, test_y,
                                                            measurements=[biof1])
