@@ -21,18 +21,14 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     best_model_weights = map(lambda x: x.copy(), model.get_weights())
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
-        #model.optimizer.lr.set_value(0.01)
-        # default waere 0.001 bei adam
-        # 1. und 2. epoche mit 0.01
-        # 3. 4. 0.005
-        # Rest 0.001
+
         if epoch == 0:
             model.optimizer.lr.set_value(0.01)
         if epoch == 2:
             model.optimizer.lr.set_value(0.005)
         if epoch == 4:
             model.optimizer.lr.set_value(0.001)
-        model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=False)
+        model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
 
         print "%.2f sec for training" % (time.time() - start_time)
         if(len(all_X_train) == 0):
