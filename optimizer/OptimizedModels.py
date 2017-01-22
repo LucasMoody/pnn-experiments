@@ -5,6 +5,7 @@ import models.POS.SennaPOS as POS
 import models.NER.SennaNER as NER
 import models.Chunking.SennaChunking as Chunking
 from models import Trainer, InputBuilder
+import numpy as np
 import config
 
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
@@ -335,7 +336,9 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_s
 
     # ----- Train Model ----- #
     if(use_existing_model):
+        print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         model.load_weights(pos_model_path)
+        print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
     else:
         train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
@@ -374,7 +377,10 @@ def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_s
 
     # ----- Train Model ----- #
     if (use_existing_model):
+        print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         model.load_weights(ner_model_path)
+        print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+    else:
         biof1 = Measurer.create_compute_BIOf1(idx2Label)
         train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
@@ -413,7 +419,9 @@ def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, win
 
     # ----- Train Model ----- #
     if (use_existing_model):
+        print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         model.load_weights(chunking_model_path)
+        print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
     else:
         biof1 = Measurer.create_compute_BIOf1(idx2Label)
         train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,

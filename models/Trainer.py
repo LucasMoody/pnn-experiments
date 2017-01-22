@@ -30,27 +30,15 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
 
         print "%.2f sec for training" % (time.time() - start_time)
-        if(len(all_X_train) == 0):
-            pred_train = model.predict(X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
-        else:
-            pred_train = model.predict(all_X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        # only dev scores need to be calculated
         pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
-        pred_test = model.predict(X_test, verbose=0).argmax(axis=-1)  # test_case_x
-        if(len(all_Y_train) == 0):
-            measurements_train = map(lambda func: func(pred_train, Y_train.argmax(axis=1)), measurements)
-        else:
-            measurements_train = map(lambda func: func(pred_train, all_Y_train.argmax(axis=1)), measurements)
         measurements_dev = map(lambda func: func(pred_dev, Y_dev), measurements)
-        measurements_test = map(lambda func: func(pred_test, Y_test), measurements)
         # update best scores
         for i in xrange(len(best_dev_scores)):
-            score_train = measurements_train[i]
+            # compare dev scores to get best one
             score_dev = measurements_dev[i]
-            score_test = measurements_test[i]
             if score_dev > best_dev_scores[i][0]:
-                best_train_scores[i] = (score_train, epoch)
                 best_dev_scores[i] = (score_dev, epoch)
-                best_test_scores[i] = (score_test, epoch)
                 best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
         print 'Current dev_score:', measurements_dev[0]
@@ -58,83 +46,44 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         best_dev_score_epoch = best_dev_scores[0][1]
         if epoch - best_dev_score_epoch > early_stopping_strike:
             break
+
+    # set back weights to best epoch
     print 'Weight sum before setting best epoch:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
     model.set_weights(best_model_weights)
     print 'Weight sum after finished training:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+
+    # calculate train and test scores for best epoch as well
+    for i in xrange(len(best_dev_scores)):
+        # make predictions on other datasets
+        # if not train set is not the full train dataset
+        if (len(all_X_train) == 0):
+            pred_train = model.predict(X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        else:
+            pred_train = model.predict(all_X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        pred_test = model.predict(X_test, verbose=0).argmax(axis=-1)  # test_case_x
+        # calculate scores of predictions
+        if (len(all_Y_train) == 0):
+            measurements_train = map(lambda func: func(pred_train, Y_train.argmax(axis=1)), measurements)
+        else:
+            measurements_train = map(lambda func: func(pred_train, all_Y_train.argmax(axis=1)), measurements)
+        measurements_dev = map(lambda func: func(pred_dev, Y_dev), measurements)
+        measurements_test = map(lambda func: func(pred_test, Y_test), measurements)
+
+        # calculate other scores
+        score_train = measurements_train[i]
+        score_dev = measurements_dev[i]
+        score_test = measurements_test[i]
+
+        # test whether earlier calculated dev score is the same as with reset weights
+        if best_dev_scores[i][0] != score_dev:
+            raise ValueError('Newly calculated best score should be the same as earlier saved one!')
+        # assign new best scores
+        best_dev_epoch = best_dev_scores[i][1]
+        best_train_scores[i] = (score_train, best_dev_epoch)
+        best_test_scores[i] = (score_test, best_dev_epoch)
     print 'best dev score: {0} in epoch: {1}'.format(best_dev_scores[0][0], best_dev_scores[0][1])
     return best_train_scores, best_dev_scores, best_test_scores
-
-def calculateMatrix(prediction, observation, numberOfClasses):
-    comparison = prediction == observation
-    acc_ppv = 0
-    acc_fdr = 0
-    acc_for = 0
-    acc_npv = 0
-    acc_tpr = 0
-    acc_fpr = 0
-    acc_tp = 0
-    acc_fp = 0
-    acc_tn = 0
-    acc_fn = 0
-
-    for i in xrange(numberOfClasses):
-        positives = comparison[prediction == i]
-        negatives = comparison[prediction != i]
-        true_positives = np.sum(positives)
-        false_positives = np.sum(positives == False)
-        true_negatives = np.sum(negatives)
-        false_negatives = np.sum(negatives == False)
-        if(len(positives) == 0):
-            ppv = 1
-            fdr = 0
-        else:
-            ppv = true_positives / float(len(positives))
-            fdr = false_positives / float(len(positives))
-        if(len(negatives) == 0):
-            faor = 0
-            npv = 1
-        else:
-            faor = true_negatives / float(len(negatives))
-            npv = false_negatives / float(len(negatives))
-        tpr = true_positives / float(true_positives + false_negatives)
-        fpr = false_positives / float(false_positives + true_negatives)
-
-        acc_ppv += ppv
-        acc_fdr += fdr
-        acc_for += faor
-        acc_npv += npv
-        acc_tpr += tpr
-        acc_fpr += fpr
-
-        acc_tp += true_positives
-        acc_fp += false_positives
-        acc_tn += true_negatives
-        acc_fn += false_negatives
-
-    acc_ppv /= float(numberOfClasses)
-    acc_fdr /= float(numberOfClasses)
-    acc_for /= float(numberOfClasses)
-    acc_npv /= float(numberOfClasses)
-    acc_tpr /= float(numberOfClasses)
-    acc_fpr /= float(numberOfClasses)
-
-    accuracy = (acc_tp + acc_tn) / float(numberOfClasses) / float(len(prediction))
-    micro_precision = acc_tp / float(acc_tp + acc_fp)
-    macro_precision = acc_ppv
-    micro_recall = acc_tp / float(acc_tp + acc_fn)
-    macro_recall = acc_tpr
-    micro_f1 = 2 * micro_precision * micro_recall / (micro_precision + micro_recall)
-    macro_f1 = 2 * macro_precision * macro_recall / (macro_precision + macro_recall)
-
-    print 'micro_precision', micro_precision
-    print 'micro_recall', micro_recall
-    print 'macro_precision', macro_precision
-    print 'macro_recall', macro_recall
-    print 'micro_f1', micro_f1
-    print 'macro_f1', macro_f1
-    print 'accuracy', accuracy
-
-    return micro_precision, micro_recall, macro_precision, macro_recall, micro_f1, macro_f1, accuracy
 
 def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[]):
     ranges = sample_fun(X_train, no_samples)
