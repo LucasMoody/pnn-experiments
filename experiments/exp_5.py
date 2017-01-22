@@ -226,6 +226,8 @@ def run_pnn_exp_with_fixed_params():
     max_evals = config.number_of_evals
 
     for model_nr in xrange(max_evals):
+        print "Model nr. ", model_nr
+
         best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(fixed_params)
         print fixed_params
         for (sample_scores, sample) in best_train_scores_ner:
