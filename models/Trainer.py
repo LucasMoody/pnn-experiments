@@ -15,9 +15,9 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     print "%d epochs" % number_of_epochs
     print "%d mini batches" % (len(X_train[0]) / minibatch_size)
 
-    best_train_scores = [(0, 0) for i in xrange(len(measurements))]
-    best_dev_scores = [(0, 0) for i in xrange(len(measurements))]
-    best_test_scores = [(0, 0) for i in xrange(len(measurements))]
+    best_train_scores = [(-1, 0) for i in xrange(len(measurements))]
+    best_dev_scores = [(-1, 0) for i in xrange(len(measurements))]
+    best_test_scores = [(-1, 0) for i in xrange(len(measurements))]
     best_model_weights = map(lambda x: x.copy(), model.get_weights())
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
