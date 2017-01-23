@@ -6,7 +6,7 @@ import config
 #sample_fun = Sampler.sampleEqualRanges
 #sample_fun = Sampler.sampleLog2Ranges
 #sample_fun = Sampler.sampleLog2AndEqualRanges
-sample_fun = Sampler.samplePNNRanges
+sample_fun = Sampler.sampleSimplePNNRanges
 
 no_samples = config.number_of_samples
 early_stopping_strike = 10
@@ -19,14 +19,16 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     best_dev_scores = [(-1, 0) for i in xrange(len(measurements))]
     best_test_scores = [(-1, 0) for i in xrange(len(measurements))]
     best_model_weights = map(lambda x: x.copy(), model.get_weights())
+
+    # ----- Training ---- #
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
-        if epoch == 0:
+        '''if epoch == 0:
             model.optimizer.lr.set_value(0.01)
         if epoch == 2:
             model.optimizer.lr.set_value(0.005)
         if epoch == 4:
-            model.optimizer.lr.set_value(0.001)
+            model.optimizer.lr.set_value(0.001)'''
         model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
 
         print "%.2f sec for training" % (time.time() - start_time)
@@ -41,12 +43,13 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
                 best_dev_scores[i] = (score_dev, epoch)
                 best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
-        print 'Current dev_score:', measurements_dev[0]
+        print 'Current dev_score: {0:.4f} and current patience: {1}'.format(measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
         # early stopping
         best_dev_score_epoch = best_dev_scores[0][1]
         if epoch - best_dev_score_epoch > early_stopping_strike:
             break
 
+    # ----- score calculations and weight resetting to best score ----- #
     # set back weights to best epoch
     print 'Weight sum before setting best epoch:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
     model.set_weights(best_model_weights)

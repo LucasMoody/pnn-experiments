@@ -426,7 +426,7 @@ def run_models_as_input_exp_with_fixed_params():
         'window_size': 3,
         'batch_size': 128,
         'hidden_dims': 100,
-        'activation': 'relu',
+        'activation': 'tanh',
         'dropout': 0.3,
         'optimizer': 'adam',
         'number_of_epochs': [config.number_of_epochs]

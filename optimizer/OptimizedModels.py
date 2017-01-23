@@ -12,16 +12,16 @@ from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbed
 from measurements import Measurer
 
 # settings
-pos_model_path = 'optimizer/saved_models/pos.hd5'
-ner_model_path = 'optimizer/saved_models/ner.hd5'
-chunking_model_path = 'optimizer/saved_models/chunking.hd5'
+pos_model_path = 'optimizer/saved_models/pos_tanh.96.07.hd5'
+ner_model_path = 'optimizer/saved_models/ner_tanh.87.38.hd5'
+chunking_model_path = 'optimizer/saved_models/chunking_tanh.90.63.hd5'
 
 fixed_params_pos = {
         'update_word_embeddings': False,
         'window_size': 3,
         'batch_size': 128,
         'hidden_dims': 100,
-        'activation': 'relu',
+        'activation': 'tanh',
         'dropout': 0.3,
         'optimizer': 'adam',
         'number_of_epochs': 12
@@ -32,7 +32,7 @@ fixed_params_chunking = {
         'window_size': 3,
         'batch_size': 128,
         'hidden_dims': 100,
-        'activation': 'relu',
+        'activation': 'tanh',
         'dropout': 0.3,
         'optimizer': 'adam',
         'number_of_epochs': 5
@@ -43,7 +43,7 @@ fixed_params_ner = {
         'window_size': 3,
         'batch_size': 128,
         'hidden_dims': 100,
-        'activation': 'relu',
+        'activation': 'tanh',
         'dropout': 0.3,
         'optimizer': 'adam',
         'number_of_epochs': 7
@@ -339,6 +339,8 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_s
         print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         model.load_weights(pos_model_path)
         print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+        pred_dev = model.predict(input_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        print 'Pos model has acc: {0:4f}'.format(Measurer.measureAccuracy(pred_dev, dev_y) * 100)
     else:
         train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
@@ -380,6 +382,9 @@ def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_s
         print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         model.load_weights(ner_model_path)
         print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+        pred_dev = model.predict(input_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        biof1 = Measurer.create_compute_BIOf1(idx2Label)
+        print 'Ner model has f1: {0:4f}'.format(biof1(pred_dev, dev_y) * 100)
     else:
         biof1 = Measurer.create_compute_BIOf1(idx2Label)
         train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
@@ -422,10 +427,13 @@ def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, win
         print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         model.load_weights(chunking_model_path)
         print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+        pred_dev = model.predict(input_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        biof1 = Measurer.create_compute_BIOf1(idx2Label)
+        print 'Chunking model has f1: {0:4f}'.format(biof1(pred_dev, dev_y) * 100)
     else:
         biof1 = Measurer.create_compute_BIOf1(idx2Label)
         train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
                                                            params['number_of_epochs'], params['batch_size'], input_dev,
                                                            dev_y, input_test, test_y,
                                                            measurements=[biof1])
-    return model, train_scores, dev_scores, test_scores
+    return model

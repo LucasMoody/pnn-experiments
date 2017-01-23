@@ -86,24 +86,30 @@ def buildNERModelGivenInput(input_layers, inputs, params, ner_n_out, metrics=[],
     return model
 
 def buildNERModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
-    pos_model = additional_models[0]
-    num_layers = len(pos_model.layers)
-    pos_hidden = pos_model.layers[num_layers - 3].output
-    pos_output = pos_model.layers[num_layers - 1].output
+    transfer_model_hidden_layers = []
+    transfer_model_output_layers = []
 
-    embeddings_hidden_merged = merge([input_layers, pos_hidden], mode='concat')
+    for model in additional_models:
+        num_layers = len(model.layers)
+        hidden = model.layers[num_layers - 3].output
+        output = model.layers[num_layers - 1].output
+
+        transfer_model_hidden_layers.append(hidden)
+        transfer_model_output_layers.append(output)
+
+        model.layers[num_layers - 3].trainable = False
+        model.layers[num_layers - 1].trainable = False
+
+    embeddings_hidden_merged = merge([input_layers] + transfer_model_hidden_layers, mode='concat')
 
     ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden')
     ner_hidden = ner_hidden_layer(embeddings_hidden_merged)
 
-    ner_hidden_merged = merge([ner_hidden, pos_output], mode='concat')
+    ner_hidden_merged = merge([ner_hidden] + transfer_model_output_layers, mode='concat')
     ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden_merged)
 
     ner_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='ner_output')
     ner_output = ner_output_layer(ner_hidden_dropout)
-
-    pos_hidden.trainable_weights = []
-    pos_output.trainable_weights = []
 
     model = Model(input=inputs, output=[ner_output])
 

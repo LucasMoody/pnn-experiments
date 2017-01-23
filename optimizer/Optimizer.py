@@ -58,7 +58,7 @@ def run_optimizer_with_fixed_params():
         'window_size': 3,
         'batch_size': 128,
         'hidden_dims': 100,
-        'activation': 'relu',
+        'activation': 'tanh',
         'dropout': 0.3,
         'optimizer': 'adam',
         'number_of_epochs': config.number_of_epochs
@@ -66,6 +66,7 @@ def run_optimizer_with_fixed_params():
     max_evals = config.number_of_evals
 
     for model_nr in xrange(max_evals):
+        print "Model nr. ", model_nr
         print fixed_params
         best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = OptimizedModels.getPOSModel(fixed_params)
         print fixed_params
