@@ -2,7 +2,7 @@ import time
 import numpy as np
 import Sampler
 import config
-
+from plots import LearningCurve
 #sample_fun = Sampler.sampleEqualRanges
 #sample_fun = Sampler.sampleLog2Ranges
 #sample_fun = Sampler.sampleLog2AndEqualRanges
@@ -11,7 +11,7 @@ sample_fun = Sampler.sampleSimplePNNRanges
 no_samples = config.number_of_samples
 early_stopping_strike = 10
 
-def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[], all_X_train = [], all_Y_train=[]):
+def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=[]):
     print "%d epochs" % number_of_epochs
     print "%d mini batches" % (len(X_train[0]) / minibatch_size)
 
@@ -20,6 +20,8 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     best_test_scores = [(-1, 0) for i in xrange(len(measurements))]
     best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
+    dev_scores = []
+    train_scores = []
     # ----- Training ---- #
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
@@ -35,6 +37,8 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         # only dev scores need to be calculated
         pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
         measurements_dev = map(lambda func: func(pred_dev, Y_dev), measurements)
+        pred_train = model.predict(X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        measurements_train = map(lambda func: func(pred_train, Y_train.argmax(axis=1)), measurements)
         # update best scores
         for i in xrange(len(best_dev_scores)):
             # compare dev scores to get best one
@@ -43,7 +47,9 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
                 best_dev_scores[i] = (score_dev, epoch)
                 best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
-        print 'Current dev_score: {0:.4f} and current patience: {1}'.format(measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
+        print 'Current train_score/dev_score: {0:.4f}/{1:.4f} and current patience: {2}'.format(measurements_train[0] * 100, measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
+        dev_scores.append(measurements_dev[0] * 100)
+        train_scores.append(measurements_train[0] * 100)
         # early stopping
         best_dev_score_epoch = best_dev_scores[0][1]
         if epoch - best_dev_score_epoch > early_stopping_strike:
@@ -51,6 +57,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
 
     # ----- score calculations and weight resetting to best score ----- #
     # set back weights to best epoch
+    #LearningCurve.plotLearningCurve(([(dev_scores, 'dev'), (train_scores, 'train')]))
     print 'Weight sum before setting best epoch:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
     model.set_weights(best_model_weights)
     print 'Weight sum after finished training:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
@@ -59,17 +66,11 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     for i in xrange(len(best_dev_scores)):
         # make predictions on other datasets
         # if not train set is not the full train dataset
-        if (len(all_X_train) == 0):
-            pred_train = model.predict(X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
-        else:
-            pred_train = model.predict(all_X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        pred_train = model.predict(X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
         pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
         pred_test = model.predict(X_test, verbose=0).argmax(axis=-1)  # test_case_x
         # calculate scores of predictions
-        if (len(all_Y_train) == 0):
-            measurements_train = map(lambda func: func(pred_train, Y_train.argmax(axis=1)), measurements)
-        else:
-            measurements_train = map(lambda func: func(pred_train, all_Y_train.argmax(axis=1)), measurements)
+        measurements_train = map(lambda func: func(pred_train, Y_train.argmax(axis=1)), measurements)
         measurements_dev = map(lambda func: func(pred_dev, Y_dev), measurements)
         measurements_test = map(lambda func: func(pred_test, Y_test), measurements)
 
@@ -106,7 +107,7 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
         sampled_train_y = Y_train[0:sample]
         # todo print sum of weights
         print 'Weight sum before training', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
-        best_train_scores, best_dev_scores, best_test_scores = trainModel(model, sampled_train_x, sampled_train_y, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=measurements, all_X_train=X_train, all_Y_train=Y_train)
+        best_train_scores, best_dev_scores, best_test_scores = trainModel(model, sampled_train_x, sampled_train_y, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurements=measurements)
         model.set_weights(weights)
         print 'Weight sum after resetting', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         print "%.2f sec for sample training" % (time.time() - start_time)

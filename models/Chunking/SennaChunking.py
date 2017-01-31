@@ -46,6 +46,8 @@ def buildChunkingModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
+    add_dense = Dense
+
     embeddings_hidden_merged = merge([input_layers] + transfer_model_hidden_layers, mode='concat')
 
     chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')

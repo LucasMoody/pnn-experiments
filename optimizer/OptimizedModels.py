@@ -1,4 +1,5 @@
 from datasets.wsj_pos import WSJPos
+from datasets.universal_dependencies_pos import UDPos
 import datasets.conll_ner.CoNLLNer as CoNLLNer
 import datasets.conll_chunking.CoNLLChunking as CoNLLChunking
 import models.POS.SennaPOS as POS
@@ -235,7 +236,7 @@ def getNERModel(learning_params = None):
     model.save_weights('optimizer/saved_models/ner_{0:.2f}.hd5'.format(dev_scores[0][0] * 100))
     return train_scores, dev_scores, test_scores
 
-def getPOSModel(learning_params = None):
+def getWSJPOSModel(learning_params = None):
     if learning_params is None:
         params = params_pos_ws_0
     else:
@@ -265,7 +266,41 @@ def getPOSModel(learning_params = None):
                                                              params['number_of_epochs'], params['batch_size'], input_dev,
                                                              dev_y, input_test, test_y, measurements=[Measurer.measureAccuracy])
 
-    model.save_weights('optimizer/saved_models/pos_{0:.2f}.hd5'.format(best_dev_scores[0][0] * 100))
+    model.save_weights('optimizer/saved_models/wsj_pos_{0:.2f}.hd5'.format(best_dev_scores[0][0] * 100))
+
+    return train_scores, best_dev_scores, best_test_scores
+
+def getUDPOSModel(learning_params = None):
+    if learning_params is None:
+        params = params_pos_ws_0
+    else:
+        params = learning_params
+
+    # Read in files
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(params['window_size'], word2Idx, case2Idx)
+    n_out = train_y_cat.shape[1]
+
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
+
+    # ----- Build Model ----- #
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
+    model = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+
+    print train_x.shape[0], ' train samples'
+    print train_x.shape[1], ' train dimension'
+    print test_x.shape[0], ' test samples'
+
+    # ----- Train Model ----- #
+    train_scores, best_dev_scores, best_test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+                                                             params['number_of_epochs'], params['batch_size'], input_dev,
+                                                             dev_y, input_test, test_y, measurements=[Measurer.measureAccuracy])
+
+    model.save_weights('optimizer/saved_models/ud_pos_{0:.2f}.hd5'.format(best_dev_scores[0][0] * 100))
 
     return train_scores, best_dev_scores, best_test_scores
 
