@@ -282,7 +282,7 @@ def buildAndTrainWSJPOSModelWithUDPos(learning_params=None):
 
     model_ud_pos = OptimizedModels.getUDPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_ud_pos])
+    model_pos = POS.buildPOSModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_ud_pos], name_prefix='wsj_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -317,7 +317,7 @@ def buildAndTrainUDPOSModelWithWSJPos(learning_params=None):
 
     model_wsj_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos])
+    model_pos = POS.buildPOSModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos], name_prefix='ud_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,

@@ -124,7 +124,7 @@ def buildNERModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, metrics
         model.layers[num_layers - 1].trainable = False
 
     adapter_layer = Dense(10, activation=params['activation'], name='chunking_adapter')
-    adapter = adapter_layer(transfer_model_hidden_layers)
+    adapter = adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
 
     embeddings_hidden_merged = merge([input_layers, adapter], mode='concat')
 
