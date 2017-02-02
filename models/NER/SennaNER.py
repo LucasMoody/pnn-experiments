@@ -58,23 +58,12 @@ def buildNERModel(n_in, embeddings, n_in_case, params, ner_n_out, metrics=[], ad
 
 def buildNERModelGivenInput(input_layers, inputs, params, ner_n_out, metrics=[], useHiddenWeights=False, usePNN=False, additional_models=[]):
 
-    if(useHiddenWeights):
-        ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden',
-                                 weights=Extender.getHiddenLayerWeights(additional_models[0]))
-    else:
-        ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden')
+
+    ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden')
     ner_hidden = ner_hidden_layer(input_layers)
 
     ner_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='ner_output')
-    if(usePNN):
-        pos_model = additional_models[0]
-        num_layers = len(pos_model.layers)
-        pos_hidden = pos_model.get_layer(name='pos_hidden').output
-        pos_hidden.trainable_weights = []
-        ner_hidden_merged_layer = merge([ner_hidden, pos_hidden], mode='concat')
-        ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden_merged_layer)
-    else:
-        ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden)
+    ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden)
     ner_output = ner_output_layer(ner_hidden_dropout)
 
     model = Model(input=inputs, output=[ner_output])

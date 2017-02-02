@@ -28,7 +28,9 @@ default_params = {
 }
 
 best_pos_window_size = 3
+best_ud_pos_window_size = 3
 best_ner_window_size = 3
+best_chunking_window_size = 3
 
 number_of_epochs = config.number_of_epochs
 
@@ -44,97 +46,206 @@ embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
 
 def extendCoNLLNer():
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = CoNLLNer.readDataset(best_pos_window_size, word2Idx, case2Idx)
+    # ----- read Data for pos with best pos window ----- #
+    [input_train_for_pos, train_y_cat_for_pos], [input_dev_for_pos, dev_y_for_pos], [input_test_for_pos, test_y_for_pos], dicts_for_pos = CoNLLNer.readDataset(best_pos_window_size, word2Idx, case2Idx)
 
-    [train_x, train_case_x] = input_train
-    [dev_x, dev_case_x] = input_dev
-    [test_x, test_case_x] = input_test
-    [_, caseLookup, ner_label2Idx, ner_idx2Label] = dicts
-    n_out = train_y_cat.shape[1]
+    [train_x_for_pos, train_case_x_for_pos] = input_train_for_pos
+    n_in_x_for_pos = train_x_for_pos.shape[1]
+    n_in_casing_for_pos = train_case_x_for_pos.shape[1]
 
-    n_in_x = train_x.shape[1]
-    n_in_casing = train_case_x.shape[1]
+    input_layers_for_pos, inputs_for_pos = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_pos, n_in_casing_for_pos)
 
-    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-
-    pos_model = OptimizedModels.getPOSModelGivenInput(input_layers_merged, inputs, window_size=best_pos_window_size)
+    pos_model = OptimizedModels.getWSJPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
 
     #pos_model = OptimizedModels.getPOSModel(embeddings, word2Idx)
-    pred_train = pos_model.predict(input_train, verbose=0).argmax(axis=-1)
-    pred_dev = pos_model.predict(input_dev, verbose=0).argmax(axis=-1)
-    pred_test = pos_model.predict(input_test, verbose=0).argmax(axis=-1)
+    pos_pred_train = pos_model.predict(input_train_for_pos, verbose=0).argmax(axis=-1)
+    pos_pred_dev = pos_model.predict(input_dev_for_pos, verbose=0).argmax(axis=-1)
+    pos_pred_test = pos_model.predict(input_test_for_pos, verbose=0).argmax(axis=-1)
 
     pos_label2Idx, pos_idx2Label = WSJPos.getLabelDict()
-    pred_train_labels = map(lambda idx: pos_idx2Label[idx], pred_train)
-    pred_dev_labels = map(lambda idx: pos_idx2Label[idx], pred_dev)
-    pred_test_labels = map(lambda idx: pos_idx2Label[idx], pred_test)
+    pos_pred_train_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_train)
+    pos_pred_dev_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_dev)
+    pos_pred_test_labels = map(lambda idx: pos_idx2Label[idx], pos_pred_test)
 
-    train_extensions = [pred_train_labels]
-    dev_extensions = [pred_dev_labels]
-    test_extensions = [pred_test_labels]
+    # ----- read Data for chunking with best chunking window ----- #
+    [input_train_for_chunking, train_y_cat_for_chunking], [input_dev_for_chunking, dev_y_for_chunking], [input_test_for_chunking,
+                                                                                     test_y_for_chunking], dicts_for_chunking = CoNLLNer.readDataset(
+        best_chunking_window_size, word2Idx, case2Idx)
+
+    [train_x_for_chunking, train_case_x_for_chunking] = input_train_for_chunking
+    n_in_x_for_chunking = train_x_for_chunking.shape[1]
+    n_in_casing_for_chunking = train_case_x_for_chunking.shape[1]
+
+    input_layers_for_chunking, inputs_for_chunking = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_chunking,
+                                                                                n_in_casing_for_chunking)
+
+    chunking_model = OptimizedModels.getChunkingModelGivenInput(input_layers_for_chunking, inputs_for_chunking,
+                                                         window_size=best_chunking_window_size)
+
+    chunking_pred_train = chunking_model.predict(input_train_for_chunking, verbose=0).argmax(axis=-1)
+    chunking_pred_dev = chunking_model.predict(input_dev_for_chunking, verbose=0).argmax(axis=-1)
+    chunking_pred_test = chunking_model.predict(input_test_for_chunking, verbose=0).argmax(axis=-1)
+
+    chunking_label2Idx, chunking_idx2Label = CoNLLChunking.getLabelDict()
+    chunking_pred_train_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_train)
+    chunking_pred_dev_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_dev)
+    chunking_pred_test_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_test)
+
+    train_extensions = [pos_pred_train_labels, chunking_pred_train_labels]
+    dev_extensions = [pos_pred_dev_labels, chunking_pred_dev_labels]
+    test_extensions = [pos_pred_test_labels, chunking_pred_test_labels]
 
     CoNLLNer.extendDataset("./datasets/conll_ner/data/eng.conllu", train_extensions, dev_extensions, test_extensions)
 
 def extendUDPOS():
-    # Read in files
-    word2Idx = Embeddings.word2Idx
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
+    # ----- read Data for ner with best ner window ----- #
+    [input_train_for_ner, train_y_cat_for_ner], [input_dev_for_ner, dev_y_for_ner], [input_test_for_ner, test_y_for_ner] = UDPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
 
-    [train_x, train_case_x] = input_train
-    [dev_x, dev_case_x] = input_dev
-    [test_x, test_case_x] = input_test
-    n_out = train_y_cat.shape[1]
+    [train_x_for_ner, train_case_x_for_ner] = input_train_for_ner
+    n_in_x_for_ner = train_x_for_ner.shape[1]
+    n_in_casing_for_ner = train_case_x_for_ner.shape[1]
 
-    n_in_x = train_x.shape[1]
-    n_in_casing = train_case_x.shape[1]
+    input_layers_for_ner, inputs_for_ner = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_ner, n_in_casing_for_ner)
 
-    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-
-    ner_model = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+    ner_model = OptimizedModels.getNERModelGivenInput(input_layers_for_ner, inputs_for_ner,
                                                             window_size=best_ner_window_size)
-    pred_train = ner_model.predict(input_train, verbose=0).argmax(axis=-1)
-    pred_dev = ner_model.predict(input_dev, verbose=0).argmax(axis=-1)
-    pred_test = ner_model.predict(input_test, verbose=0).argmax(axis=-1)
+    ner_pred_train = ner_model.predict(input_train_for_ner, verbose=0).argmax(axis=-1)
+    ner_pred_dev = ner_model.predict(input_dev_for_ner, verbose=0).argmax(axis=-1)
+    ner_pred_test = ner_model.predict(input_test_for_ner, verbose=0).argmax(axis=-1)
 
     ner_label2Idx, ner_idx2Label = CoNLLNer.getLabelDict()
-    pred_train_labels = map(lambda idx: ner_idx2Label[idx], pred_train)
-    pred_dev_labels = map(lambda idx: ner_idx2Label[idx], pred_dev)
-    pred_test_labels = map(lambda idx: ner_idx2Label[idx], pred_test)
+    ner_pred_train_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_train)
+    ner_pred_dev_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_dev)
+    ner_pred_test_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_test)
 
-    train_extensions = [pred_train_labels]
-    dev_extensions = [pred_dev_labels]
-    test_extensions = [pred_test_labels]
+    # ----- read Data for chunking with best chunking window ----- #
+    [input_train_for_chunking, train_y_cat_for_chunking], [input_dev_for_chunking, dev_y_for_chunking], [input_test_for_chunking,
+                                                                                     test_y_for_chunking] = UDPos.readDataset(
+        best_chunking_window_size, word2Idx, case2Idx)
+
+    [train_x_for_chunking, train_case_x_for_chunking] = input_train_for_chunking
+    n_in_x_for_chunking = train_x_for_chunking.shape[1]
+    n_in_casing_for_chunking = train_case_x_for_chunking.shape[1]
+
+    input_layers_for_chunking, inputs_for_chunking = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_chunking,
+                                                                                n_in_casing_for_chunking)
+
+    chunking_model = OptimizedModels.getChunkingModelGivenInput(input_layers_for_chunking, inputs_for_chunking,
+                                                      window_size=best_chunking_window_size)
+    chunking_pred_train = chunking_model.predict(input_train_for_chunking, verbose=0).argmax(axis=-1)
+    chunking_pred_dev = chunking_model.predict(input_dev_for_chunking, verbose=0).argmax(axis=-1)
+    chunking_pred_test = chunking_model.predict(input_test_for_chunking, verbose=0).argmax(axis=-1)
+
+    chunking_label2Idx, chunking_idx2Label = CoNLLChunking.getLabelDict()
+    chunking_pred_train_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_train)
+    chunking_pred_dev_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_dev)
+    chunking_pred_test_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_test)
+
+    # ----- read Data for pos with best wsj_pos window ----- #
+    [input_train_for_wsj_pos, train_y_cat_for_wsj_pos], [input_dev_for_wsj_pos, dev_y_for_wsj_pos], [
+        input_test_for_wsj_pos,
+        test_y_for_wsj_pos] = UDPos.readDataset(
+        best_pos_window_size, word2Idx, case2Idx)
+
+    [train_x_for_wsj_pos, train_case_x_for_wsj_pos] = input_train_for_wsj_pos
+    n_in_x_for_wsj_pos = train_x_for_wsj_pos.shape[1]
+    n_in_casing_for_wsj_pos = train_case_x_for_wsj_pos.shape[1]
+
+    input_layers_for_wsj_pos, inputs_for_wsj_pos = InputBuilder.buildStandardModelInput(embeddings, case2Idx,
+                                                                                          n_in_x_for_wsj_pos,
+                                                                                          n_in_casing_for_wsj_pos)
+
+    wsj_pos_model = OptimizedModels.getWSJPOSModelGivenInput(input_layers_for_wsj_pos, inputs_for_wsj_pos,
+                                                                window_size=best_pos_window_size)
+    wsj_pos_pred_train = wsj_pos_model.predict(input_train_for_wsj_pos, verbose=0).argmax(axis=-1)
+    wsj_pos_pred_dev = wsj_pos_model.predict(input_dev_for_wsj_pos, verbose=0).argmax(axis=-1)
+    wsj_pos_pred_test = wsj_pos_model.predict(input_test_for_wsj_pos, verbose=0).argmax(axis=-1)
+
+    wsj_pos_label2Idx, wsj_pos_idx2Label = WSJPos.getLabelDict()
+    wsj_pos_pred_train_labels = map(lambda idx: wsj_pos_idx2Label[idx], wsj_pos_pred_train)
+    wsj_pos_pred_dev_labels = map(lambda idx: wsj_pos_idx2Label[idx], wsj_pos_pred_dev)
+    wsj_pos_pred_test_labels = map(lambda idx: wsj_pos_idx2Label[idx], wsj_pos_pred_test)
+
+    train_extensions = [ner_pred_train_labels, chunking_pred_train_labels, wsj_pos_pred_train_labels]
+    dev_extensions = [ner_pred_dev_labels, chunking_pred_dev_labels, wsj_pos_pred_dev_labels]
+    test_extensions = [ner_pred_test_labels, chunking_pred_test_labels, wsj_pos_pred_test_labels]
 
     UDPos.extendDataset("./datasets/universal_dependencies_pos/data/en-ud.conllu", train_extensions, dev_extensions, test_extensions)
 
 def extendWSJPOS():
-    # Read in files
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
+    # ----- read Data for ner with best ner window ----- #
+    [input_train_for_ner, train_y_cat_for_ner], [input_dev_for_ner, dev_y_for_ner], [input_test_for_ner, test_y_for_ner] = WSJPos.readDataset(best_ner_window_size, word2Idx, case2Idx)
 
-    [train_x, train_case_x] = input_train
-    [dev_x, dev_case_x] = input_dev
-    [test_x, test_case_x] = input_test
-    n_out = train_y_cat.shape[1]
+    [train_x_for_ner, train_case_x_for_ner] = input_train_for_ner
+    n_in_x_for_ner = train_x_for_ner.shape[1]
+    n_in_casing_for_ner = train_case_x_for_ner.shape[1]
 
-    n_in_x = train_x.shape[1]
-    n_in_casing = train_case_x.shape[1]
+    input_layers_for_ner, inputs_for_ner = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_ner, n_in_casing_for_ner)
 
-    input_layers_merged, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-
-    ner_model = OptimizedModels.getNERModelGivenInput(input_layers_merged, inputs,
+    ner_model = OptimizedModels.getNERModelGivenInput(input_layers_for_ner, inputs_for_ner,
                                                             window_size=best_ner_window_size)
-    pred_train = ner_model.predict(input_train, verbose=0).argmax(axis=-1)
-    pred_dev = ner_model.predict(input_dev, verbose=0).argmax(axis=-1)
-    pred_test = ner_model.predict(input_test, verbose=0).argmax(axis=-1)
+    ner_pred_train = ner_model.predict(input_train_for_ner, verbose=0).argmax(axis=-1)
+    ner_pred_dev = ner_model.predict(input_dev_for_ner, verbose=0).argmax(axis=-1)
+    ner_pred_test = ner_model.predict(input_test_for_ner, verbose=0).argmax(axis=-1)
 
     ner_label2Idx, ner_idx2Label = CoNLLNer.getLabelDict()
-    pred_train_labels = map(lambda idx: ner_idx2Label[idx], pred_train)
-    pred_dev_labels = map(lambda idx: ner_idx2Label[idx], pred_dev)
-    pred_test_labels = map(lambda idx: ner_idx2Label[idx], pred_test)
+    ner_pred_train_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_train)
+    ner_pred_dev_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_dev)
+    ner_pred_test_labels = map(lambda idx: ner_idx2Label[idx], ner_pred_test)
 
-    train_extensions = [pred_train_labels]
-    dev_extensions = [pred_dev_labels]
-    test_extensions = [pred_test_labels]
+    # ----- read Data for chunking with best chunking window ----- #
+    [input_train_for_chunking, train_y_cat_for_chunking], [input_dev_for_chunking, dev_y_for_chunking], [
+        input_test_for_chunking,
+        test_y_for_chunking] = WSJPos.readDataset(
+        best_chunking_window_size, word2Idx, case2Idx)
+
+    [train_x_for_chunking, train_case_x_for_chunking] = input_train_for_chunking
+    n_in_x_for_chunking = train_x_for_chunking.shape[1]
+    n_in_casing_for_chunking = train_case_x_for_chunking.shape[1]
+
+    input_layers_for_chunking, inputs_for_chunking = InputBuilder.buildStandardModelInput(embeddings, case2Idx,
+                                                                                          n_in_x_for_chunking,
+                                                                                          n_in_casing_for_chunking)
+
+    chunking_model = OptimizedModels.getChunkingModelGivenInput(input_layers_for_chunking, inputs_for_chunking,
+                                                                window_size=best_chunking_window_size)
+    chunking_pred_train = chunking_model.predict(input_train_for_chunking, verbose=0).argmax(axis=-1)
+    chunking_pred_dev = chunking_model.predict(input_dev_for_chunking, verbose=0).argmax(axis=-1)
+    chunking_pred_test = chunking_model.predict(input_test_for_chunking, verbose=0).argmax(axis=-1)
+
+    chunking_label2Idx, chunking_idx2Label = CoNLLChunking.getLabelDict()
+    chunking_pred_train_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_train)
+    chunking_pred_dev_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_dev)
+    chunking_pred_test_labels = map(lambda idx: chunking_idx2Label[idx], chunking_pred_test)
+
+    # ----- read Data for pos with best ud_pos window ----- #
+    [input_train_for_ud_pos, train_y_cat_for_ud_pos], [input_dev_for_ud_pos, dev_y_for_ud_pos], [
+        input_test_for_ud_pos,
+        test_y_for_ud_pos] = WSJPos.readDataset(
+        best_ud_pos_window_size, word2Idx, case2Idx)
+
+    [train_x_for_ud_pos, train_case_x_for_ud_pos] = input_train_for_ud_pos
+    n_in_x_for_ud_pos = train_x_for_ud_pos.shape[1]
+    n_in_casing_for_ud_pos = train_case_x_for_ud_pos.shape[1]
+
+    input_layers_for_ud_pos, inputs_for_ud_pos = InputBuilder.buildStandardModelInput(embeddings, case2Idx,
+                                                                                          n_in_x_for_ud_pos,
+                                                                                          n_in_casing_for_ud_pos)
+
+    ud_pos_model = OptimizedModels.getUDPOSModelGivenInput(input_layers_for_ud_pos, inputs_for_ud_pos,
+                                                                window_size=best_ud_pos_window_size)
+    ud_pos_pred_train = ud_pos_model.predict(input_train_for_ud_pos, verbose=0).argmax(axis=-1)
+    ud_pos_pred_dev = ud_pos_model.predict(input_dev_for_ud_pos, verbose=0).argmax(axis=-1)
+    ud_pos_pred_test = ud_pos_model.predict(input_test_for_ud_pos, verbose=0).argmax(axis=-1)
+
+    ud_pos_label2Idx, ud_pos_idx2Label = UDPos.getLabelDict()
+    ud_pos_pred_train_labels = map(lambda idx: ud_pos_idx2Label[idx], ud_pos_pred_train)
+    ud_pos_pred_dev_labels = map(lambda idx: ud_pos_idx2Label[idx], ud_pos_pred_dev)
+    ud_pos_pred_test_labels = map(lambda idx: ud_pos_idx2Label[idx], ud_pos_pred_test)
+
+    train_extensions = [ner_pred_train_labels, chunking_pred_train_labels, ud_pos_pred_train_labels]
+    dev_extensions = [ner_pred_dev_labels, chunking_pred_dev_labels, ud_pos_pred_dev_labels]
+    test_extensions = [ner_pred_test_labels, chunking_pred_test_labels, ud_pos_pred_test_labels]
 
     WSJPos.extendDataset("./datasets/wsj_pos/data/wsj.conllu", train_extensions, dev_extensions, test_extensions)
 
@@ -149,7 +260,7 @@ def extendCoNLLChunking():
 
     # build pos model
     input_layers_for_pos, inputs_for_pos = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x_for_pos, n_in_casing_for_pos)
-    pos_model = OptimizedModels.getPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
+    pos_model = OptimizedModels.getWSJPOSModelGivenInput(input_layers_for_pos, inputs_for_pos, window_size=best_pos_window_size)
 
     # predict pos on chunking data
     pos_pred_train = pos_model.predict(input_train_for_pos, verbose=0).argmax(axis=-1)
@@ -192,7 +303,7 @@ def extendCoNLLChunking():
 
     CoNLLChunking.extendDataset("./datasets/conll_chunking/data/chunking.conllu", train_extensions, dev_extensions, test_extensions)
 
-def buildAndTrainNERModel(learning_params=None):
+def buildAndTrainNERModelWithChunkingPos(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -200,11 +311,133 @@ def buildAndTrainNERModel(learning_params=None):
 
     [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts = CoNLLNer.readDatasetExt(params['window_size'], word2Idx, case2Idx)
 
-    [ner_train_x, ner_train_pos_x, ner_train_casing_x] = input_train
-    [ner_dev_x, ner_dev_pos_x, ner_dev_casing_x] = input_dev
-    [ner_test_x, ner_test_pos_x, ner_test_casing_x] = input_test
-    [_, pos2Idx, _, ner_label2Idx, ner_idx2Label] = dicts
+    [ner_train_x, ner_train_pos_x, ner_train_chunking_x, ner_train_casing_x] = input_train
+    [ner_dev_x, ner_dev_pos_x, ner_dev_chunking_x, ner_dev_casing_x] = input_dev
+    [ner_test_x, ner_test_pos_x, ner_test_chunking_x, ner_test_casing_x] = input_test
+    [_, pos2Idx, chunking2Idx, _, ner_label2Idx, ner_idx2Label] = dicts
 
+    ner_n_out = ner_train_y_cat.shape[1]
+    n_in_x = ner_train_x.shape[1]
+    n_in_pos = ner_train_pos_x.shape[1]
+    n_in_chunking = ner_train_chunking_x.shape[1]
+    n_in_casing = ner_train_casing_x.shape[1]
+
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    pos_input = Input(shape=(n_in_pos,), dtype='int32', name='pos_input')
+    posEmbeddingLayer = Embedding(output_dim=len(pos2Idx), input_dim=len(pos2Idx), input_length=n_in_pos,
+                                   trainable=True)
+    pos = posEmbeddingLayer(pos_input)
+    pos = Flatten(name='pos_flatten')(pos)
+
+    chunking_input = Input(shape=(n_in_chunking,), dtype='int32', name='chunking_input')
+    chunkingEmbeddingLayer = Embedding(output_dim=len(chunking2Idx), input_dim=len(chunking2Idx), input_length=n_in_chunking,
+                                   trainable=True)
+    chunking = chunkingEmbeddingLayer(chunking_input)
+    chunking = Flatten(name='chunking_flatten')(chunking)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, pos, casing, chunking]
+    inputs = [words_input, pos_input, case_input, chunking_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, ner_n_out)
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+                                                                   ner_train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], input_dev,
+                                                                   ner_dev_y, input_test, ner_test_y,
+                                                                   measurements=[biof1])
+
+    return train_scores, dev_scores, test_scores
+
+def buildAndTrainNERModelWithChunking(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts = CoNLLNer.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [ner_train_x, ner_train_pos_x, ner_train_chunking_x, ner_train_casing_x] = input_train
+    [ner_dev_x, ner_dev_pos_x, ner_dev_chunking_x, ner_dev_casing_x] = input_dev
+    [ner_test_x, ner_test_pos_x, ner_test_chunking_x, ner_test_casing_x] = input_test
+    [_, pos2Idx, chunking2Idx, _, ner_label2Idx, ner_idx2Label] = dicts
+
+    model_input_train = [ner_train_x, ner_train_chunking_x, ner_train_casing_x]
+    model_input_dev = [ner_dev_x, ner_dev_chunking_x, ner_dev_casing_x]
+    model_input_test = [ner_test_x, ner_test_chunking_x, ner_test_casing_x]
+
+    ner_n_out = ner_train_y_cat.shape[1]
+    n_in_x = ner_train_x.shape[1]
+    n_in_chunking = ner_train_chunking_x.shape[1]
+    n_in_casing = ner_train_casing_x.shape[1]
+
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    chunking_input = Input(shape=(n_in_chunking,), dtype='int32', name='chunking_input')
+    chunkingEmbeddingLayer = Embedding(output_dim=len(chunking2Idx), input_dim=len(chunking2Idx), input_length=n_in_chunking,
+                                   trainable=True)
+    chunking = chunkingEmbeddingLayer(chunking_input)
+    chunking = Flatten(name='chunking_flatten')(chunking)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, casing, chunking]
+    inputs = [words_input, case_input, chunking_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, ner_n_out)
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
+                                                                   ner_train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   ner_dev_y, model_input_test, ner_test_y,
+                                                                   measurements=[biof1])
+
+    return train_scores, dev_scores, test_scores
+
+def buildAndTrainNERModelWithPos(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts = CoNLLNer.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [ner_train_x, ner_train_pos_x, ner_train_chunking_x, ner_train_casing_x] = input_train
+    [ner_dev_x, ner_dev_pos_x, ner_dev_chunking_x, ner_dev_casing_x] = input_dev
+    [ner_test_x, ner_test_pos_x, ner_test_chunking_x, ner_test_casing_x] = input_test
+    [_, pos2Idx, chunking2Idx, _, ner_label2Idx, ner_idx2Label] = dicts
+
+    model_input_train = [ner_train_x, ner_train_pos_x, ner_train_casing_x]
+    model_input_dev = [ner_dev_x, ner_dev_pos_x, ner_dev_casing_x]
+    model_input_test = [ner_test_x, ner_test_pos_x, ner_test_casing_x]
 
     ner_n_out = ner_train_y_cat.shape[1]
     n_in_x = ner_train_x.shape[1]
@@ -230,8 +463,8 @@ def buildAndTrainNERModel(learning_params=None):
     casing = caseEmbeddingLayer(case_input)
     casing = Flatten(name='casing_flatten')(casing)
 
-    input_layers = [words, pos, casing]
-    inputs = [words_input, pos_input, case_input]
+    input_layers = [words, casing, pos]
+    inputs = [words_input, case_input, pos_input]
 
     input_layers_merged = merge(input_layers, mode='concat')
 
@@ -239,15 +472,15 @@ def buildAndTrainNERModel(learning_params=None):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
                                                                    ner_train_y_cat, number_of_epochs,
-                                                                   params['batch_size'], input_dev,
-                                                                   ner_dev_y, input_test, ner_test_y,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   ner_dev_y, model_input_test, ner_test_y,
                                                                    measurements=[biof1])
 
     return train_scores, dev_scores, test_scores
 
-def buildAndTrainChunkingModel(learning_params=None):
+def buildAndTrainChunkingModelWithNerPos(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -307,8 +540,124 @@ def buildAndTrainChunkingModel(learning_params=None):
 
     return train_scores, dev_scores, test_scores
 
+def buildAndTrainChunkingModelWithNer(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
 
-def buildAndTrainPOSModel(learning_params=None):
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = CoNLLChunking.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [chunking_train_x, chunking_train_pos_x, chunking_train_ner_x, chunking_train_casing_x] = input_train
+    [chunking_dev_x, chunking_dev_pos_x, chunking_dev_ner_x, chunking_dev_casing_x] = input_dev
+    [chunking_test_x, chunking_test_pos_x, chunking_test_ner_x, chunking_test_casing_x] = input_test
+    [_, pos2Idx, ner2Idx, _, chunking_label2Idx, chunking_idx2Label] = dicts
+
+    model_input_train = [chunking_train_x, chunking_train_ner_x, chunking_train_casing_x]
+    model_input_dev = [chunking_dev_x, chunking_dev_ner_x, chunking_dev_casing_x]
+    model_input_test = [chunking_test_x, chunking_test_ner_x, chunking_test_casing_x]
+
+    chunking_n_out = train_y_cat.shape[1]
+    n_in_x = chunking_train_x.shape[1]
+    n_in_ner = chunking_train_ner_x.shape[1]
+    n_in_casing = chunking_train_casing_x.shape[1]
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    ner_input = Input(shape=(n_in_ner,), dtype='int32', name='ner_input')
+    nerEmbeddingLayer = Embedding(output_dim=len(ner2Idx), input_dim=len(ner2Idx), input_length=n_in_ner,
+                                   trainable=True)
+    ner = nerEmbeddingLayer(ner_input)
+    ner = Flatten(name='ner_flatten')(ner)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, ner, casing]
+    inputs = [words_input, ner_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = Chunking.buildChunkingModelGivenInput(input_layers_merged, inputs, params, chunking_n_out)
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   dev_y, model_input_test, test_y,
+                                                                   measurements=[biof1])
+
+    return train_scores, dev_scores, test_scores
+
+
+def buildAndTrainChunkingModelWithPos(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = CoNLLChunking.readDatasetExt(
+        params['window_size'], word2Idx, case2Idx)
+
+    [chunking_train_x, chunking_train_pos_x, chunking_train_ner_x, chunking_train_casing_x] = input_train
+    [chunking_dev_x, chunking_dev_pos_x, chunking_dev_ner_x, chunking_dev_casing_x] = input_dev
+    [chunking_test_x, chunking_test_pos_x, chunking_test_ner_x, chunking_test_casing_x] = input_test
+    [_, pos2Idx, ner2Idx, _, chunking_label2Idx, chunking_idx2Label] = dicts
+
+    model_input_train = [chunking_train_x, chunking_train_pos_x, chunking_train_casing_x]
+    model_input_dev = [chunking_dev_x, chunking_dev_pos_x, chunking_dev_casing_x]
+    model_input_test = [chunking_test_x, chunking_test_pos_x, chunking_test_casing_x]
+
+    chunking_n_out = train_y_cat.shape[1]
+    n_in_x = chunking_train_x.shape[1]
+    n_in_pos = chunking_train_pos_x.shape[1]
+    n_in_casing = chunking_train_casing_x.shape[1]
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    pos_input = Input(shape=(n_in_pos,), dtype='int32', name='pos_input')
+    posEmbeddingLayer = Embedding(output_dim=len(pos2Idx), input_dim=len(pos2Idx), input_length=n_in_pos,
+                                  trainable=True)
+    pos = posEmbeddingLayer(pos_input)
+    pos = Flatten(name='pos_flatten')(pos)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, pos, casing]
+    inputs = [words_input, pos_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = Chunking.buildChunkingModelGivenInput(input_layers_merged, inputs, params, chunking_n_out)
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
+                                                                                 train_y_cat, number_of_epochs,
+                                                                                 params['batch_size'], model_input_dev,
+                                                                                 dev_y, model_input_test, test_y,
+                                                                                 measurements=[biof1])
+
+    return train_scores, dev_scores, test_scores
+
+
+def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -316,16 +665,145 @@ def buildAndTrainPOSModel(learning_params=None):
 
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = WSJPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
 
-    [pos_train_x, pos_train_ner_x, pos_train_casing_x] = input_train
-    [pos_dev_x, pos_dev_ner_x, pos_dev_casing_x] = input_dev
-    [pos_test_x, pos_test_ner_x, pos_test_casing_x] = input_test
-    [_, ner2Idx, _, pos_label2Idx, pos_idx2Label] = dicts
+    [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_ud_pos_x, pos_train_casing_x] = input_train
+    [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_ud_pos_x, pos_dev_casing_x] = input_dev
+    [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_ud_pos_x, pos_test_casing_x] = input_test
+    [_, ner2Idx, chunking2Idx, ud_pos2Idx, _, label2Idx, idx2Label] = dicts
+
+    model_input_train = [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_ud_pos_x, pos_train_casing_x]
+    model_input_dev = [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_ud_pos_x, pos_dev_casing_x]
+    model_input_test = [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_ud_pos_x, pos_test_casing_x]
+
+    pos_n_out = train_y_cat.shape[1]
+    n_in_x = pos_train_x.shape[1]
+    n_in_ner = pos_train_ner_x.shape[1]
+    n_in_chunking = pos_train_chunking_x.shape[1]
+    n_in_ud_pos = pos_train_ud_pos_x.shape[1]
+    n_in_casing = pos_train_casing_x.shape[1]
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    ner_input = Input(shape=(n_in_ner,), dtype='int32', name='ner_input')
+    nerEmbeddingLayer = Embedding(output_dim=len(ner2Idx), input_dim=len(ner2Idx), input_length=n_in_ner,
+                                   trainable=True)
+    ner = nerEmbeddingLayer(ner_input)
+    ner = Flatten(name='ner_flatten')(ner)
+
+    chunking_input = Input(shape=(n_in_chunking,), dtype='int32', name='chunking_input')
+    chunkingEmbeddingLayer = Embedding(output_dim=len(chunking2Idx), input_dim=len(chunking2Idx), input_length=n_in_chunking,
+                                   trainable=True)
+    chunking = chunkingEmbeddingLayer(chunking_input)
+    chunking = Flatten(name='chunking_flatten')(chunking)
+
+    ud_pos_input = Input(shape=(n_in_ud_pos,), dtype='int32', name='ud_pos_input')
+    ud_posEmbeddingLayer = Embedding(output_dim=len(ud_pos2Idx), input_dim=len(ud_pos2Idx), input_length=n_in_ud_pos,
+                                   trainable=True)
+    ud_pos = ud_posEmbeddingLayer(ud_pos_input)
+    ud_pos = Flatten(name='ud_pos_flatten')(ud_pos)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, ner, chunking, ud_pos, casing]
+    inputs = [words_input, ner_input, chunking_input, ud_pos_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+
+    # ----- Train Model ----- #
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   dev_y, model_input_test, test_y,
+                                                                   measurements=[Measurer.measureAccuracy])
+
+    return train_scores, dev_scores, test_scores
+
+def buildAndTrainPOSModelWithChunking(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = WSJPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_ud_pos_x, pos_train_casing_x] = input_train
+    [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_ud_pos_x, pos_dev_casing_x] = input_dev
+    [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_ud_pos_x, pos_test_casing_x] = input_test
+    [_, ner2Idx, chunking2Idx, ud_pos2Idx, _, label2Idx, idx2Label] = dicts
+
+    model_input_train = [pos_train_x, pos_train_chunking_x, pos_train_casing_x]
+    model_input_dev = [pos_dev_x, pos_dev_chunking_x, pos_dev_casing_x]
+    model_input_test = [pos_test_x, pos_test_chunking_x, pos_test_casing_x]
+
+    pos_n_out = train_y_cat.shape[1]
+    n_in_x = pos_train_x.shape[1]
+    n_in_chunking = pos_train_chunking_x.shape[1]
+    n_in_casing = pos_train_casing_x.shape[1]
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    chunking_input = Input(shape=(n_in_chunking,), dtype='int32', name='chunking_input')
+    chunkingEmbeddingLayer = Embedding(output_dim=len(chunking2Idx), input_dim=len(chunking2Idx), input_length=n_in_chunking,
+                                   trainable=True)
+    chunking = chunkingEmbeddingLayer(chunking_input)
+    chunking = Flatten(name='chunking_flatten')(chunking)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, chunking, casing]
+    inputs = [words_input, chunking_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+
+    # ----- Train Model ----- #
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   dev_y, model_input_test, test_y,
+                                                                   measurements=[Measurer.measureAccuracy])
+
+    return train_scores, dev_scores, test_scores
+
+def buildAndTrainPOSModelWithNer(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = WSJPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_ud_pos_x, pos_train_casing_x] = input_train
+    [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_ud_pos_x, pos_dev_casing_x] = input_dev
+    [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_ud_pos_x, pos_test_casing_x] = input_test
+    [_, ner2Idx, chunking2Idx, ud_pos2Idx, _, label2Idx, idx2Label] = dicts
+
+    model_input_train = [pos_train_x, pos_train_ner_x, pos_train_casing_x]
+    model_input_dev = [pos_dev_x, pos_dev_ner_x, pos_dev_casing_x]
+    model_input_test = [pos_test_x, pos_test_ner_x, pos_test_casing_x]
 
     pos_n_out = train_y_cat.shape[1]
     n_in_x = pos_train_x.shape[1]
     n_in_ner = pos_train_ner_x.shape[1]
     n_in_casing = pos_train_casing_x.shape[1]
-
 
     words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
     wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
@@ -353,10 +831,122 @@ def buildAndTrainPOSModel(learning_params=None):
     model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
 
     # ----- Train Model ----- #
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
                                                                    train_y_cat, number_of_epochs,
-                                                                   params['batch_size'], input_dev,
-                                                                   dev_y, input_test, test_y,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   dev_y, model_input_test, test_y,
+                                                                   measurements=[Measurer.measureAccuracy])
+
+    return train_scores, dev_scores, test_scores
+
+def buildAndTrainPOSModelWithUDPos(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = WSJPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_ud_pos_x, pos_train_casing_x] = input_train
+    [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_ud_pos_x, pos_dev_casing_x] = input_dev
+    [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_ud_pos_x, pos_test_casing_x] = input_test
+    [_, ner2Idx, chunking2Idx, ud_pos2Idx, _, label2Idx, idx2Label] = dicts
+
+    model_input_train = [pos_train_x, pos_train_ud_pos_x, pos_train_casing_x]
+    model_input_dev = [pos_dev_x, pos_dev_ud_pos_x, pos_dev_casing_x]
+    model_input_test = [pos_test_x, pos_test_ud_pos_x, pos_test_casing_x]
+
+    pos_n_out = train_y_cat.shape[1]
+    n_in_x = pos_train_x.shape[1]
+    n_in_ud_pos = pos_train_ud_pos_x.shape[1]
+    n_in_casing = pos_train_casing_x.shape[1]
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    ud_pos_input = Input(shape=(n_in_ud_pos,), dtype='int32', name='ud_pos_input')
+    ud_posEmbeddingLayer = Embedding(output_dim=len(ud_pos2Idx), input_dim=len(ud_pos2Idx), input_length=n_in_ud_pos,
+                                   trainable=True)
+    ud_pos = ud_posEmbeddingLayer(ud_pos_input)
+    ud_pos = Flatten(name='ud_pos_flatten')(ud_pos)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, ud_pos, casing]
+    inputs = [words_input, ud_pos_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+
+    # ----- Train Model ----- #
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   dev_y, model_input_test, test_y,
+                                                                   measurements=[Measurer.measureAccuracy])
+
+    return train_scores, dev_scores, test_scores
+
+def buildAndTrainUDPosModelWithWSJPos(learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = UDPos.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+
+    [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_wsj_pos_x, pos_train_casing_x] = input_train
+    [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_wsj_pos_x, pos_dev_casing_x] = input_dev
+    [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_wsj_pos_x, pos_test_casing_x] = input_test
+    [_, ner2Idx, chunking2Idx, wsj_pos2Idx, _, label2Idx, idx2Label] = dicts
+
+    model_input_train = [pos_train_x, pos_train_wsj_pos_x, pos_train_casing_x]
+    model_input_dev = [pos_dev_x, pos_dev_wsj_pos_x, pos_dev_casing_x]
+    model_input_test = [pos_test_x, pos_test_wsj_pos_x, pos_test_casing_x]
+
+    pos_n_out = train_y_cat.shape[1]
+    n_in_x = pos_train_x.shape[1]
+    n_in_wsj_pos = pos_train_wsj_pos_x.shape[1]
+    n_in_casing = pos_train_casing_x.shape[1]
+
+    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
+    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
+                                   weights=[embeddings], trainable=False)
+    words = wordEmbeddingLayer(words_input)
+    words = Flatten(name='words_flatten')(words)
+
+    wsj_pos_input = Input(shape=(n_in_wsj_pos,), dtype='int32', name='wsj_pos_input')
+    wsj_posEmbeddingLayer = Embedding(output_dim=len(wsj_pos2Idx), input_dim=len(wsj_pos2Idx), input_length=n_in_wsj_pos,
+                                   trainable=True)
+    wsj_pos = wsj_posEmbeddingLayer(wsj_pos_input)
+    wsj_pos = Flatten(name='wsj_pos_flatten')(wsj_pos)
+
+    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
+    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
+                                   trainable=True)
+    casing = caseEmbeddingLayer(case_input)
+    casing = Flatten(name='casing_flatten')(casing)
+
+    input_layers = [words, wsj_pos, casing]
+    inputs = [words_input, wsj_pos_input, case_input]
+
+    input_layers_merged = merge(input_layers, mode='concat')
+
+    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+
+    # ----- Train Model ----- #
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
+                                                                   train_y_cat, number_of_epochs,
+                                                                   params['batch_size'], model_input_dev,
+                                                                   dev_y, model_input_test, test_y,
                                                                    measurements=[Measurer.measureAccuracy])
 
     return train_scores, dev_scores, test_scores
@@ -372,7 +962,7 @@ def run_models_as_input_exp_with_random_params():
 
         print "Model nr. ", model_nr
         print params
-        best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModel(params)
+        best_train_scores_ner, best_dev_scores_ner, best_test_scores_ner = buildAndTrainNERModelWithChunkingPos(params)
         print params
         for (sample_scores, sample) in best_train_scores_ner:
             for score in sample_scores:
@@ -387,7 +977,7 @@ def run_models_as_input_exp_with_random_params():
                 print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'ner', 'test', params, score[0], score[1], sample, 'pos')
 
-        best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModel(params)
+        best_train_scores_chunking, best_dev_scores_chunking, best_test_scores_chunking = buildAndTrainChunkingModelWithNerPos(params)
         print params
         for (sample_scores, sample) in best_train_scores_chunking:
             for score in sample_scores:
@@ -405,7 +995,7 @@ def run_models_as_input_exp_with_random_params():
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'test', params,
                                                      score[0], score[1], sample, 'pos-ner')
 
-        best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModel(params)
+        best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModelWithChunkingNer(params)
         print params
         for (sample_scores, sample) in best_train_scores_pos:
             for score in sample_scores:
@@ -424,7 +1014,7 @@ def run_models_as_input_exp_with_fixed_params():
     fixed_params = {
         'update_word_embeddings': False,
         'window_size': 3,
-        'batch_size': 128,
+        'batch_size': 32,
         'hidden_dims': 100,
         'activation': 'tanh',
         'dropout': 0.3,
@@ -436,11 +1026,20 @@ def run_models_as_input_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ner' in config.tasks:
-            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModel, 'f1', 'pos')
-        if 'pos' in config.tasks:
-            run_build_model('pos', 'exp_2', fixed_params, buildAndTrainPOSModel, 'acc', 'ner')
+            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
+            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
+            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
+        if 'wsj_pos' in config.tasks:
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithNer, 'acc', 'ner')
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithChunking, 'acc', 'chunking')
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithChunkingNer, 'acc', 'chunking-ner')
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithUDPos, 'acc', 'ud_pos')
         if 'chunking' in config.tasks:
-            run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModel, 'f1', 'pos-ner')
+            run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
+            run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
+            run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNerPos, 'f1', 'pos-ner')
+        if 'ud_pos' in config.tasks:
+            run_build_model('ud_pos', 'exp_2', fixed_params, buildAndTrainUDPosModelWithWSJPos, 'acc', 'wsj_pos')
 
 def run_build_model(task, exp, params, build_model_func, score_name, transfer_models):
     train_scores, dev_scores, test_scores = build_model_func(params)

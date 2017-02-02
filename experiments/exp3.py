@@ -56,7 +56,7 @@ def buildAndTrainNERModel(learning_params = None):
     n_in_casing = ner_train_case_x.shape[1]
 
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-    pos_model = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size)
+    pos_model = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size)
 
     words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
     wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,

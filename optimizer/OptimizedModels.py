@@ -13,7 +13,8 @@ from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbed
 from measurements import Measurer
 
 # settings
-pos_model_path = 'optimizer/saved_models/pos_tanh.96.07.hd5'
+wsj_pos_model_path = 'optimizer/saved_models/wsj_pos_tanh.96.07.hd5'
+ud_pos_model_path = 'optimizer/saved_models/ud_pos_tanh.96.07.hd5'
 ner_model_path = 'optimizer/saved_models/ner_tanh.87.38.hd5'
 chunking_model_path = 'optimizer/saved_models/chunking_tanh.90.63.hd5'
 
@@ -344,7 +345,7 @@ def getChunkingModel(learning_params = None):
     model.save_weights('optimizer/saved_models/chunking_{0:.2f}.hd5'.format(dev_scores[0][0] * 100))
     return train_scores, dev_scores, test_scores
 
-def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None, use_existing_model = True):
+def getWSJPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None, use_existing_model = True):
     if learning_params is None:
         #params = pos_default_params[window_size]
         #params['number_of_epochs'] = 1
@@ -372,7 +373,47 @@ def getPOSModelGivenInput(input_layers, inputs, learning_params = None, window_s
     # ----- Train Model ----- #
     if(use_existing_model):
         print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
-        model.load_weights(pos_model_path)
+        model.load_weights(wsj_pos_model_path)
+        print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+        pred_dev = model.predict(input_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        print 'Pos model has acc: {0:4f}'.format(Measurer.measureAccuracy(pred_dev, dev_y) * 100)
+    else:
+        train_scores, dev_scores, test_scores = Trainer.trainModel(model, input_train, train_y_cat,
+                                                           params['number_of_epochs'], params['batch_size'], input_dev,
+                                                           dev_y, input_test, test_y,
+                                                           measurements=[Measurer.measureAccuracy])
+
+    return model
+
+def getUDPOSModelGivenInput(input_layers, inputs, learning_params = None, window_size = None, use_existing_model = True):
+    if learning_params is None:
+        #params = pos_default_params[window_size]
+        #params['number_of_epochs'] = 1
+        params = fixed_params_pos
+    else:
+        params = learning_params
+
+    print params
+    # Read in files
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(
+        params['window_size'], word2Idx, case2Idx)
+    n_out = train_y_cat.shape[1]
+
+    [train_x, pos_train_case_x] = input_train
+    [dev_x, pos_dev_case_x] = input_dev
+    [test_x, pos_test_case_x] = input_test
+
+    # ----- Build Model ----- #
+    model = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+
+    print train_x.shape[0], ' train samples'
+    print train_x.shape[1], ' train dimension'
+    print test_x.shape[0], ' test samples'
+
+    # ----- Train Model ----- #
+    if(use_existing_model):
+        print 'Weight sum before setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
+        model.load_weights(ud_pos_model_path)
         print 'Weight sum after setting weights:', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         pred_dev = model.predict(input_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
         print 'Pos model has acc: {0:4f}'.format(Measurer.measureAccuracy(pred_dev, dev_y) * 100)
