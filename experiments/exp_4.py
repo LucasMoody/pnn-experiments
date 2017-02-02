@@ -59,7 +59,7 @@ def buildAndTrainNERModel(learning_params=None):
 
     model_pos  = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_ner = NER.buildNERModelWithPNN2(input_layers, inputs, params, n_out, additional_models=[model_pos])
+    model_ner = NER.buildNERModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_pos])
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -92,7 +92,7 @@ def buildAndTrainPOSModel(learning_params=None):
 
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithPNN2(input_layers, inputs, params, n_out, additional_models=[model_ner])
+    model_pos = POS.buildPOSModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_ner])
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,

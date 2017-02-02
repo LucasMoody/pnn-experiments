@@ -31,7 +31,7 @@ def buildChunkingModelGivenInput(input_layers, inputs, params, ner_n_out, metric
 
     return model
 
-def buildChunkingModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+def buildChunkingModelWithPNN(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
 
@@ -45,8 +45,6 @@ def buildChunkingModelWithPNN2(input_layers, inputs, params, ner_n_out, metrics=
 
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
-
-    add_dense = Dense
 
     embeddings_hidden_merged = merge([input_layers] + transfer_model_hidden_layers, mode='concat')
 
@@ -85,6 +83,43 @@ def buildChunkingModelWithSimplePNN(input_layers, inputs, params, ner_n_out, met
     chunking_hidden = chunking_hidden_layer(input_layers)
 
     chunking_hidden_merged = merge([chunking_hidden, pos_hidden, ner_hidden], mode='concat')
+    chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
+
+    chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
+    chunking_output = chunking_output_layer(chunking_hidden_dropout)
+
+    model = Model(input=inputs, output=[chunking_output])
+
+    model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'], metrics=metrics)
+
+    print model.summary()
+
+    return model
+
+def buildChunkingModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+    transfer_model_hidden_layers = []
+    transfer_model_output_layers = []
+
+    for model in additional_models:
+        num_layers = len(model.layers)
+        hidden = model.layers[num_layers - 3].output
+        output = model.layers[num_layers - 1].output
+
+        transfer_model_hidden_layers.append(hidden)
+        transfer_model_output_layers.append(output)
+
+        model.layers[num_layers - 3].trainable = False
+        model.layers[num_layers - 1].trainable = False
+
+    adapter_layer = Dense(10, activation=params['activation'], name='chunking_adapter')
+    adapter = adapter_layer(transfer_model_hidden_layers)
+
+    embeddings_hidden_merged = merge([input_layers, adapter], mode='concat')
+
+    chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
+    chunking_hidden = chunking_hidden_layer(embeddings_hidden_merged)
+
+    chunking_hidden_merged = merge([chunking_hidden] + transfer_model_output_layers, mode='concat')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
     chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')

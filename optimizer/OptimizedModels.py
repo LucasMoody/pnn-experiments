@@ -13,10 +13,10 @@ from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbed
 from measurements import Measurer
 
 # settings
-wsj_pos_model_path = 'optimizer/saved_models/wsj_pos_tanh.96.07.hd5'
-ud_pos_model_path = 'optimizer/saved_models/ud_pos_tanh.96.07.hd5'
-ner_model_path = 'optimizer/saved_models/ner_tanh.87.38.hd5'
-chunking_model_path = 'optimizer/saved_models/chunking_tanh.90.63.hd5'
+wsj_pos_model_path = 'optimizer/saved_models/best_wsj_pos_96.09.hd5'
+ud_pos_model_path = 'optimizer/saved_models/best_ud_pos_94.29.hd5'
+ner_model_path = 'optimizer/saved_models/best_ner_87.94.hd5'
+chunking_model_path = 'optimizer/saved_models/best_chunking_90.71.hd5'
 
 fixed_params_pos = {
         'update_word_embeddings': False,

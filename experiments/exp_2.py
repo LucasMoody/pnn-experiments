@@ -347,8 +347,8 @@ def buildAndTrainNERModelWithChunkingPos(learning_params=None):
     casing = caseEmbeddingLayer(case_input)
     casing = Flatten(name='casing_flatten')(casing)
 
-    input_layers = [words, pos, casing, chunking]
-    inputs = [words_input, pos_input, case_input, chunking_input]
+    input_layers = [words, pos, chunking, casing]
+    inputs = [words_input, pos_input, chunking_input, case_input]
 
     input_layers_merged = merge(input_layers, mode='concat')
 
@@ -405,8 +405,8 @@ def buildAndTrainNERModelWithChunking(learning_params=None):
     casing = caseEmbeddingLayer(case_input)
     casing = Flatten(name='casing_flatten')(casing)
 
-    input_layers = [words, casing, chunking]
-    inputs = [words_input, case_input, chunking_input]
+    input_layers = [words, chunking, casing]
+    inputs = [words_input, chunking_input, case_input]
 
     input_layers_merged = merge(input_layers, mode='concat')
 
@@ -463,8 +463,8 @@ def buildAndTrainNERModelWithPos(learning_params=None):
     casing = caseEmbeddingLayer(case_input)
     casing = Flatten(name='casing_flatten')(casing)
 
-    input_layers = [words, casing, pos]
-    inputs = [words_input, case_input, pos_input]
+    input_layers = [words, pos, casing]
+    inputs = [words_input, pos_input, case_input]
 
     input_layers_merged = merge(input_layers, mode='concat')
 
@@ -670,15 +670,14 @@ def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
     [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_ud_pos_x, pos_test_casing_x] = input_test
     [_, ner2Idx, chunking2Idx, ud_pos2Idx, _, label2Idx, idx2Label] = dicts
 
-    model_input_train = [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_ud_pos_x, pos_train_casing_x]
-    model_input_dev = [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_ud_pos_x, pos_dev_casing_x]
-    model_input_test = [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_ud_pos_x, pos_test_casing_x]
+    model_input_train = [pos_train_x, pos_train_ner_x, pos_train_chunking_x, pos_train_casing_x]
+    model_input_dev = [pos_dev_x, pos_dev_ner_x, pos_dev_chunking_x, pos_dev_casing_x]
+    model_input_test = [pos_test_x, pos_test_ner_x, pos_test_chunking_x, pos_test_casing_x]
 
     pos_n_out = train_y_cat.shape[1]
     n_in_x = pos_train_x.shape[1]
     n_in_ner = pos_train_ner_x.shape[1]
     n_in_chunking = pos_train_chunking_x.shape[1]
-    n_in_ud_pos = pos_train_ud_pos_x.shape[1]
     n_in_casing = pos_train_casing_x.shape[1]
 
     words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
@@ -699,20 +698,14 @@ def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
     chunking = chunkingEmbeddingLayer(chunking_input)
     chunking = Flatten(name='chunking_flatten')(chunking)
 
-    ud_pos_input = Input(shape=(n_in_ud_pos,), dtype='int32', name='ud_pos_input')
-    ud_posEmbeddingLayer = Embedding(output_dim=len(ud_pos2Idx), input_dim=len(ud_pos2Idx), input_length=n_in_ud_pos,
-                                   trainable=True)
-    ud_pos = ud_posEmbeddingLayer(ud_pos_input)
-    ud_pos = Flatten(name='ud_pos_flatten')(ud_pos)
-
     case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
     caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
                                    trainable=True)
     casing = caseEmbeddingLayer(case_input)
     casing = Flatten(name='casing_flatten')(casing)
 
-    input_layers = [words, ner, chunking, ud_pos, casing]
-    inputs = [words_input, ner_input, chunking_input, ud_pos_input, case_input]
+    input_layers = [words, ner, chunking, casing]
+    inputs = [words_input, ner_input, chunking_input, case_input]
 
     input_layers_merged = merge(input_layers, mode='concat')
 
@@ -1063,4 +1056,5 @@ def run_build_model(task, exp, params, build_model_func, score_name, transfer_mo
 #extendCoNLLNer()
 #extendCoNLLChunking()
 #extendWSJPOS()
+#extendUDPOS()
 run_models_as_input_exp_with_fixed_params()
