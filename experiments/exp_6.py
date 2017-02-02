@@ -521,7 +521,7 @@ def run_pnn_exp_with_fixed_params():
     fixed_params = {
         'update_word_embeddings': False,
         'window_size': 3,
-        'batch_size': 128,
+        'batch_size': 32,
         'hidden_dims': 100,
         'activation': 'tanh',
         'dropout': 0.3,

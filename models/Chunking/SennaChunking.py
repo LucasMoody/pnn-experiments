@@ -111,15 +111,24 @@ def buildChunkingModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, me
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
-    adapter_layer = Dense(10, activation=params['activation'], name='chunking_adapter')
-    adapter = adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
+    adapter_hidden_layer = Dense(20, activation=params['activation'], name='chunking_hidden_adapter')
+    if (len(transfer_model_hidden_layers) > 1):
+        adapterhidden = adapter_hidden_layer(merge(transfer_model_hidden_layers, mode='concat'))
+    else:
+        adapterhidden = adapter_hidden_layer(transfer_model_hidden_layers[0])
 
-    embeddings_hidden_merged = merge([input_layers, adapter], mode='concat')
+    embeddings_hidden_merged = merge([input_layers, adapterhidden], mode='concat')
 
     chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
     chunking_hidden = chunking_hidden_layer(embeddings_hidden_merged)
 
-    chunking_hidden_merged = merge([chunking_hidden] + transfer_model_output_layers, mode='concat')
+    adapter_output_layer = Dense(20, activation=params['activation'], name='chunking_output_adapter')
+    if (len(transfer_model_hidden_layers) > 1):
+        adapter_output = adapter_output_layer(merge(transfer_model_output_layers, mode='concat'))
+    else:
+        adapter_output = adapter_output_layer(transfer_model_output_layers[0])
+
+    chunking_hidden_merged = merge([chunking_hidden, adapter_output], mode='concat')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
     chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
