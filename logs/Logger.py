@@ -21,3 +21,10 @@ def save_reduced_datasets_results(path, experiment, task, set, params, score, sc
     )
     with open(path, 'a') as f:
         f.write(line)
+
+def save_scores(train_scores, dev_scores):
+    timeString = str(datetime.datetime.now())
+    with open('overfitting.csv', 'a') as f:
+        f.write(timeString + "\n")
+        for i in xrange(len(train_scores)):
+            f.write("{0:.2f}; {1:.2f}\n".format(train_scores[i], dev_scores[i]))

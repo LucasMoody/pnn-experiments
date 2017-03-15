@@ -1007,7 +1007,7 @@ def run_models_as_input_exp_with_fixed_params():
     fixed_params = {
         'update_word_embeddings': False,
         'window_size': 3,
-        'batch_size': 32,
+        'batch_size': 128,
         'hidden_dims': 100,
         'activation': 'tanh',
         'dropout': 0.3,
