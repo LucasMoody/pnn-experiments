@@ -36,7 +36,7 @@ def run_optimizer_with_fixed_params():
         'batch_size': 128,
         'hidden_dims': 100,
         'activation': 'tanh',
-        'dropout': 0.3,
+        'dropout': 0,
         'optimizer': 'adam',
         'number_of_epochs': config.number_of_epochs
     }

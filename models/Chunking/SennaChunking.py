@@ -111,24 +111,18 @@ def buildChunkingModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, me
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
-    adapter_hidden_layer = Dense(20, activation=params['activation'], name='chunking_hidden_adapter')
+    adapter_layer = Dense(10, activation=params['activation'], name='chunking_adapter')
     if (len(transfer_model_hidden_layers) > 1):
-        adapterhidden = Dropout(0.3)(adapter_hidden_layer(merge(transfer_model_hidden_layers, mode='concat')))
+        adapter = adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
     else:
-        adapterhidden = Dropout(0.3)(adapter_hidden_layer(transfer_model_hidden_layers[0]))
+        adapter = adapter_layer(transfer_model_hidden_layers[0])
 
-    embeddings_hidden_merged = merge([input_layers, adapterhidden], mode='concat')
+    embeddings_hidden_merged = merge([input_layers, adapter], mode='concat')
 
     chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
     chunking_hidden = chunking_hidden_layer(embeddings_hidden_merged)
 
-    adapter_output_layer = Dense(20, activation=params['activation'], name='chunking_output_adapter')
-    if (len(transfer_model_hidden_layers) > 1):
-        adapter_output = Dropout(0.3)(adapter_output_layer(merge(transfer_model_output_layers, mode='concat')))
-    else:
-        adapter_output = Dropout(0.3)(adapter_output_layer(transfer_model_output_layers[0]))
-
-    chunking_hidden_merged = merge([chunking_hidden, adapter_output], mode='concat')
+    chunking_hidden_merged = merge([chunking_hidden] + transfer_model_output_layers, mode='concat')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
     chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
@@ -169,14 +163,14 @@ def buildChunkingModelWithDropoutPNN(input_layers, inputs, params, ner_n_out, me
     chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
     chunking_hidden = chunking_hidden_layer(embeddings_hidden_merged)
 
-    pnn_dropout_output_layer = Dropout(params['dropout'], name='chunking_pnn_output_dropout')
+    pnn_dropout_output_layer = Dropout(0.3, name='chunking_pnn_output_dropout')
     if (len(transfer_model_output_layers) > 1):
-        pnn_dropout_output = pnn_dropout_hidden_layer(merge(transfer_model_output_layers, mode='concat'))
+        pnn_dropout_output = pnn_dropout_output_layer(merge(transfer_model_output_layers, mode='concat'))
     else:
         pnn_dropout_output = pnn_dropout_output_layer(transfer_model_output_layers[0])
 
     chunking_hidden_merged = merge([chunking_hidden, pnn_dropout_output], mode='concat')
-    chunking_hidden_dropout = Dropout(0.3)(chunking_hidden_merged)
+    chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
     chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
     chunking_output = chunking_output_layer(chunking_hidden_dropout)

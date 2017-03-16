@@ -1020,8 +1020,8 @@ def run_models_as_input_exp_with_fixed_params():
 
         if 'ner' in config.tasks:
             run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
-            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
-            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
+            #run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
+            #run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
         if 'wsj_pos' in config.tasks:
             run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithNer, 'acc', 'ner')
             run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithChunking, 'acc', 'chunking')

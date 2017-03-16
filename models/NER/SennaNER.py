@@ -123,7 +123,7 @@ def buildNERModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, metrics
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
-    adapter_layer = Dense(10, activation=params['activation'], name='chunking_adapter')
+    adapter_layer = Dense(10, activation=params['activation'], name='ner_adapter')
     if(len(transfer_model_hidden_layers) > 1):
         adapter = adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
     else:
@@ -163,18 +163,24 @@ def buildNERModelWithDropoutPNN(input_layers, inputs, params, ner_n_out, metrics
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
-    adapter_layer = Dense(10, activation=params['activation'], name='chunking_adapter')
-    if(len(transfer_model_hidden_layers) > 1):
-        adapter = adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
+    pnn_dropout_hidden_layer = Dropout(0.3, name='ner_pnn_hidden_dropout')
+    if (len(transfer_model_hidden_layers) > 1):
+        pnn_dropout_hidden = pnn_dropout_hidden_layer(merge(transfer_model_hidden_layers, mode='concat'))
     else:
-        adapter = adapter_layer(transfer_model_hidden_layers[0])
+        pnn_dropout_hidden = pnn_dropout_hidden_layer(transfer_model_hidden_layers[0])
 
-    embeddings_hidden_merged = merge([input_layers, adapter], mode='concat')
+    embeddings_hidden_merged = merge([input_layers, pnn_dropout_hidden], mode='concat')
 
     ner_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='ner_hidden')
     ner_hidden = ner_hidden_layer(embeddings_hidden_merged)
 
-    ner_hidden_merged = merge([ner_hidden] + transfer_model_output_layers, mode='concat')
+    pnn_dropout_output_layer = Dropout(0.3, name='ner_pnn_output_dropout')
+    if (len(transfer_model_output_layers) > 1):
+        pnn_dropout_output = pnn_dropout_output_layer(merge(transfer_model_output_layers, mode='concat'))
+    else:
+        pnn_dropout_output = pnn_dropout_output_layer(transfer_model_output_layers[0])
+
+    ner_hidden_merged = merge([ner_hidden, pnn_dropout_output], mode='concat')
     ner_hidden_dropout = Dropout(params['dropout'])(ner_hidden_merged)
 
     ner_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='ner_output')

@@ -14,6 +14,7 @@ from measurements import Measurer
 
 # settings
 wsj_pos_model_path = 'optimizer/saved_models/best_wsj_pos_96.09.hd5'
+#wsj_pos_model_path = 'optimizer/saved_models/wsj_pos_no_dropout_95.96.hd5'
 ud_pos_model_path = 'optimizer/saved_models/best_ud_pos_94.29.hd5'
 ner_model_path = 'optimizer/saved_models/best_ner_87.94.hd5'
 chunking_model_path = 'optimizer/saved_models/best_chunking_90.71.hd5'
@@ -24,7 +25,7 @@ fixed_params_pos = {
         'batch_size': 128,
         'hidden_dims': 100,
         'activation': 'tanh',
-        'dropout': 0.3,
+        'dropout': 0,
         'optimizer': 'adam',
         'number_of_epochs': 12
 }

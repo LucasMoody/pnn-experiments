@@ -282,7 +282,7 @@ def buildAndTrainWSJPOSModelWithUDPos(learning_params=None):
 
     model_ud_pos = OptimizedModels.getUDPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ud_pos])
+    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ud_pos], name_prefix='wsj_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -317,7 +317,7 @@ def buildAndTrainUDPOSModelWithWSJPos(learning_params=None):
 
     model_wsj_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos])
+    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos], name_prefix='ud_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -539,9 +539,9 @@ def run_pnn_exp_with_fixed_params():
             run_build_model('ner', 'pnn_dropout', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
 
         if 'chunking' in config.tasks:
-            #run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
+            run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
             run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
-            #run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
+            run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
 
         if 'wsj_pos' in config.tasks:
             run_build_model('wsj_pos', 'pnn_dropout', fixed_params, buildAndTrainPOSModelWithChunkingNer, 'acc', 'chunking-ner')

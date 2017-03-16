@@ -26,12 +26,12 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     # ----- Training ---- #
     for epoch in xrange(number_of_epochs):
         start_time = time.time()
-        '''if epoch == 0:
+        if epoch == 0:
             model.optimizer.lr.set_value(0.01)
         if epoch == 2:
             model.optimizer.lr.set_value(0.005)
         if epoch == 4:
-            model.optimizer.lr.set_value(0.001)'''
+            model.optimizer.lr.set_value(0.001)
         model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
 
         print "%.2f sec for training" % (time.time() - start_time)
@@ -48,6 +48,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
                 best_dev_scores[i] = (score_dev, epoch)
                 best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
+        print 'Current dev_score: {0:.4f} and current patience: {1}'.format(measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
         #print 'Current train_score/dev_score: {0:.4f}/{1:.4f} and current patience: {2}'.format(measurements_train[0] * 100, measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
         #dev_scores.append(measurements_dev[0] * 100)
         #train_scores.append(measurements_train[0] * 100)
