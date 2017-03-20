@@ -2,11 +2,8 @@ from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbed
 from datasets.conll_ner import CoNLLNer
 from datasets.wsj_pos import WSJPos
 from datasets.universal_dependencies_pos import UDPos
-from models.NER import SennaNER as NER
-from models.POS import SennaPOS as POS
-from models.Chunking import SennaChunking as Chunking
 from datasets.conll_chunking import CoNLLChunking
-from models import Trainer, InputBuilder
+from models import Trainer, InputBuilder, Senna
 from measurements import Measurer
 import random
 from parameters import parameter_space
@@ -56,7 +53,7 @@ def buildAndTrainNERModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model = NER.buildNERModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='ner_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -91,7 +88,7 @@ def buildAndTrainWSJPOSModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model_pos = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+    model_pos = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='wsj_pos_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -125,7 +122,7 @@ def buildAndTrainUDPOSModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model_pos = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+    model_pos = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='ud_pos_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -160,7 +157,7 @@ def buildAndTrainChunkingModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model = Chunking.buildChunkingModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='chunking_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'

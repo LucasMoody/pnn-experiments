@@ -38,8 +38,8 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         # only dev scores need to be calculated
         pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
         measurements_dev = map(lambda func: func(pred_dev, Y_dev), measurements)
-        #pred_train = model.predict(X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
-        #measurements_train = map(lambda func: func(pred_train, Y_train.argmax(axis=1)), measurements)
+        pred_train = model.predict(X_train, verbose=0).argmax(axis=-1)  # Prediction of the classes
+        measurements_train = map(lambda func: func(pred_train, Y_train.argmax(axis=1)), measurements)
         # update best scores
         for i in xrange(len(best_dev_scores)):
             # compare dev scores to get best one
@@ -48,10 +48,10 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
                 best_dev_scores[i] = (score_dev, epoch)
                 best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
-        print 'Current dev_score: {0:.4f} and current patience: {1}'.format(measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
-        #print 'Current train_score/dev_score: {0:.4f}/{1:.4f} and current patience: {2}'.format(measurements_train[0] * 100, measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
-        #dev_scores.append(measurements_dev[0] * 100)
-        #train_scores.append(measurements_train[0] * 100)
+        #print 'Current dev_score: {0:.4f} and current patience: {1}'.format(measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
+        print 'Current train_score/dev_score: {0:.4f}/{1:.4f} and current patience: {2}'.format(measurements_train[0] * 100, measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
+        dev_scores.append(measurements_dev[0] * 100)
+        train_scores.append(measurements_train[0] * 100)
         # early stopping
         best_dev_score_epoch = best_dev_scores[0][1]
         if epoch - best_dev_score_epoch > early_stopping_strike:
@@ -59,7 +59,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
 
 
 
-    #Logger.save_scores(train_scores, dev_scores)
+    Logger.save_scores(train_scores, dev_scores)
 
     # ----- score calculations and weight resetting to best score ----- #
     # set back weights to best epoch

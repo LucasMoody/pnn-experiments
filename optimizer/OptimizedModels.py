@@ -2,10 +2,7 @@ from datasets.wsj_pos import WSJPos
 from datasets.universal_dependencies_pos import UDPos
 import datasets.conll_ner.CoNLLNer as CoNLLNer
 import datasets.conll_chunking.CoNLLChunking as CoNLLChunking
-import models.POS.SennaPOS as POS
-import models.NER.SennaNER as NER
-import models.Chunking.SennaChunking as Chunking
-from models import Trainer, InputBuilder
+from models import Trainer, InputBuilder, Senna
 import numpy as np
 import config
 
@@ -15,6 +12,7 @@ from measurements import Measurer
 # settings
 wsj_pos_model_path = 'optimizer/saved_models/best_wsj_pos_96.09.hd5'
 #wsj_pos_model_path = 'optimizer/saved_models/wsj_pos_no_dropout_95.96.hd5'
+#wsj_pos_model_path = 'optimizer/saved_models/wsj_pos_300_95.93.hd5'
 ud_pos_model_path = 'optimizer/saved_models/best_ud_pos_94.29.hd5'
 ner_model_path = 'optimizer/saved_models/best_ner_87.94.hd5'
 chunking_model_path = 'optimizer/saved_models/best_chunking_90.71.hd5'
@@ -25,7 +23,7 @@ fixed_params_pos = {
         'batch_size': 128,
         'hidden_dims': 100,
         'activation': 'tanh',
-        'dropout': 0,
+        'dropout': 0.3,
         'optimizer': 'adam',
         'number_of_epochs': 12
 }
@@ -221,7 +219,7 @@ def getNERModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-    model = NER.buildNERModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='ner_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -257,7 +255,7 @@ def getWSJPOSModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-    model = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='wsj_pos_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -291,7 +289,7 @@ def getUDPOSModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-    model = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, 'ud_pos_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -327,7 +325,7 @@ def getChunkingModel(learning_params = None):
 
     # ----- Build Model ----- #
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-    model = Chunking.buildChunkingModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, 'chunking_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -365,7 +363,7 @@ def getWSJPOSModelGivenInput(input_layers, inputs, learning_params = None, windo
     [test_x, pos_test_case_x] = input_test
 
     # ----- Build Model ----- #
-    model = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='wsj_pos_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -405,7 +403,7 @@ def getUDPOSModelGivenInput(input_layers, inputs, learning_params = None, window
     [test_x, pos_test_case_x] = input_test
 
     # ----- Build Model ----- #
-    model = POS.buildPosModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='ud_pos_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -442,13 +440,13 @@ def getNERModelGivenInput(input_layers, inputs, learning_params = None, window_s
     [dev_x, dev_case_x] = input_dev
     [test_x, test_case_x] = input_test
     [_, caseLookup, label2Idx, idx2Label] = dicts
-    ner_n_out = train_y_cat.shape[1]
+    n_out = train_y_cat.shape[1]
 
     n_in_x = train_x.shape[1]
     n_in_casing = train_case_x.shape[1]
 
     # ----- Build Model ----- #
-    model = NER.buildNERModelGivenInput(input_layers, inputs, params, ner_n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='ner_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'
@@ -492,7 +490,7 @@ def getChunkingModelGivenInput(input_layers, inputs, learning_params = None, win
     n_in_casing = train_case_x.shape[1]
 
     # ----- Build Model ----- #
-    model = Chunking.buildChunkingModelGivenInput(input_layers, inputs, params, n_out)
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='chunking_')
 
     print train_x.shape[0], ' train samples'
     print train_x.shape[1], ' train dimension'

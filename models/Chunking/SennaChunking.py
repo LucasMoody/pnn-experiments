@@ -6,11 +6,11 @@ from transfer import Extender
 
 #####################################
 #
-# Create the Keras Network for NER
+# Create the Keras Network for chunking
 #
 #####################################
 
-def buildChunkingModelGivenInput(input_layers, inputs, params, ner_n_out, metrics=[], useHiddenWeights=False, additional_models=[]):
+def buildChunkingModelGivenInput(input_layers, inputs, params, chunking_n_out, metrics=[], useHiddenWeights=False, additional_models=[]):
 
     if(useHiddenWeights):
         chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden',
@@ -19,7 +19,7 @@ def buildChunkingModelGivenInput(input_layers, inputs, params, ner_n_out, metric
         chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
     chunking_hidden = chunking_hidden_layer(input_layers)
 
-    chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
+    chunking_output_layer = Dense(output_dim=chunking_n_out, activation='softmax', name='chunking_output')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden)
     chunking_output = chunking_output_layer(chunking_hidden_dropout)
 
@@ -31,7 +31,7 @@ def buildChunkingModelGivenInput(input_layers, inputs, params, ner_n_out, metric
 
     return model
 
-def buildChunkingModelWithPNN(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+def buildChunkingModelWithPNN(input_layers, inputs, params, chunking_n_out, metrics=[], additional_models=[]):
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
 
@@ -54,7 +54,7 @@ def buildChunkingModelWithPNN(input_layers, inputs, params, ner_n_out, metrics=[
     chunking_hidden_merged = merge([chunking_hidden] + transfer_model_output_layers, mode='concat')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
-    chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
+    chunking_output_layer = Dense(output_dim=chunking_n_out, activation='softmax', name='chunking_output')
     chunking_output = chunking_output_layer(chunking_hidden_dropout)
 
     model = Model(input=inputs, output=[chunking_output])
@@ -65,7 +65,7 @@ def buildChunkingModelWithPNN(input_layers, inputs, params, ner_n_out, metrics=[
 
     return model
 
-def buildChunkingModelWithSimplePNN(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+def buildChunkingModelWithSimplePNN(input_layers, inputs, params, chunking_n_out, metrics=[], additional_models=[]):
     pos_model = additional_models[0]
     pos_num_layers = len(pos_model.layers)
     pos_hidden = pos_model.layers[pos_num_layers - 3].output
@@ -82,10 +82,10 @@ def buildChunkingModelWithSimplePNN(input_layers, inputs, params, ner_n_out, met
     chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
     chunking_hidden = chunking_hidden_layer(input_layers)
 
-    chunking_hidden_merged = merge([chunking_hidden, pos_hidden, ner_hidden], mode='concat')
+    chunking_hidden_merged = merge([chunking_hidden, pos_hidden, chunking_hidden], mode='concat')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
-    chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
+    chunking_output_layer = Dense(output_dim=chunking_n_out, activation='softmax', name='chunking_output')
     chunking_output = chunking_output_layer(chunking_hidden_dropout)
 
     model = Model(input=inputs, output=[chunking_output])
@@ -96,7 +96,7 @@ def buildChunkingModelWithSimplePNN(input_layers, inputs, params, ner_n_out, met
 
     return model
 
-def buildChunkingModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+def buildChunkingModelWithAdapterPNN(input_layers, inputs, params, chunking_n_out, metrics=[], additional_models=[]):
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
 
@@ -125,7 +125,7 @@ def buildChunkingModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, me
     chunking_hidden_merged = merge([chunking_hidden] + transfer_model_output_layers, mode='concat')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
-    chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
+    chunking_output_layer = Dense(output_dim=chunking_n_out, activation='softmax', name='chunking_output')
     chunking_output = chunking_output_layer(chunking_hidden_dropout)
 
     model = Model(input=inputs, output=[chunking_output])
@@ -137,7 +137,7 @@ def buildChunkingModelWithAdapterPNN(input_layers, inputs, params, ner_n_out, me
     return model
 
 
-def buildChunkingModelWithDropoutPNN(input_layers, inputs, params, ner_n_out, metrics=[], additional_models=[]):
+def buildChunkingModelWithDropoutPNN(input_layers, inputs, params, chunking_n_out, metrics=[], additional_models=[]):
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
 
@@ -172,7 +172,7 @@ def buildChunkingModelWithDropoutPNN(input_layers, inputs, params, ner_n_out, me
     chunking_hidden_merged = merge([chunking_hidden, pnn_dropout_output], mode='concat')
     chunking_hidden_dropout = Dropout(params['dropout'])(chunking_hidden_merged)
 
-    chunking_output_layer = Dense(output_dim=ner_n_out, activation='softmax', name='chunking_output')
+    chunking_output_layer = Dense(output_dim=chunking_n_out, activation='softmax', name='chunking_output')
     chunking_output = chunking_output_layer(chunking_hidden_dropout)
 
     model = Model(input=inputs, output=[chunking_output])

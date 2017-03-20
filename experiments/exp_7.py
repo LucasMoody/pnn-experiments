@@ -3,10 +3,7 @@ from datasets.conll_chunking import CoNLLChunking
 from datasets.wsj_pos import WSJPos
 from datasets.universal_dependencies_pos import UDPos
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
-from models import Trainer, InputBuilder
-from models.NER import SennaNER as NER
-from models.POS import SennaPOS as POS
-from models.Chunking import SennaChunking as Chunking
+from models import Trainer, InputBuilder, Senna
 from optimizer import OptimizedModels
 from measurements import Measurer
 import config
@@ -62,9 +59,8 @@ def buildAndTrainNERModelWithPos(learning_params=None):
                                                                 params['update_word_embeddings'])
 
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
-    # model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_ner = NER.buildNERModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_pos])
+    model_ner = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_pos], name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -98,10 +94,9 @@ def buildAndTrainNERModelWithChunking(learning_params=None):
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing,
                                                                 params['update_word_embeddings'])
 
-    # model_pos = OptimizedModels.getPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_ner = NER.buildNERModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking])
+    model_ner = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking], name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -138,7 +133,7 @@ def buildAndTrainNERModelWithChunkingPos(learning_params=None):
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_ner = NER.buildNERModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking, model_pos])
+    model_ner = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking, model_pos], name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -173,9 +168,8 @@ def buildAndTrainPOSModelWithNer(learning_params=None):
                                                                 params['update_word_embeddings'])
 
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
-    # model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ner])
+    model_pos = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ner], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -208,10 +202,9 @@ def buildAndTrainPOSModelWithChunking(learning_params=None):
     input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing,
                                                                 params['update_word_embeddings'])
 
-    #model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking])
+    model_pos = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -247,7 +240,7 @@ def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ner, model_chunking])
+    model_pos = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ner, model_chunking], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -282,7 +275,7 @@ def buildAndTrainWSJPOSModelWithUDPos(learning_params=None):
 
     model_ud_pos = OptimizedModels.getUDPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ud_pos], name_prefix='wsj_')
+    model_pos = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_ud_pos], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -317,7 +310,7 @@ def buildAndTrainUDPOSModelWithWSJPos(learning_params=None):
 
     model_wsj_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = POS.buildPOSModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos], name_prefix='ud_')
+    model_pos = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos], name_prefix='ud_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -355,8 +348,8 @@ def buildAndTrainChunkingModelWithPosNer(learning_params=None):
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_chunking = Chunking.buildChunkingModelWithDropoutPNN(input_layers, inputs, params, n_out,
-                                                        additional_models=[model_pos, model_ner])
+    model_chunking = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out,
+                                                        additional_models=[model_pos, model_ner], name_prefix='chunking_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -393,8 +386,8 @@ def buildAndTrainChunkingModelWithPos(learning_params=None):
 
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_chunking = Chunking.buildChunkingModelWithDropoutPNN(input_layers, inputs, params, n_out,
-                                                        additional_models=[model_pos])
+    model_chunking = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out,
+                                                        additional_models=[model_pos], name_prefix='chunking_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -431,8 +424,8 @@ def buildAndTrainChunkingModelWithNer(learning_params=None):
 
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_chunking = Chunking.buildChunkingModelWithDropoutPNN(input_layers, inputs, params, n_out,
-                                                        additional_models=[model_ner])
+    model_chunking = Senna.buildModelWithDropoutPNN(input_layers, inputs, params, n_out,
+                                                        additional_models=[model_ner], name_prefix='chunking_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -539,9 +532,9 @@ def run_pnn_exp_with_fixed_params():
             run_build_model('ner', 'pnn_dropout', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
 
         if 'chunking' in config.tasks:
-            run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
+            #run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
             run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
-            run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
+            #run_build_model('chunking', 'pnn_dropout', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
 
         if 'wsj_pos' in config.tasks:
             run_build_model('wsj_pos', 'pnn_dropout', fixed_params, buildAndTrainPOSModelWithChunkingNer, 'acc', 'chunking-ner')

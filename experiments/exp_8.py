@@ -60,7 +60,7 @@ def buildAndTrainNERModelWithPos(learning_params=None):
 
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_ner = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_pos], name_prefix='ner_')
+    model_ner = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_pos], name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -96,7 +96,7 @@ def buildAndTrainNERModelWithChunking(learning_params=None):
 
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_ner = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking], name_prefix='ner_')
+    model_ner = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_chunking], name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -133,7 +133,7 @@ def buildAndTrainNERModelWithChunkingPos(learning_params=None):
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_ner = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking, model_pos], name_prefix='ner_')
+    model_ner = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_chunking, model_pos], name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -169,7 +169,7 @@ def buildAndTrainPOSModelWithNer(learning_params=None):
 
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_ner], name_prefix='wsj_pos_')
+    model_pos = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_ner], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -181,7 +181,7 @@ def buildAndTrainPOSModelWithNer(learning_params=None):
 
     return train_scores, dev_scores, test_scores
 
-def buildAndTrainWSJPModelWithChunking(learning_params=None):
+def buildAndTrainPOSModelWithChunking(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -204,7 +204,7 @@ def buildAndTrainWSJPModelWithChunking(learning_params=None):
 
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_chunking], name_prefix='wsj_pos_')
+    model_pos = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_chunking], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -216,7 +216,7 @@ def buildAndTrainWSJPModelWithChunking(learning_params=None):
 
     return train_scores, dev_scores, test_scores
 
-def buildAndTrainWSJPosModelWithChunkingNer(learning_params=None):
+def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -240,7 +240,7 @@ def buildAndTrainWSJPosModelWithChunkingNer(learning_params=None):
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_chunking = OptimizedModels.getChunkingModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_ner, model_chunking], name_prefix='wjs_pos_')
+    model_pos = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_ner, model_chunking], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -258,7 +258,7 @@ def buildAndTrainWSJPOSModelWithUDPos(learning_params=None):
     else:
         params = learning_params
 
-    print 'build pnn pos model with ud_pos'
+    print 'build pnn pos model with chunking and ner'
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = WSJPos.readDataset(
         params['window_size'], word2Idx, case2Idx)
 
@@ -275,7 +275,7 @@ def buildAndTrainWSJPOSModelWithUDPos(learning_params=None):
 
     model_ud_pos = OptimizedModels.getUDPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_ud_pos], name_prefix='wsj_pos_')
+    model_pos = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_ud_pos], name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -293,7 +293,7 @@ def buildAndTrainUDPOSModelWithWSJPos(learning_params=None):
     else:
         params = learning_params
 
-    print 'build pnn ud_pos model with wsj_pos'
+    print 'build pnn pos model with chunking and ner'
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y] = UDPos.readDataset(
         params['window_size'], word2Idx, case2Idx)
 
@@ -310,7 +310,7 @@ def buildAndTrainUDPOSModelWithWSJPos(learning_params=None):
 
     model_wsj_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_pos = Senna.buildModelWithPNN(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos], name_prefix='ud_pos_')
+    model_pos = Senna.buildModelWithOutput(input_layers, inputs, params, n_out, additional_models=[model_wsj_pos], name_prefix='ud_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model_pos, input_train,
@@ -348,7 +348,7 @@ def buildAndTrainChunkingModelWithPosNer(learning_params=None):
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_chunking = Senna.buildModelWithPNN(input_layers, inputs, params, n_out,
+    model_chunking = Senna.buildModelWithOutput(input_layers, inputs, params, n_out,
                                                         additional_models=[model_pos, model_ner], name_prefix='chunking_')
 
     # ----- Train Model ----- #
@@ -386,7 +386,7 @@ def buildAndTrainChunkingModelWithPos(learning_params=None):
 
     model_pos = OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_chunking = Senna.buildModelWithPNN(input_layers, inputs, params, n_out,
+    model_chunking = Senna.buildModelWithOutput(input_layers, inputs, params, n_out,
                                                         additional_models=[model_pos], name_prefix='chunking_')
 
     # ----- Train Model ----- #
@@ -424,7 +424,7 @@ def buildAndTrainChunkingModelWithNer(learning_params=None):
 
     model_ner = OptimizedModels.getNERModelGivenInput(input_layers, inputs, window_size=params['window_size'])
 
-    model_chunking = Senna.buildModelWithPNN(input_layers, inputs, params, n_out,
+    model_chunking = Senna.buildModelWithOutput(input_layers, inputs, params, n_out,
                                                         additional_models=[model_ner], name_prefix='chunking_')
 
     # ----- Train Model ----- #
@@ -454,17 +454,17 @@ def run_pnn_exp_with_random_params():
         for (sample_scores, sample) in best_train_scores_ner:
             for score in sample_scores:
                 print "Max f1 train ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'ner', 'train', params,
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'ner', 'train', params,
                                                      score[0], score[1], sample, 'pos')
         for (sample_scores, sample) in best_dev_scores_ner:
             for score in sample_scores:
                 print "Max f1 dev ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'ner', 'dev', params,
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'ner', 'dev', params,
                                                      score[0], score[1], sample, 'pos')
         for (sample_scores, sample) in best_test_scores_ner:
             for score in sample_scores:
                 print "Max f1 test ner: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'ner', 'test', params,
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'ner', 'test', params,
                                                      score[0], score[1], sample, 'pos')
 
         best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModelWithNer(params)
@@ -472,17 +472,17 @@ def run_pnn_exp_with_random_params():
         for (sample_scores, sample) in best_train_scores_pos:
             for score in sample_scores:
                 print "Max acc train pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'pos', 'train', params,
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'pos', 'train', params,
                                                      score[0], score[1], sample, 'ner')
         for (sample_scores, sample) in best_dev_scores_pos:
             for score in sample_scores:
                 print "Max acc dev pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'pos', 'dev', params,
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'pos', 'dev', params,
                                                      score[0], score[1], sample, 'ner')
         for (sample_scores, sample) in best_test_scores_pos:
             for score in sample_scores:
                 print "Max acc test pos: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'pos', 'test', params,
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'pos', 'test', params,
                                                      score[0],
                                                      score[1], sample, 'ner')
 
@@ -492,19 +492,19 @@ def run_pnn_exp_with_random_params():
         for (sample_scores, sample) in best_train_scores_chunking:
             for score in sample_scores:
                 print "Max f1 train chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'chunking', 'train',
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'chunking', 'train',
                                                      params,
                                                      score[0], score[1], sample, 'pos-ner')
         for (sample_scores, sample) in best_dev_scores_chunking:
             for score in sample_scores:
                 print "Max f1 dev chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'chunking', 'dev',
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'chunking', 'dev',
                                                      params,
                                                      score[0], score[1], sample, 'pos-ner')
         for (sample_scores, sample) in best_test_scores_chunking:
             for score in sample_scores:
                 print "Max f1 test chunking: %.4f in epoch: %d with samples: %d" % (score[0], sample, score[1])
-                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn', 'chunking', 'test',
+                Logger.save_reduced_datasets_results(config.experiments_log_path, 'pnn_adapter', 'chunking', 'test',
                                                      params,
 
                                                      score[0], score[1], sample, 'pos-ner')
@@ -527,23 +527,23 @@ def run_pnn_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ner' in config.tasks:
-            run_build_model('ner', 'pnn', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
-            run_build_model('ner', 'pnn', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
-            run_build_model('ner', 'pnn', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
+            run_build_model('ner', 'pnn_output', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
+            run_build_model('ner', 'pnn_output', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
+            run_build_model('ner', 'pnn_output', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
 
         if 'chunking' in config.tasks:
-            #run_build_model('chunking', 'pnn', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
-            run_build_model('chunking', 'pnn', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
-            #run_build_model('chunking', 'pnn', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
+            #run_build_model('chunking', 'pnn_output', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
+            run_build_model('chunking', 'pnn_output', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
+            #run_build_model('chunking', 'pnn_output', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
 
         if 'wsj_pos' in config.tasks:
-            run_build_model('wsj_pos', 'pnn', fixed_params, buildAndTrainWSJPosModelWithChunkingNer, 'acc', 'chunking-ner')
-            run_build_model('wsj_pos', 'pnn', fixed_params, buildAndTrainWSJPModelWithChunking, 'acc', 'chunking')
-            run_build_model('wsj_pos', 'pnn', fixed_params, buildAndTrainPOSModelWithNer, 'acc', 'ner')
-            run_build_model('wsj_pos', 'pnn', fixed_params, buildAndTrainWSJPOSModelWithUDPos, 'acc', 'ud_pos')
+            run_build_model('wsj_pos', 'pnn_output', fixed_params, buildAndTrainPOSModelWithChunkingNer, 'acc', 'chunking-ner')
+            run_build_model('wsj_pos', 'pnn_output', fixed_params, buildAndTrainPOSModelWithChunking, 'acc', 'chunking')
+            run_build_model('wsj_pos', 'pnn_output', fixed_params, buildAndTrainPOSModelWithNer, 'acc', 'ner')
+            run_build_model('wsj_pos', 'pnn_output', fixed_params, buildAndTrainWSJPOSModelWithUDPos, 'acc', 'ud_pos')
 
         if 'ud_pos' in config.tasks:
-            run_build_model('ud_pos', 'pnn', fixed_params, buildAndTrainUDPOSModelWithWSJPos, 'acc', 'wsj_pos')
+            run_build_model('ud_pos', 'pnn_output', fixed_params, buildAndTrainUDPOSModelWithWSJPos, 'acc', 'wsj_pos')
 
 
 def run_build_model(task, exp, params, build_model_func, score_name, transfer_models):

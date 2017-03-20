@@ -9,6 +9,7 @@ from datasets.universal_dependencies_pos import UDPos
 from models.NER import SennaNER as NER
 from models.POS import SennaPOS as POS
 from models.Chunking import SennaChunking as Chunking
+from models import Senna
 from optimizer import OptimizedModels
 from parameters import parameter_space
 from measurements import Measurer
@@ -352,7 +353,7 @@ def buildAndTrainNERModelWithChunkingPos(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, ner_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, ner_n_out, name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
@@ -410,7 +411,7 @@ def buildAndTrainNERModelWithChunking(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, ner_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, ner_n_out, name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
@@ -468,7 +469,7 @@ def buildAndTrainNERModelWithPos(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = NER.buildNERModelGivenInput(input_layers_merged, inputs, params, ner_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, ner_n_out, name_prefix='ner_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
@@ -528,7 +529,7 @@ def buildAndTrainChunkingModelWithNerPos(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = Chunking.buildChunkingModelGivenInput(input_layers_merged, inputs, params, chunking_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, chunking_n_out, name_prefix='chunking_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
@@ -585,7 +586,7 @@ def buildAndTrainChunkingModelWithNer(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = Chunking.buildChunkingModelGivenInput(input_layers_merged, inputs, params, chunking_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, chunking_n_out, name_prefix='chunking_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
@@ -644,7 +645,7 @@ def buildAndTrainChunkingModelWithPos(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = Chunking.buildChunkingModelGivenInput(input_layers_merged, inputs, params, chunking_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, chunking_n_out, name_prefix='chunking_')
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
@@ -657,7 +658,7 @@ def buildAndTrainChunkingModelWithPos(learning_params=None):
     return train_scores, dev_scores, test_scores
 
 
-def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
+def buildAndTrainWSJPosModelWithChunkingNer(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -709,7 +710,7 @@ def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, pos_n_out, name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
@@ -720,7 +721,7 @@ def buildAndTrainPOSModelWithChunkingNer(learning_params=None):
 
     return train_scores, dev_scores, test_scores
 
-def buildAndTrainPOSModelWithChunking(learning_params=None):
+def buildAndTrainWSJPosModelWithChunking(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -765,7 +766,7 @@ def buildAndTrainPOSModelWithChunking(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, pos_n_out, name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
@@ -776,7 +777,7 @@ def buildAndTrainPOSModelWithChunking(learning_params=None):
 
     return train_scores, dev_scores, test_scores
 
-def buildAndTrainPOSModelWithNer(learning_params=None):
+def buildAndTrainWSJPosModelWithNer(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -821,7 +822,7 @@ def buildAndTrainPOSModelWithNer(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, pos_n_out, name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
@@ -832,7 +833,7 @@ def buildAndTrainPOSModelWithNer(learning_params=None):
 
     return train_scores, dev_scores, test_scores
 
-def buildAndTrainPOSModelWithUDPos(learning_params=None):
+def buildAndTrainWSJPosModelWithUDPos(learning_params=None):
     if learning_params is None:
         params = default_params
     else:
@@ -877,7 +878,7 @@ def buildAndTrainPOSModelWithUDPos(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, pos_n_out, name_prefix='wsj_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
@@ -933,7 +934,7 @@ def buildAndTrainUDPosModelWithWSJPos(learning_params=None):
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = POS.buildPosModelGivenInput(input_layers_merged, inputs, params, pos_n_out)
+    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, pos_n_out, name_prefix='ud_pos_')
 
     # ----- Train Model ----- #
     train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, model_input_train,
@@ -988,7 +989,7 @@ def run_models_as_input_exp_with_random_params():
                 Logger.save_reduced_datasets_results(config.experiments_log_path, 'exp_2', 'chunking', 'test', params,
                                                      score[0], score[1], sample, 'pos-ner')
 
-        best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainPOSModelWithChunkingNer(params)
+        best_train_scores_pos, best_dev_scores_pos, best_test_scores_pos = buildAndTrainWSJPosModelWithChunkingNer(params)
         print params
         for (sample_scores, sample) in best_train_scores_pos:
             for score in sample_scores:
@@ -1020,17 +1021,17 @@ def run_models_as_input_exp_with_fixed_params():
 
         if 'ner' in config.tasks:
             run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
-            #run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
-            #run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
+            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
+            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
         if 'wsj_pos' in config.tasks:
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithNer, 'acc', 'ner')
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithChunking, 'acc', 'chunking')
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithChunkingNer, 'acc', 'chunking-ner')
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainPOSModelWithUDPos, 'acc', 'ud_pos')
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithNer, 'acc', 'ner')
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithChunking, 'acc', 'chunking')
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithChunkingNer, 'acc', 'chunking-ner')
+            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithUDPos, 'acc', 'ud_pos')
         if 'chunking' in config.tasks:
-            run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
+            #run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
             run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
-            run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNerPos, 'f1', 'pos-ner')
+            #run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNerPos, 'f1', 'pos-ner')
         if 'ud_pos' in config.tasks:
             run_build_model('ud_pos', 'exp_2', fixed_params, buildAndTrainUDPosModelWithWSJPos, 'acc', 'wsj_pos')
 
