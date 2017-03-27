@@ -2,14 +2,14 @@ from keras.layers import Input, Embedding, Flatten, Dense, merge, Dropout
 from keras.models import Model
 import theano
 import numpy as np
-from transfer import Extender
+from transfer import TransferUtils
 
 def buildModelGivenInput(input_layers, inputs, params, n_out, metrics=[], useHiddenWeights=False, additional_models=[], name_prefix=''):
 
     input_dropout_layer = Dropout(params['dropout'])
     if(useHiddenWeights):
         hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name_prefix + 'hidden',
-                                 weights=Extender.getHiddenLayerWeights(additional_models[0]))
+                             weights=TransferUtils.getHiddenLayerWeights(additional_models[0]))
     else:
         hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name_prefix + 'hidden')
     input_dropout = input_dropout_layer(input_layers)

@@ -2,7 +2,7 @@ from keras.layers import Input, Embedding, Flatten, Dense, merge, Dropout
 from keras.models import Model
 import theano
 import numpy as np
-from transfer import Extender
+from transfer import TransferUtils
 
 #####################################
 #
@@ -14,7 +14,7 @@ def buildChunkingModelGivenInput(input_layers, inputs, params, chunking_n_out, m
 
     if(useHiddenWeights):
         chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden',
-                                 weights=Extender.getHiddenLayerWeights(additional_models[0]))
+                                      weights=TransferUtils.getHiddenLayerWeights(additional_models[0]))
     else:
         chunking_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='chunking_hidden')
     chunking_hidden = chunking_hidden_layer(input_layers)
