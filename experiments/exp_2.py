@@ -1008,7 +1008,7 @@ def run_models_as_input_exp_with_fixed_params():
     fixed_params = {
         'update_word_embeddings': False,
         'window_size': 3,
-        'batch_size': 128,
+        'batch_size': 32,
         'hidden_dims': 100,
         'activation': 'tanh',
         'dropout': 0.3,
@@ -1020,20 +1020,20 @@ def run_models_as_input_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ner' in config.tasks:
-            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
-            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
-            run_build_model('ner', 'exp_2', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
+            run_build_model('ner', 'pipeline', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
+            run_build_model('ner', 'pipeline', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
+            run_build_model('ner', 'pipeline', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
         if 'wsj_pos' in config.tasks:
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithNer, 'acc', 'ner')
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithChunking, 'acc', 'chunking')
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithChunkingNer, 'acc', 'chunking-ner')
-            run_build_model('wsj_pos', 'exp_2', fixed_params, buildAndTrainWSJPosModelWithUDPos, 'acc', 'ud_pos')
+            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithNer, 'acc', 'ner')
+            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithChunking, 'acc', 'chunking')
+            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithChunkingNer, 'acc', 'chunking-ner')
+            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithUDPos, 'acc', 'ud_pos')
         if 'chunking' in config.tasks:
-            #run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
-            run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
-            #run_build_model('chunking', 'exp_2', fixed_params, buildAndTrainChunkingModelWithNerPos, 'f1', 'pos-ner')
+            run_build_model('chunking', 'pipeline', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
+            run_build_model('chunking', 'pipeline', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
+            run_build_model('chunking', 'pipeline', fixed_params, buildAndTrainChunkingModelWithNerPos, 'f1', 'pos-ner')
         if 'ud_pos' in config.tasks:
-            run_build_model('ud_pos', 'exp_2', fixed_params, buildAndTrainUDPosModelWithWSJPos, 'acc', 'wsj_pos')
+            run_build_model('ud_pos', 'pipeline', fixed_params, buildAndTrainUDPosModelWithWSJPos, 'acc', 'wsj_pos')
 
 def run_build_model(task, exp, params, build_model_func, score_name, transfer_models):
     train_scores, dev_scores, test_scores = build_model_func(params)

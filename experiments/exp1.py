@@ -246,16 +246,16 @@ def run_baseline_exp_with_fixed_params():
         print fixed_params
 
         if 'ner' in config.tasks:
-            run_build_model('ner', 'exp_1', fixed_params, buildAndTrainNERModel, 'f1', 'none')
+            run_build_model('ner', 'baseline', fixed_params, buildAndTrainNERModel, 'f1', 'none')
 
         if 'wsj_pos' in config.tasks:
-            run_build_model('wsj_pos', 'exp_1', fixed_params, buildAndTrainWSJPOSModel, 'acc', 'none')
+            run_build_model('wsj_pos', 'baseline', fixed_params, buildAndTrainWSJPOSModel, 'acc', 'none')
 
         if 'chunking' in config.tasks:
-            run_build_model('chunking', 'exp_1', fixed_params, buildAndTrainChunkingModel, 'f1', 'none')
+            run_build_model('chunking', 'baseline', fixed_params, buildAndTrainChunkingModel, 'f1', 'none')
 
         if 'ud_pos' in config.tasks:
-            run_build_model('ud_pos', 'exp_1', fixed_params, buildAndTrainUDPOSModel, 'acc', 'none')
+            run_build_model('ud_pos', 'baseline', fixed_params, buildAndTrainUDPOSModel, 'acc', 'none')
 
 def run_build_model(task, exp, params, build_model_func, score_name, transfer_models):
     train_scores, dev_scores, test_scores = build_model_func(params)

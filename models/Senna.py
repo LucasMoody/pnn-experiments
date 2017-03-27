@@ -28,6 +28,7 @@ def buildModelGivenInput(input_layers, inputs, params, n_out, metrics=[], useHid
     return model
 
 def buildModelWithPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
+    # ----- GET TENSOR OF TRANSFER MODELS ----- #
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
 
@@ -42,17 +43,22 @@ def buildModelWithPNN(input_layers, inputs, params, n_out, metrics=[], additiona
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
+    # MERGE INPUT WITH HIDDEN LAYERS OF TRANSFERRED MODELS
     embeddings_hidden_merged = merge([input_layers] + transfer_model_hidden_layers, mode='concat')
 
+    # INPUT DROPOUT
     input_dropout_layer = Dropout(params['dropout'])
     input_dropout = input_dropout_layer(embeddings_hidden_merged)
 
+    # HIDDEN LAYER
     hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name_prefix + 'hidden')
     hidden = hidden_layer(input_dropout)
 
+    # MERGE HIDDEN WITH OUTPUT LAYERS OF TRANSFERRED MODELS
     hidden_merged = merge([hidden] + transfer_model_output_layers, mode='concat')
     hidden_dropout = Dropout(params['dropout'])(hidden_merged)
 
+    # OUTPUT LAYER
     output_layer = Dense(output_dim=n_out, activation='softmax', name=name_prefix + 'output')
     output = output_layer(hidden_dropout)
 
@@ -98,6 +104,7 @@ def buildModelWithSimplePNN(input_layers, inputs, params, n_out, metrics=[], add
     return model
 
 def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
+    # ----- GET TENSOR OF TRANSFER MODELS ----- #
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
 
@@ -112,11 +119,12 @@ def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], ad
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
+    # INPUT DROPOUT
     input_dropout_layer = Dropout(params['dropout'])
     input_dropout = input_dropout_layer(input_layers)
 
     # ADAPTER - HIDDEN #
-    hidden_adapter_layer = Dense(150, activation=params['activation'], name=name_prefix + 'hidden_adapter')
+    hidden_adapter_layer = Dense(100, activation=params['activation'], name=name_prefix + 'hidden_adapter')
     if (len(transfer_model_hidden_layers) > 1):
         hidden_adapter = hidden_adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
     else:
@@ -129,7 +137,7 @@ def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], ad
     hidden = hidden_layer(embeddings_hidden_merged)
 
     # ADAPTER - OUTPUT
-    output_adapter_layer = Dense(150, activation=params['activation'], name=name_prefix + 'output_adapter')
+    output_adapter_layer = Dense(100, activation=params['activation'], name=name_prefix + 'output_adapter')
     if (len(transfer_model_output_layers) > 1):
         output_adapter = output_adapter_layer(merge(transfer_model_output_layers, mode='concat'))
     else:
@@ -152,6 +160,7 @@ def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], ad
 
 
 def buildModelWithDropoutPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
+    # ----- GET TENSOR OF TRANSFER MODELS ----- #
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
 

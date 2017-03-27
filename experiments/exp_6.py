@@ -537,9 +537,9 @@ def run_pnn_exp_with_fixed_params():
             run_build_model('ner', 'pnn_adapter', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
 
         if 'chunking' in config.tasks:
-            #run_build_model('chunking', 'pnn_adapter', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
+            run_build_model('chunking', 'pnn_adapter', fixed_params, buildAndTrainChunkingModelWithPosNer, 'f1', 'pos-ner')
             run_build_model('chunking', 'pnn_adapter', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
-            #run_build_model('chunking', 'pnn_adapter', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
+            run_build_model('chunking', 'pnn_adapter', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
 
         if 'wsj_pos' in config.tasks:
             run_build_model('wsj_pos', 'pnn_adapter', fixed_params, buildAndTrainPOSModelWithChunkingNer, 'acc', 'chunking-ner')
