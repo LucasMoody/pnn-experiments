@@ -34,9 +34,9 @@ def run_optimizer_with_fixed_params():
         'update_word_embeddings': False,
         'window_size': 3,
         'batch_size': 128,
-        'hidden_dims': 300,
+        'hidden_dims': 100,
         'activation': 'tanh',
-        'dropout': 0.4,
+        'dropout': 0.3,
         'optimizer': 'adam',
         'number_of_epochs': config.number_of_epochs
     }
@@ -57,6 +57,18 @@ def run_optimizer_with_fixed_params():
 
         if 'chunking' in config.tasks:
             run_build_model('chunking', fixed_params, OptimizedModels.getChunkingModel, 'f1')
+
+        if 'ace_ed' in config.tasks:
+            run_build_model('ace_ed', fixed_params, OptimizedModels.getAceEDModel, 'f1')
+
+        if 'tac_ed' in config.tasks:
+            run_build_model('tac_ed', fixed_params, OptimizedModels.getTacEDModel, 'f1')
+
+        if 'tempeval_ed' in config.tasks:
+            run_build_model('tempeval_ed', fixed_params, OptimizedModels.getTempevalEDModel, 'f1')
+
+        if 'ecbplus_ed' in config.tasks:
+            run_build_model('ecbplus_ed', fixed_params, OptimizedModels.getEcbPlusEDModel, 'f1')
 
 def run_build_model(task, params, build_model_func, score_name):
     train_scores, dev_scores, test_scores = build_model_func(params)
