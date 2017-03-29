@@ -4,13 +4,17 @@ import embeddings.dependency_based_word_embeddings.DependencyBasedWordEmbeddings
 from models import Trainer, InputBuilder
 from datasets.ace_ed import ACEED
 from datasets.tac2015_ed import TACED
+from datasets.ecbplus_ed import ECBPlusED
+from datasets.tempeval3_ed import TempevalED
+from datasets.wsj_pos import WSJPos
+from datasets.conll_ner import CoNLLNer
+from datasets.conll_chunking import CoNLLChunking
 from models import Senna
 from optimizer import OptimizedModels
 from parameters import parameter_space
 from measurements import Measurer
 import config
-from logs import Logger
-import random
+from experiments import ExperimentHelper
 
 # settings
 default_params = {
@@ -27,6 +31,9 @@ best_tac_window_size = 3
 best_tempeval_window_size = 3
 best_ace_window_size = 3
 best_ecb_window_size = 3
+best_pos_window_size = 3
+best_ner_window_size = 3
+best_chunking_window_size = 3
 
 number_of_epochs = config.number_of_epochs
 
@@ -34,24 +41,39 @@ number_of_epochs = config.number_of_epochs
 metric_results = []
 
 #Casing matrix
-case2Idx = {'numeric': 0, 'allLower':1, 'allUpper':2, 'initialUpper':3, 'other':4, 'mainly_numeric':5, 'contains_digit': 6, 'PADDING':7}
+case2Idx = {
+    'numeric': 0,
+    'allLower': 1,
+    'allUpper': 2,
+    'initialUpper': 3,
+    'other': 4,
+    'mainly_numeric': 5,
+    'contains_digit': 6,
+    'PADDING': 7
+}
 n_in_case = len(case2Idx)
 
 # Read in embeddings
 embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
 
-def extendHelper(reader, word2Idx, case2Idx, best_window_size, pipeline_model_builder, pipeline_dict):
+
+def extendHelper(reader, word2Idx, case2Idx, best_window_size,
+                 pipeline_model_builder, pipeline_dict):
     # ----- read Data with best window ----- #
-    [input_train, events_train_y_cat], [input_dev, events_dev_y], [input_test, events_test_y], dicts = reader(best_window_size, word2Idx, case2Idx)
+    [input_train, events_train_y_cat], [input_dev, events_dev_y], [
+        input_test, events_test_y
+    ], dicts = reader(best_window_size, word2Idx, case2Idx)
     # calculate dims for model building
     [train_x, train_case_x] = input_train
     n_in_x = train_x.shape[1]
     n_in_casing = train_case_x.shape[1]
 
     # build pos model
-    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing)
-    model_pipeline = pipeline_model_builder(input_layers, inputs, window_size=best_window_size)
+    input_layers, inputs = InputBuilder.buildStandardModelInput(
+        embeddings, case2Idx, n_in_x, n_in_casing)
+    model_pipeline = pipeline_model_builder(
+        input_layers, inputs, window_size=best_window_size)
 
     # predict data
     pred_train = model_pipeline.predict(input_train, verbose=0).argmax(axis=-1)
@@ -66,76 +88,145 @@ def extendHelper(reader, word2Idx, case2Idx, best_window_size, pipeline_model_bu
 
     return pred_train_labels, pred_dev_labels, pred_test_labels
 
+
 def extendAceED():
+    # ----- labels from pos for ace ----- #
+    pred_train_labels_for_pos, pred_dev_labels_for_pos, pred_test_labels_for_pos = extendHelper(
+        ACEED.readDataset, word2Idx, case2Idx, best_pos_window_size,
+        OptimizedModels.getWSJPOSModelGivenInput, WSJPos.getLabelDict())
+
+    # ----- labels from ner for ace ----- #
+    pred_train_labels_for_ner, pred_dev_labels_for_ner, pred_test_labels_for_ner = extendHelper(
+        ACEED.readDataset, word2Idx, case2Idx, best_ner_window_size,
+        OptimizedModels.getNERModelGivenInput, CoNLLNer.getLabelDict())
+
+    # ----- labels from chunking for ace ----- #
+    pred_train_labels_for_chunking, pred_dev_labels_for_chunking, pred_test_labels_for_chunking = extendHelper(
+        ACEED.readDataset, word2Idx, case2Idx, best_chunking_window_size,
+        OptimizedModels.getChunkingModelGivenInput, CoNLLChunking.getLabelDict())
+
     # ----- labels from tac for ace ----- #
-    pred_train_labels_for_tac, pred_dev_labels_for_tac, pred_test_labels_for_tac = extendHelper(ACEED.readDataset, word2Idx, case2Idx, best_tac_window_size, OptimizedModels., TACED.getLabelDict())
+    pred_train_labels_for_tac, pred_dev_labels_for_tac, pred_test_labels_for_tac = extendHelper(
+        ACEED.readDataset, word2Idx, case2Idx, best_tac_window_size,
+        OptimizedModels.getTacEDModelGivenInput, TACED.getLabelDict())
 
-    train_extensions = [pred_train_labels_for_tac]
-    dev_extensions = [pred_dev_labels_for_tac]
-    test_extensions = [pred_test_labels_for_tac]
+    # ----- labels from ecb for ace ----- #
+    pred_train_labels_for_ecb, pred_dev_labels_for_ecb, pred_test_labels_for_ecb = extendHelper(
+        ACEED.readDataset, word2Idx, case2Idx, best_ecb_window_size,
+        OptimizedModels.getEcbEDModelGivenInput, ECBPlusED.getLabelDict())
 
-    ACEED.extendDataset("./datasets/ace_ed/data/events.conllu", train_extensions, dev_extensions, test_extensions)
+    # ----- labels from tempeval for ace ----- #
+    pred_train_labels_for_tempeval, pred_dev_labels_for_tempeval, pred_test_labels_for_tempeval = extendHelper(
+        ACEED.readDataset, word2Idx, case2Idx, best_tempeval_window_size,
+        OptimizedModels.getTempevalEDModelGivenInput, TempevalED.getLabelDict())
 
-def buildAndTrainAceModelWithEcbTacTempeval(learning_params=None):
+    train_extensions = [pred_train_labels_for_pos, pred_train_labels_for_ner, pred_train_labels_for_chunking, pred_train_labels_for_tac, pred_train_labels_for_ecb, pred_train_labels_for_tempeval]
+    dev_extensions = [pred_dev_labels_for_pos, pred_dev_labels_for_ner, pred_dev_labels_for_chunking, pred_dev_labels_for_tac, pred_dev_labels_for_ecb, pred_dev_labels_for_tempeval]
+    test_extensions = [pred_test_labels_for_pos, pred_test_labels_for_ner, pred_test_labels_for_chunking, pred_test_labels_for_tac, pred_test_labels_for_ecb, pred_test_labels_for_tempeval]
+
+    ACEED.extendDataset("./datasets/ace_ed/data/events.conllu",
+                        train_extensions, dev_extensions, test_extensions)
+
+
+def buildAndTrainAceModel(learning_params=None, config={}):
     if learning_params is None:
         params = default_params
     else:
         params = learning_params
 
-    [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts = CoNLLNer.readDatasetExt(params['window_size'], word2Idx, case2Idx)
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = ACEED.readDatasetExt(params['window_size'], word2Idx, case2Idx)
 
-    [ner_train_x, ner_train_pos_x, ner_train_chunking_x, ner_train_casing_x] = input_train
-    [ner_dev_x, ner_dev_pos_x, ner_dev_chunking_x, ner_dev_casing_x] = input_dev
-    [ner_test_x, ner_test_pos_x, ner_test_chunking_x, ner_test_casing_x] = input_test
-    [_, pos2Idx, chunking2Idx, _, ner_label2Idx, ner_idx2Label] = dicts
+    [_, events_pos2Idx, events_ner2Idx, events_chunking2Idx, events_ecb2Idx, events_tac2Idx, events_tempeval2Idx,
+     _, events_label2Idx, events_idx2Label] = dicts
 
-    ner_n_out = ner_train_y_cat.shape[1]
-    n_in_x = ner_train_x.shape[1]
-    n_in_pos = ner_train_pos_x.shape[1]
-    n_in_chunking = ner_train_chunking_x.shape[1]
-    n_in_casing = ner_train_casing_x.shape[1]
+    [events_train_x, events_train_casing_x, events_train_pos_x, events_train_ner_x, events_train_chunking_x,
+     events_train_ecb_x, events_train_tac_x, events_train_tempeval_x] = input_train
 
+    n_out = train_y_cat.shape[1]
+    n_in_x = events_train_x.shape[1]
+    n_in_pos = events_train_pos_x.shape[1]
+    n_in_ner = events_train_ner_x.shape[1]
+    n_in_chunking = events_train_chunking_x.shape[1]
+    n_in_casing = events_train_casing_x.shape[1]
+    n_in_tac = events_train_tac_x.shape[1]
+    n_in_ecb = events_train_ecb_x.shape[1]
+    n_in_tempeval = events_train_tempeval_x.shape[1]
 
-    words_input = Input(shape=(n_in_x,), dtype='int32', name='words_input')
-    wordEmbeddingLayer = Embedding(output_dim=embeddings.shape[1], input_dim=embeddings.shape[0], input_length=n_in_x,
-                                   weights=[embeddings], trainable=False)
-    words = wordEmbeddingLayer(words_input)
-    words = Flatten(name='words_flatten')(words)
+    # prepare config
+    config_values = {
+        'words': {
+            'n': n_in_x,
+            'idx': embeddings,
+            'pos': 0
+        },
+        'casing': {
+            'n': n_in_casing,
+            'idx': case2Idx,
+            'pos': 1
+        },
+        'pos': {
+            'n': n_in_pos,
+            'idx': events_pos2Idx,
+            'pos': 2
+        },
+        'ner': {
+            'n': n_in_ner,
+            'idx': events_ner2Idx,
+            'pos': 3
+        },
+        'chunking': {
+            'n': n_in_chunking,
+            'idx': events_chunking2Idx,
+            'pos': 4
+        },
+        'ecb': {
+            'n': n_in_ecb,
+            'idx': events_ecb2Idx,
+            'pos': 5
+        },
+        'tac': {
+            'n': n_in_tac,
+            'idx': events_tac2Idx,
+            'pos': 6
+        },
+        'tempeval': {
+            'n': n_in_tempeval,
+            'idx': events_tempeval2Idx,
+            'pos': 7
+        }
+    }
 
-    pos_input = Input(shape=(n_in_pos,), dtype='int32', name='pos_input')
-    posEmbeddingLayer = Embedding(output_dim=len(pos2Idx), input_dim=len(pos2Idx), input_length=n_in_pos,
-                                   trainable=True)
-    pos = posEmbeddingLayer(pos_input)
-    pos = Flatten(name='pos_flatten')(pos)
+    selectedFeatures = {key: config_values[key] for key in config}
 
-    chunking_input = Input(shape=(n_in_chunking,), dtype='int32', name='chunking_input')
-    chunkingEmbeddingLayer = Embedding(output_dim=len(chunking2Idx), input_dim=len(chunking2Idx), input_length=n_in_chunking,
-                                   trainable=True)
-    chunking = chunkingEmbeddingLayer(chunking_input)
-    chunking = Flatten(name='chunking_flatten')(chunking)
-
-    case_input = Input(shape=(n_in_x,), dtype='int32', name='case_input')
-    caseEmbeddingLayer = Embedding(output_dim=len(case2Idx), input_dim=len(case2Idx), input_length=n_in_casing,
-                                   trainable=True)
-    casing = caseEmbeddingLayer(case_input)
-    casing = Flatten(name='casing_flatten')(casing)
-
-    input_layers = [words, pos, chunking, casing]
-    inputs = [words_input, pos_input, chunking_input, case_input]
+    input_layers, inputs = InputBuilder.buildPipelineModelInput(selectedFeatures)
 
     input_layers_merged = merge(input_layers, mode='concat')
 
-    model = Senna.buildModelGivenInput(input_layers_merged, inputs, params, ner_n_out, name_prefix='ner_')
+    model = Senna.buildModelGivenInput(
+        input_layers_merged, inputs, params, n_out, name_prefix='ace_ed_')
+
+    # SELECT FEATURES WHICH APPEAR IN THE CONFIG
+    indices = sorted([selectedFeatures[feature]['pos'] for feature in selectedFeatures])
+    model_train = [input_train[i] for i in indices]
+    model_dev = [input_dev[i] for i in indices]
+    model_test = [input_test[i] for i in indices]
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train,
-                                                                   ner_train_y_cat, number_of_epochs,
-                                                                   params['batch_size'], input_dev,
-                                                                   ner_dev_y, input_test, ner_test_y,
-                                                                   measurements=[biof1])
+    biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(
+        model,
+        model_train,
+        train_y_cat,
+        number_of_epochs,
+        params['batch_size'],
+        model_dev,
+        dev_y,
+        model_test,
+        test_y,
+        measurements=[biof1])
 
     return train_scores, dev_scores, test_scores
+
 
 def run_models_as_input_exp_with_fixed_params():
     fixed_params = {
@@ -152,43 +243,20 @@ def run_models_as_input_exp_with_fixed_params():
     for model_nr in range(max_evals):
         print "Model nr. ", model_nr
 
-        if 'ner' in config.tasks:
-            run_build_model('ner', 'pipeline', fixed_params, buildAndTrainNERModelWithPos, 'f1', 'pos')
-            run_build_model('ner', 'pipeline', fixed_params, buildAndTrainNERModelWithChunking, 'f1', 'chunking')
-            run_build_model('ner', 'pipeline', fixed_params, buildAndTrainNERModelWithChunkingPos, 'f1', 'chunking-pos')
-        if 'wsj_pos' in config.tasks:
-            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithNer, 'acc', 'ner')
-            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithChunking, 'acc', 'chunking')
-            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithChunkingNer, 'acc', 'chunking-ner')
-            run_build_model('wsj_pos', 'pipeline', fixed_params, buildAndTrainWSJPosModelWithUDPos, 'acc', 'ud_pos')
-        if 'chunking' in config.tasks:
-            run_build_model('chunking', 'pipeline', fixed_params, buildAndTrainChunkingModelWithNer, 'f1', 'ner')
-            run_build_model('chunking', 'pipeline', fixed_params, buildAndTrainChunkingModelWithPos, 'f1', 'pos')
-            run_build_model('chunking', 'pipeline', fixed_params, buildAndTrainChunkingModelWithNerPos, 'f1', 'pos-ner')
-        if 'ud_pos' in config.tasks:
-            run_build_model('ud_pos', 'pipeline', fixed_params, buildAndTrainUDPosModelWithWSJPos, 'acc', 'wsj_pos')
+        if 'ace' in config.tasks:
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                            buildAndTrainAceModel, 'f1', 'pos',
+                            {'words', 'casing'})
+            #ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+            #                buildAndTrainAceModel, 'f1', 'pos',
+             #               {'words', 'casing', 'pos', 'ner', 'chunking'})
+            #ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+             #               buildAndTrainAceModel, 'f1', 'pos', {'words', 'casing', 'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'})
 
-def run_build_model(task, exp, params, build_model_func, score_name, transfer_models):
-    train_scores, dev_scores, test_scores = build_model_func(params)
-    print params
-    for (sample_scores, sample) in train_scores:
-        for score in sample_scores:
-            print "Max {0} train {1} with {2}: {3:.4f} in epoch: {4} with samples: {5}".format(score_name, task, transfer_models, score[0], score[1], sample)
-            Logger.save_reduced_datasets_results(config.experiments_log_path, exp, task, 'train', params, score[0], score[1], sample, transfer_models)
-    for (sample_scores, sample) in dev_scores:
-        for score in sample_scores:
-            print "Max {0} dev {1} with {2}: {3:.4f} in epoch: {4} with samples: {5}".format(score_name, task, transfer_models, score[0], score[1], sample)
-            Logger.save_reduced_datasets_results(config.experiments_log_path, exp, task, 'dev', params, score[0], score[1], sample, transfer_models)
-    for (sample_scores, sample) in test_scores:
-        for score in sample_scores:
-            print "Max {0} test {1} with {2}: {3:.4f} in epoch: {4} with samples: {5}".format(score_name, task, transfer_models, score[0], score[1], sample)
-            Logger.save_reduced_datasets_results(config.experiments_log_path, exp, task, 'test', params, score[0], score[1], sample, transfer_models)
 
-    print '\n\n-------------------- END --------------------\n\n'
 
-#run_models_as_input_exp_with_random_params()
-#extendCoNLLNer()
-#extendCoNLLChunking()
-#extendWSJPOS()
-#extendUDPOS()
+
+
+
+#extendAceED()
 run_models_as_input_exp_with_fixed_params()

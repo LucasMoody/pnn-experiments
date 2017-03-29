@@ -199,4 +199,4 @@ def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
     DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
 
 def getLabelDict():
-    return GermEvalReader.getLabelDict(events_trainFile, 2)
+    return GermEvalReader.getLabelDict(events_trainFile, label_position)

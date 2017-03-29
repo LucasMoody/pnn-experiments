@@ -34,6 +34,39 @@ n_in_case = len(case2Idx)
 embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
 
+def buildBaselineModel(reader, name_prefix='', learning_params=None):
+    if learning_params is None:
+        params = default_params
+    else:
+        params = learning_params
+
+    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = reader(params['window_size'], word2Idx, case2Idx)
+    [train_x, train_case_x] = input_train
+    [dev_x, dev_case_x] = input_dev
+    [test_x, test_case_x] = input_test
+    [_, caseLookup, label2Idx, idx2Label] = dicts
+    n_out = train_y_cat.shape[1]
+
+    n_in_x = train_x.shape[1]
+    n_in_casing = train_case_x.shape[1]
+
+    # ----- Build Model ----- #
+    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
+    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix=name_prefix)
+
+    print train_x.shape[0], ' train samples'
+    print train_x.shape[1], ' train dimension'
+    print test_x.shape[0], ' test samples'
+
+    # ----- Train Model ----- #
+    biof1 = Measurer.create_compute_BIOf1(idx2Label)
+    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train, train_y_cat, number_of_epochs,
+                                                                           params['batch_size'], input_dev,
+                                                                           dev_y, input_test, test_y, measurements=[biof1])
+
+
+    return train_scores, dev_scores, test_scores
+
 def buildAndTrainAceEDModel(learning_params = None):
     if learning_params is None:
         params = default_params
@@ -108,7 +141,6 @@ def buildAndTrainTempevalEDModel(learning_params = None):
     else:
         params = learning_params
 
-    # ----- NER ----- #
     [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = TempevalED.readDataset(params['window_size'], word2Idx, case2Idx)
     [train_x, train_case_x] = input_train
     [dev_x, dev_case_x] = input_dev

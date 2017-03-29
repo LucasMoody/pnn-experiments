@@ -211,4 +211,16 @@ def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
     DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
 
 def getLabelDict():
-    return GermEvalReader.getLabelDict(events_trainFile, 2)
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position)
+    # there is a tag in the test file which does not appear in the train file
+    # so the dictionaries have to be updated in order not to get an error
+    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position)
+    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position)
+    for tag in dev_label_dicts[0]:
+        if tag not in events_label2Idx:
+            events_label2Idx[tag] = len(events_label2Idx)
+    for tag in test_label_dicts[0]:
+        if tag not in events_label2Idx:
+            events_label2Idx[tag] = len(events_label2Idx)
+    events_idx2Label = {v: k for k, v in events_label2Idx.items()}
+    return events_label2Idx, events_idx2Label
