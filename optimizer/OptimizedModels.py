@@ -631,7 +631,6 @@ def getEcbPlusEDModel(learning_params=None):
 def getWSJPOSModelGivenInput(input_layers,
                              inputs,
                              learning_params=None,
-                             window_size=None,
                              use_existing_model=True):
     if learning_params is None:
         #params = pos_default_params[window_size]

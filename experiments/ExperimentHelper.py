@@ -2,8 +2,13 @@ from logs import Logger
 import config
 
 def run_build_model(task, exp, params, build_model_func, score_name,
-                    transfer_models, transfer_config):
-    train_scores, dev_scores, test_scores = build_model_func(params, transfer_config)
+                    transfer_models='', transfer_config=None):
+    if transfer_config is None:
+        train_scores, dev_scores, test_scores = build_model_func(params)
+    else:
+        train_scores, dev_scores, test_scores = build_model_func(params, transfer_config)
+        transfer_models = '-'.join(sorted(list(transfer_config)))
+
     print params
     for (sample_scores, sample) in train_scores:
         for score in sample_scores:

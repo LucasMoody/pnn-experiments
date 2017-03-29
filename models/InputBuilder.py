@@ -94,3 +94,4 @@ def buildInputNodes(config, name):
     input_layer = embeddingLayer(input)
     input_layer = Flatten(name=name + '_flatten')(input_layer)
     return input, input_layer
+

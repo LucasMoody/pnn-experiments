@@ -7,8 +7,8 @@ from models import Trainer, InputBuilder, Senna
 from measurements import Measurer
 import random
 from parameters import parameter_space
-from logs import Logger
 import config
+from experiments import ExperimentHelper
 
 # settings
 default_params = {
@@ -68,141 +68,16 @@ def buildBaselineModel(reader, name_prefix='', learning_params=None):
     return train_scores, dev_scores, test_scores
 
 def buildAndTrainAceEDModel(learning_params = None):
-    if learning_params is None:
-        params = default_params
-    else:
-        params = learning_params
-
-    # ----- NER ----- #
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = ACEED.readDataset(params['window_size'], word2Idx, case2Idx)
-    [train_x, train_case_x] = input_train
-    [dev_x, dev_case_x] = input_dev
-    [test_x, test_case_x] = input_test
-    [_, caseLookup, label2Idx, idx2Label] = dicts
-    n_out = train_y_cat.shape[1]
-
-    n_in_x = train_x.shape[1]
-    n_in_casing = train_case_x.shape[1]
-
-    # ----- Build Model ----- #
-    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='ace_ed_')
-
-    print train_x.shape[0], ' train samples'
-    print train_x.shape[1], ' train dimension'
-    print test_x.shape[0], ' test samples'
-
-    # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train, train_y_cat, number_of_epochs,
-                                                                           params['batch_size'], input_dev,
-                                                                           dev_y, input_test, test_y, measurements=[biof1])
-
-
-    return train_scores, dev_scores, test_scores
+    return buildBaselineModel(ACEED.readDataset, name_prefix='ace_ed_', learning_params=learning_params)
 
 def buildAndTrainTacEDModel(learning_params = None):
-    if learning_params is None:
-        params = default_params
-    else:
-        params = learning_params
-
-    # ----- NER ----- #
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = TACED.readDataset(params['window_size'], word2Idx, case2Idx)
-    [train_x, train_case_x] = input_train
-    [dev_x, dev_case_x] = input_dev
-    [test_x, test_case_x] = input_test
-    [_, caseLookup, label2Idx, idx2Label] = dicts
-    n_out = train_y_cat.shape[1]
-
-    n_in_x = train_x.shape[1]
-    n_in_casing = train_case_x.shape[1]
-
-    # ----- Build Model ----- #
-    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='tac_ed_')
-
-    print train_x.shape[0], ' train samples'
-    print train_x.shape[1], ' train dimension'
-    print test_x.shape[0], ' test samples'
-
-    # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train, train_y_cat, number_of_epochs,
-                                                                           params['batch_size'], input_dev,
-                                                                           dev_y, input_test, test_y, measurements=[biof1])
-
-
-    return train_scores, dev_scores, test_scores
+    return buildBaselineModel(TACED.readDataset, name_prefix='tac_ed_', learning_params=learning_params)
 
 def buildAndTrainTempevalEDModel(learning_params = None):
-    if learning_params is None:
-        params = default_params
-    else:
-        params = learning_params
-
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = TempevalED.readDataset(params['window_size'], word2Idx, case2Idx)
-    [train_x, train_case_x] = input_train
-    [dev_x, dev_case_x] = input_dev
-    [test_x, test_case_x] = input_test
-    [_, caseLookup, label2Idx, idx2Label] = dicts
-    n_out = train_y_cat.shape[1]
-
-    n_in_x = train_x.shape[1]
-    n_in_casing = train_case_x.shape[1]
-
-    # ----- Build Model ----- #
-    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='tac_ed_')
-
-    print train_x.shape[0], ' train samples'
-    print train_x.shape[1], ' train dimension'
-    print test_x.shape[0], ' test samples'
-
-    # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train, train_y_cat, number_of_epochs,
-                                                                           params['batch_size'], input_dev,
-                                                                           dev_y, input_test, test_y, measurements=[biof1])
-
-
-    return train_scores, dev_scores, test_scores
+    return buildBaselineModel(TempevalED.readDataset, name_prefix='tempeval_ed_', learning_params=learning_params)
 
 def buildAndTrainECBPlusEDModel(learning_params = None):
-    if learning_params is None:
-        params = default_params
-    else:
-        params = learning_params
-
-    # ----- NER ----- #
-    [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], dicts = ECBPlusED.readDataset(params['window_size'], word2Idx, case2Idx)
-    [train_x, train_case_x] = input_train
-    [dev_x, dev_case_x] = input_dev
-    [test_x, test_case_x] = input_test
-    [_, caseLookup, label2Idx, idx2Label] = dicts
-    n_out = train_y_cat.shape[1]
-
-    n_in_x = train_x.shape[1]
-    n_in_casing = train_case_x.shape[1]
-
-    # ----- Build Model ----- #
-    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_casing, params['update_word_embeddings'])
-    model = Senna.buildModelGivenInput(input_layers, inputs, params, n_out, name_prefix='ecb_ed_')
-
-    print train_x.shape[0], ' train samples'
-    print train_x.shape[1], ' train dimension'
-    print test_x.shape[0], ' test samples'
-
-    # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(model, input_train, train_y_cat, number_of_epochs,
-                                                                           params['batch_size'], input_dev,
-                                                                           dev_y, input_test, test_y, measurements=[biof1])
-
-
-    return train_scores, dev_scores, test_scores
-
-
+    return buildBaselineModel(ECBPlusED.readDataset, name_prefix='ecb_ed_', learning_params=learning_params)
 
 def run_baseline_exp_with_fixed_params():
     fixed_params = {
@@ -220,36 +95,16 @@ def run_baseline_exp_with_fixed_params():
         print "Model nr. ", model_nr
         print fixed_params
 
-        if 'ace_ed' in config.tasks:
-            run_build_model('ace_ed', 'baseline', fixed_params, buildAndTrainAceEDModel, 'f1', 'none')
+        if 'ace' in config.tasks:
+            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainAceEDModel, 'f1', 'none')
 
-        if 'tac_ed' in config.tasks:
-            run_build_model('tac_ed', 'baseline', fixed_params, buildAndTrainTacEDModel, 'f1', 'none')
+        if 'tac' in config.tasks:
+            ExperimentHelper.run_build_model('tac', 'baseline', fixed_params, buildAndTrainTacEDModel, 'f1', 'none')
 
-        if 'tempeval_ed' in config.tasks:
-            run_build_model('tempeval_ed', 'baseline', fixed_params, buildAndTrainTempevalEDModel, 'f1', 'none')
+        if 'tempeval' in config.tasks:
+            ExperimentHelper.run_build_model('tempeval', 'baseline', fixed_params, buildAndTrainTempevalEDModel, 'f1', 'none')
 
-        if 'ecb_ed' in config.tasks:
-            run_build_model('ecb_ed', 'baseline', fixed_params, buildAndTrainTempevalEDModel, 'f1', 'none')
-
-
-
-def run_build_model(task, exp, params, build_model_func, score_name, transfer_models):
-    train_scores, dev_scores, test_scores = build_model_func(params)
-    print params
-    for (sample_scores, sample) in train_scores:
-        for score in sample_scores:
-            print "Max {0} train {1} with {2}: {3:.4f} in epoch: {4} with samples: {5}".format(score_name, task, transfer_models, score[0], score[1], sample)
-            Logger.save_reduced_datasets_results(config.experiments_log_path, exp, task, 'train', params, score[0], score[1], sample, transfer_models)
-    for (sample_scores, sample) in dev_scores:
-        for score in sample_scores:
-            print "Max {0} dev {1} with {2}: {3:.4f} in epoch: {4} with samples: {5}".format(score_name, task, transfer_models, score[0], score[1], sample)
-            Logger.save_reduced_datasets_results(config.experiments_log_path, exp, task, 'dev', params, score[0], score[1], sample, transfer_models)
-    for (sample_scores, sample) in test_scores:
-        for score in sample_scores:
-            print "Max {0} test {1} with {2}: {3:.4f} in epoch: {4} with samples: {5}".format(score_name, task, transfer_models, score[0], score[1], sample)
-            Logger.save_reduced_datasets_results(config.experiments_log_path, exp, task, 'test', params, score[0], score[1], sample, transfer_models)
-
-    print '\n\n-------------------- END --------------------\n\n'
+        if 'ecb' in config.tasks:
+            ExperimentHelper.run_build_model('ecb', 'baseline', fixed_params, buildAndTrainTempevalEDModel, 'f1', 'none')
 
 run_baseline_exp_with_fixed_params()
