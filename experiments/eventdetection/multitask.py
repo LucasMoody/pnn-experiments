@@ -140,14 +140,14 @@ def run_baseline_exp_with_fixed_params():
         print fixed_params
 
         if 'ace' in config.tasks:
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'})
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb', 'tac', 'tempeval'})
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb', 'tac'})
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb', 'tempeval'})
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'tac', 'tempeval'})
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb'})
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'tac'})
-            ExperimentHelper.run_build_model('ace', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb', 'tac'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'ecb'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'tac'})
+            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config={'ace', 'tempeval'})
 
         if 'tac' in config.tasks:
             ExperimentHelper.run_build_model('tac', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', 'none')
