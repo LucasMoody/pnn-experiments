@@ -223,7 +223,7 @@ def buildAndTrainAceModel(learning_params=None, config={}):
         dev_y,
         model_test,
         test_y,
-        measurements=[biof1])
+        measurer=biof1)
 
     return train_scores, dev_scores, test_scores
 
@@ -244,14 +244,38 @@ def run_models_as_input_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ace' in config.tasks:
-            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
-                            buildAndTrainAceModel, 'f1', 'pos',
-                            {'words', 'casing'})
             #ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
             #                buildAndTrainAceModel, 'f1', 'pos',
-             #               {'words', 'casing', 'pos', 'ner', 'chunking'})
-            #ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
-             #               buildAndTrainAceModel, 'f1', 'pos', {'words', 'casing', 'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'})
+             #               {'words', 'casing', 'pos'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                            buildAndTrainAceModel, 'f1', 'pos',
+                            {'words', 'casing', 'pos', 'ner', 'chunking'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                            buildAndTrainAceModel, 'f1', 'pos', {'words', 'casing', 'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                         buildAndTrainAceModel, 'f1', 'pos',
+                                         {'words', 'casing', 'ecb', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                             buildAndTrainAceModel, 'f1', 'pos',
+                                             {'words', 'casing', 'ecb', 'tac'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                             buildAndTrainAceModel, 'f1', 'pos',
+                                             {'words', 'casing', 'ecb', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                             buildAndTrainAceModel, 'f1', 'pos',
+                                             {'words', 'casing', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                             buildAndTrainAceModel, 'f1', 'pos',
+                                                 {'words', 'casing', 'ecb', 'tac'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                             buildAndTrainAceModel, 'f1', 'pos',
+                                             {'words', 'casing', 'ecb'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                             buildAndTrainAceModel, 'f1', 'pos',
+                                             {'words', 'casing', 'tac'})
+            ExperimentHelper.run_build_model('ace', 'pipeline', fixed_params,
+                                             buildAndTrainAceModel, 'f1', 'pos',
+                                             {'words', 'casing', 'tempeval'})
 
 
 

@@ -47,8 +47,8 @@ def readDataset(windowSize, word2Idx, caseLookup):
     pos_input_test = [pos_test_x, pos_test_case_x]
 
     pos_train_y_cat = np_utils.to_categorical(pos_train_y, len(pos_label2Idx))
-
-    return [pos_input_train, pos_train_y_cat], [pos_input_dev, pos_dev_y], [pos_input_test, pos_test_y]
+    pos_dicts = [word2Idx, caseLookup, pos_label2Idx, pos_idx2Label]
+    return [pos_input_train, pos_train_y_cat], [pos_input_dev, pos_dev_y], [pos_input_test, pos_test_y], pos_dicts
 
 
 def readDatasetExt(windowSize, word2Idx, case2Idx):

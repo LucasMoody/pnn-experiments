@@ -58,30 +58,27 @@ def run_optimizer_with_fixed_params():
         if 'chunking' in config.tasks:
             run_build_model('chunking', fixed_params, OptimizedModels.getChunkingModel, 'f1')
 
-        if 'ace_ed' in config.tasks:
-            run_build_model('ace_ed', fixed_params, OptimizedModels.getAceEDModel, 'f1')
+        if 'ace' in config.tasks:
+            run_build_model('ace', fixed_params, OptimizedModels.getAceEDModel, 'f1')
 
-        if 'tac_ed' in config.tasks:
-            run_build_model('tac_ed', fixed_params, OptimizedModels.getTacEDModel, 'f1')
+        if 'tac' in config.tasks:
+            run_build_model('tac', fixed_params, OptimizedModels.getTacEDModel, 'f1')
 
-        if 'tempeval_ed' in config.tasks:
-            run_build_model('tempeval_ed', fixed_params, OptimizedModels.getTempevalEDModel, 'f1')
+        if 'tempeval' in config.tasks:
+            run_build_model('tempeval', fixed_params, OptimizedModels.getTempevalEDModel, 'f1')
 
-        if 'ecbplus_ed' in config.tasks:
-            run_build_model('ecbplus_ed', fixed_params, OptimizedModels.getEcbPlusEDModel, 'f1')
+        if 'ecb' in config.tasks:
+            run_build_model('ecb', fixed_params, OptimizedModels.getEcbPlusEDModel, 'f1')
 
 def run_build_model(task, params, build_model_func, score_name):
-    train_scores, dev_scores, test_scores = build_model_func(params)
+    (train_score, train_epoch), (dev_score, dev_epoch), (test_score, test_epoch) = build_model_func(params)
     print params
-    for (score, epoch) in train_scores:
-        print "Max {0} train {1}: {2:.4f} in epoch: {3}".format(score_name, task, score, epoch)
-        Logger.save_results(config.optimized_models_log_path, task, 'train', params, score, epoch)
-    for (score, sample) in dev_scores:
-        print "Max {0} dev {1}: {2:.4f} in epoch: {3}".format(score_name, task, score, epoch)
-        Logger.save_results(config.optimized_models_log_path, task, 'dev', params, score, epoch)
-    for (score, sample) in test_scores:
-        print "Max {0} test {1}: {2:.4f} in epoch: {3}".format(score_name, task, score, epoch)
-        Logger.save_results(config.optimized_models_log_path, task, 'test', params, score, epoch)
+    print "Max {0} train {1}: {2:.4f} in epoch: {3}".format(score_name, task, train_score, train_epoch)
+    Logger.save_results(config.optimized_models_log_path, task, 'train', params, train_score, test_epoch)
+    print "Max {0} dev {1}: {2:.4f} in epoch: {3}".format(score_name, task, dev_score, dev_epoch)
+    Logger.save_results(config.optimized_models_log_path, task, 'dev', params, dev_score, dev_epoch)
+    print "Max {0} test {1}: {2:.4f} in epoch: {3}".format(score_name, task, dev_score, dev_epoch)
+    Logger.save_results(config.optimized_models_log_path, task, 'test', params, dev_score, dev_epoch)
 
     print '\n\n-------------------- END --------------------\n\n'
 

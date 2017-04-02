@@ -249,3 +249,27 @@ def buildModelWithOutput(input_layers, inputs, params, n_out, metrics=[], additi
     print model.summary()
 
     return model
+
+def buildMultiTaskModelGivenInput(input_layers, inputs, params, model_info):
+    models = []
+
+    input_dropout_layer = Dropout(params['dropout'])
+    hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name='hidden')
+    input_dropout = input_dropout_layer(input_layers)
+    hidden = hidden_layer(input_dropout)
+
+    hidden_dropout = Dropout(params['dropout'])(hidden)
+
+    for name, n_out in model_info:
+        output_layer = Dense(output_dim=n_out, activation='softmax', name=name + 'output')
+        output = output_layer(hidden_dropout)
+
+        model = Model(input=inputs, output=[output])
+
+        model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'])
+
+        print model.summary()
+
+        models.append(model)
+
+    return models

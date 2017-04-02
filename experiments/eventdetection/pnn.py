@@ -67,7 +67,7 @@ def buildAndTrainPNNModel(reader, name_prefix='', learning_params=None, config={
                                                                                  train_y_cat, number_of_epochs,
                                                                                  params['batch_size'], input_dev,
                                                                                  dev_y, input_test, test_y,
-                                                                                 measurements=[biof1])
+                                                                                 measurer=biof1)
 
     return train_scores, dev_scores, test_scores
 
@@ -102,6 +102,20 @@ def run_pnn_exp_with_fixed_params():
 
         if 'ace' in config.tasks:
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1', transfer_config={'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
+                                             transfer_config={'ecb', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
+                                             transfer_config={'ecb', 'tac'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
+                                             transfer_config={'ecb', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
+                                             transfer_config={'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
+                                             transfer_config={'ecb'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
+                                             transfer_config={'tac'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
+                                             transfer_config={'tempeval'})
 
         if 'ecb' in config.tasks:
             ExperimentHelper.run_build_model('ecb', 'pnn', fixed_params, buildAndTrainEcbModel, 'f1',
