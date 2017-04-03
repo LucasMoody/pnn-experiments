@@ -33,7 +33,7 @@ n_in_case = len(case2Idx)
 embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
 
-def buildAndTrainPNNModel(reader, name_prefix='', learning_params=None, config={}):
+def buildAndTrainPNNModel(reader, name_prefix='', learning_params=None, config=[]):
     if learning_params is None:
         params = default_params
     else:
@@ -101,33 +101,33 @@ def run_pnn_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ace' in config.tasks:
-            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1', transfer_config={'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'})
+            ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1', transfer_config=['pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'])
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
-                                             transfer_config={'ecb', 'tac', 'tempeval'})
+                                             transfer_config=['ecb', 'tac', 'tempeval'])
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
-                                             transfer_config={'ecb', 'tac'})
+                                             transfer_config=['ecb', 'tac'])
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
-                                             transfer_config={'ecb', 'tempeval'})
+                                             transfer_config=['ecb', 'tempeval'])
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
-                                             transfer_config={'tac', 'tempeval'})
+                                             transfer_config=['tac', 'tempeval'])
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
-                                             transfer_config={'ecb'})
+                                             transfer_config=['ecb'])
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
-                                             transfer_config={'tac'})
+                                             transfer_config=['tac'])
             ExperimentHelper.run_build_model('ace', 'pnn', fixed_params, buildAndTrainAceModel, 'f1',
-                                             transfer_config={'tempeval'})
+                                             transfer_config=['tempeval'])
 
         if 'ecb' in config.tasks:
             ExperimentHelper.run_build_model('ecb', 'pnn', fixed_params, buildAndTrainEcbModel, 'f1',
-                                             transfer_config={'pos', 'ner', 'chunking', 'ace', 'tac', 'tempeval'})
+                                             transfer_config=['pos', 'ner', 'chunking', 'ace', 'tac', 'tempeval'])
 
         if 'tac' in config.tasks:
             ExperimentHelper.run_build_model('tac', 'pnn', fixed_params, buildAndTrainTacModel, 'f1',
-                                             transfer_config={'pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'})
+                                             transfer_config=['pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'])
 
         if 'tempeval' in config.tasks:
             ExperimentHelper.run_build_model('tempeval', 'pnn', fixed_params, buildAndTrainTempevalModel, 'f1',
-                                             transfer_config={'pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'})
+                                             transfer_config=['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
 
 
 run_pnn_exp_with_fixed_params()

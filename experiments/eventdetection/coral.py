@@ -13,6 +13,7 @@ import random
 from parameters import parameter_space
 import config
 from experiments import ExperimentHelper
+from transfer import InputTransformer
 
 # settings
 default_params = {
@@ -96,13 +97,14 @@ def datasetFormat(name, dataset):
         'dicts': dicts
     }
 
-def buildAndTrainMultiTaskModel(learning_params = None, config=[]):
+def buildAndTrainMultiTaskModelWithCoral(learning_params = None, config=[]):
     if learning_params is None:
         params = default_params
     else:
         params = learning_params
 
     datasets = getDataForConfig(params, config)
+    datasets = InputTransformer.apply_coral(datasets)
     # calculate input dimensions
     # take the first dataset for it, because model input looks the same for all
     first_dataset = datasets[0]
@@ -142,21 +144,21 @@ def run_baseline_exp_with_fixed_params():
 
         if 'ace' in config.tasks:
             #ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'])
-            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'ecb', 'tac', 'tempeval'])
-            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'ecb', 'tac'])
-            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'ecb', 'tempeval'])
-            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'tac', 'tempeval'])
-            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'ecb'])
-            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'tac'])
-            ExperimentHelper.run_build_model('ace', 'multitask', fixed_params, buildAndTrainMultiTaskModel, 'f1', transfer_config=['ace', 'tempeval'])
+            '''ExperimentHelper.run_build_model('ace', 'coral', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', transfer_config=['ace', 'ecb', 'tac', 'tempeval'])
+            ExperimentHelper.run_build_model('ace', 'coral', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', transfer_config=['ace', 'ecb', 'tac'])
+            ExperimentHelper.run_build_model('ace', 'coral', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', transfer_config=['ace', 'ecb', 'tempeval'])
+            ExperimentHelper.run_build_model('ace', 'coral', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', transfer_config=['ace', 'tac', 'tempeval'])
+            ExperimentHelper.run_build_model('ace', 'coral', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', transfer_config=['ace', 'ecb'])
+            ExperimentHelper.run_build_model('ace', 'coral', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', transfer_config=['ace', 'tac'])'''
+            ExperimentHelper.run_build_model('ace', 'coral', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', transfer_config=['ace', 'tempeval'])
 
         if 'tac' in config.tasks:
-            ExperimentHelper.run_build_model('tac', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', 'none')
+            ExperimentHelper.run_build_model('tac', 'baseline', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', 'none')
 
         if 'tempeval' in config.tasks:
-            ExperimentHelper.run_build_model('tempeval', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', 'none')
+            ExperimentHelper.run_build_model('tempeval', 'baseline', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', 'none')
 
         if 'ecb' in config.tasks:
-            ExperimentHelper.run_build_model('ecb', 'baseline', fixed_params, buildAndTrainMultiTaskModel, 'f1', 'none')
+            ExperimentHelper.run_build_model('ecb', 'baseline', fixed_params, buildAndTrainMultiTaskModelWithCoral, 'f1', 'none')
 
 run_baseline_exp_with_fixed_params()

@@ -158,7 +158,7 @@ def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
     # maximum number of epochs
     global_batch_start = 0
     virtual_epoch_counter = 0
-    for epoch in xrange(number_of_epochs):
+    while virtual_epoch_counter < number_of_epochs:
         start_time = time.time()
         # models are trained by turns
         for idx, model in enumerate(models):
@@ -184,8 +184,8 @@ def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
             print "%.2f sec for training" % (time.time() - start_time)
             start_prediction_time = time.time()
             dev_scores = []
-            # calculate the scores for each model
-            for idx, model in enumerate(models):
+            # calculate the scores for each model in dev mode or only the target model score in other modes
+            for idx, model in (enumerate(models) if config.dev_env else enumerate([models[0]])):
                 model_data = datasets[idx]
                 dev_input = model_data['dev']['input']
                 pred_dev = model.predict(dev_input, verbose=0).argmax(axis=-1)  # Prediction of the classes
