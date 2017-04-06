@@ -13,11 +13,15 @@ testFileExt = 'datasets/tac2015_ed/data/events_test_ext.conllu'
 
 word_position = 1
 label_position = 3
-pos_position = 2
-ner_position = 3
-other_positions = [pos_position, ner_position]
-positions = [word_position, label_position]
-positions.extend(other_positions)
+
+ext_word_position = 0
+ext_label_position = 1
+ext_pos_position = 2
+ext_ner_position = 3
+ext_chunking_position = 4
+ext_ace_position = 5
+ext_ecb_position = 6
+ext_tempeval_position = 7
 
 def readDataset(windowSize, word2Idx, case2Idx):
 
@@ -33,12 +37,12 @@ def readDataset(windowSize, word2Idx, case2Idx):
     events_test_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False), events_test_sentences)
 
     #Label mapping for ED
-    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position)
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position, excludeList=['Contact'])
 
     # there is a tag in the test file which does not appear in the train file
     # so the dictionaries have to be updated in order not to get an error
-    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position)
-    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position)
+    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position, excludeList=['Contact'])
+    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position, excludeList=['Contact'])
     for tag in dev_label_dicts[0]:
         if tag not in events_label2Idx:
             events_label2Idx[tag] = len(events_label2Idx)
@@ -74,140 +78,132 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
     dev_sentences = GermEvalReader.readFileExt(devFileExt)
     test_sentences = GermEvalReader.readFileExt(testFileExt)
 
-    # create dictionaries
-    # Label mapping for POS
-    label_column_train = filterColumn(train_sentences, label_position)
-    word_column_train = filterColumn(train_sentences, word_position)
-    pos_column_train = filterColumn(train_sentences, pos_position)
-    ner_column_train = filterColumn(train_sentences, ner_position)
+    # exclude all Contact labels as they are badly annotated
+    train_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+                                    train_sentences)
+    dev_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+                                  dev_sentences)
+    test_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+                                   test_sentences)
 
-    label_column_dev = filterColumn(dev_sentences, label_position)
-    word_column_dev = filterColumn(dev_sentences, word_position)
-    pos_column_dev = filterColumn(dev_sentences, pos_position)
-    ner_column_dev = filterColumn(dev_sentences, ner_position)
+    # ----- WORDS ----- #
+    # get words from sentences
+    word_column_train = DatasetExtender.filterColumn(train_sentences, word_position)
+    word_column_dev = DatasetExtender.filterColumn(dev_sentences, word_position)
+    word_column_test = DatasetExtender.filterColumn(test_sentences, word_position)
 
-    label_column_test = filterColumn(test_sentences, label_position)
-    word_column_test = filterColumn(test_sentences, word_position)
-    pos_column_test = filterColumn(test_sentences, pos_position)
-    ner_column_test = filterColumn(test_sentences, ner_position)
-
-    events_label2Idx, events_idx2Label = DatasetExtender.getDict(label_column_train)
-    # there is a tag in the test file which does not appear in the train file
-    # so the dictionaries have to be updated in order not to get an error
-    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, 2)
-    for tag in test_label_dicts[0]:
-        if tag not in events_label2Idx:
-            events_label2Idx[tag] = len(events_label2Idx)
-    events_idx2Label = {v: k for k, v in events_label2Idx.items()}
-
-    events_pos2Idx, events_idx2pos = DatasetExtender.getDict(pos_column_train, withAddLabels=True)
-    events_ner2Idx, events_ner2pos = DatasetExtender.getDict(ner_column_train, withAddLabels=True)
-
-    # convert value to index
+    # convert them to an index of the word embedding
     words_train = GermEvalReader.convertValue2Idx(word_column_train, word2Idx, GermEvalReader.wordConverter)
-    pos_train = GermEvalReader.convertValue2Idx(pos_column_train, events_pos2Idx, GermEvalReader.wordConverter)
-    ner_train = GermEvalReader.convertValue2Idx(ner_column_train, events_ner2Idx, GermEvalReader.wordConverter)
-    casing_train = GermEvalReader.convertValue2Idx(word_column_train, case2Idx, GermEvalReader.getCasing)
-    labels_train = GermEvalReader.convertValue2Idx(label_column_train, events_label2Idx, GermEvalReader.labelConverter)
-
     words_dev = GermEvalReader.convertValue2Idx(word_column_dev, word2Idx, GermEvalReader.wordConverter)
-    pos_dev = GermEvalReader.convertValue2Idx(pos_column_dev, events_pos2Idx, GermEvalReader.wordConverter)
-    ner_dev = GermEvalReader.convertValue2Idx(ner_column_dev, events_ner2Idx, GermEvalReader.wordConverter)
-    casing_dev = GermEvalReader.convertValue2Idx(word_column_dev, case2Idx, GermEvalReader.getCasing)
-    labels_dev = GermEvalReader.convertValue2Idx(label_column_dev, events_label2Idx, GermEvalReader.labelConverter)
-
     words_test = GermEvalReader.convertValue2Idx(word_column_test, word2Idx, GermEvalReader.wordConverter)
-    pos_test = GermEvalReader.convertValue2Idx(pos_column_test, events_pos2Idx, GermEvalReader.wordConverter)
-    ner_test = GermEvalReader.convertValue2Idx(ner_column_test, events_ner2Idx, GermEvalReader.wordConverter)
-    casing_test = GermEvalReader.convertValue2Idx(word_column_test, case2Idx, GermEvalReader.getCasing)
+
+    # convert them into numbers according the window
+    events_train_x = GermEvalReader.createNumpyArray(words_train, windowSize, word2Idx)
+    events_dev_x = GermEvalReader.createNumpyArray(words_dev, windowSize, word2Idx)
+    events_test_x = GermEvalReader.createNumpyArray(words_test, windowSize, word2Idx)
+
+    # ----- LABELS ----- #
+
+    # get labels from sentences
+    label_column_train = DatasetExtender.filterColumn(train_sentences, ext_label_position)
+    label_column_dev = DatasetExtender.filterColumn(dev_sentences, ext_label_position)
+    label_column_test = DatasetExtender.filterColumn(test_sentences, ext_label_position)
+
+    # create dictionaries
+    events_label2Idx, events_idx2Label = DatasetExtender.getDict(label_column_train)
+
+    # convert labels into index
+    labels_train = GermEvalReader.convertValue2Idx(label_column_train, events_label2Idx, GermEvalReader.labelConverter)
+    labels_dev = GermEvalReader.convertValue2Idx(label_column_dev, events_label2Idx, GermEvalReader.labelConverter)
     labels_test = GermEvalReader.convertValue2Idx(label_column_test, events_label2Idx, GermEvalReader.labelConverter)
 
-    # create numpy datasets
-    events_train_x = GermEvalReader.createNumpyArray(words_train, windowSize, word2Idx)
-    events_train_pos_x = GermEvalReader.createNumpyArray(pos_train, windowSize, events_pos2Idx)
-    events_train_ner_x = GermEvalReader.createNumpyArray(ner_train, windowSize, events_ner2Idx)
-    events_train_casing_x = GermEvalReader.createNumpyArray(casing_train, windowSize, case2Idx)
+    # concatenate them to final label set
     events_train_y = np.concatenate(labels_train)
-
-    events_dev_x = GermEvalReader.createNumpyArray(words_dev, windowSize, word2Idx)
-    events_dev_pos_x = GermEvalReader.createNumpyArray(pos_dev, windowSize, events_pos2Idx)
-    events_dev_ner_x = GermEvalReader.createNumpyArray(ner_dev, windowSize, events_ner2Idx)
-    events_dev_casing_x = GermEvalReader.createNumpyArray(casing_dev, windowSize, case2Idx)
     events_dev_y = np.concatenate(labels_dev)
-
-    events_test_x = GermEvalReader.createNumpyArray(words_test, windowSize, word2Idx)
-    events_test_pos_x = GermEvalReader.createNumpyArray(pos_test, windowSize, events_pos2Idx)
-    events_test_ner_x = GermEvalReader.createNumpyArray(ner_test, windowSize, events_ner2Idx)
-    events_test_casing_x = GermEvalReader.createNumpyArray(casing_test, windowSize, case2Idx)
     events_test_y = np.concatenate(labels_test)
 
-    print "shape of events_train_x:", events_train_x.shape
-    print events_train_x[0]
+    # ----- CASING ----- #
 
-    print "shape of events_train_pos_x:", events_train_pos_x.shape
-    print events_train_pos_x[0]
+    # convert words into casing
+    casing_train = GermEvalReader.convertValue2Idx(word_column_train, case2Idx, GermEvalReader.getCasing)
+    casing_dev = GermEvalReader.convertValue2Idx(word_column_dev, case2Idx, GermEvalReader.getCasing)
+    casing_test = GermEvalReader.convertValue2Idx(word_column_test, case2Idx, GermEvalReader.getCasing)
 
-    print "shape of events_train_ner_x:", events_train_ner_x.shape
-    print events_train_ner_x[0]
+    # convert them into numbers according the window
+    events_train_casing_x = GermEvalReader.createNumpyArray(casing_train, windowSize, case2Idx)
+    events_dev_casing_x = GermEvalReader.createNumpyArray(casing_dev, windowSize, case2Idx)
+    events_test_casing_x = GermEvalReader.createNumpyArray(casing_test, windowSize, case2Idx)
 
-    print "shape of events_train_casing_x:", events_train_casing_x.shape
-    print events_train_casing_x[0]
+    # ----- POS ----- #
+    events_train_pos_x, events_dev_pos_x, events_test_pos_x, events_pos2Idx = DatasetExtender.createNumpyArraysForFeature(
+        train_sentences, dev_sentences, test_sentences, ext_pos_position, GermEvalReader.wordConverter, windowSize)
 
-    print "shape of events_train_y:", events_train_y.shape
-    print events_train_y
+    # ------ NER ------ #
+    events_train_ner_x, events_dev_ner_x, events_test_ner_x, events_ner2Idx = DatasetExtender.createNumpyArraysForFeature(
+        train_sentences,
+        dev_sentences, test_sentences,
+        ext_ner_position,
+        GermEvalReader.wordConverter,
+        windowSize)
+    # ------ CHUNKING ------ #
+    events_train_chunking_x, events_dev_chunking_x, events_test_chunking_x, events_chunking2Idx = DatasetExtender.createNumpyArraysForFeature(
+        train_sentences,
+        dev_sentences, test_sentences,
+        ext_chunking_position,
+        GermEvalReader.wordConverter,
+        windowSize)
 
+    # ----- ACE ED ----- #
+    events_train_ace_x, events_dev_ace_x, events_test_ace_x, events_ace2Idx = DatasetExtender.createNumpyArraysForFeature(
+        train_sentences,
+        dev_sentences, test_sentences,
+        ext_ace_position,
+        GermEvalReader.wordConverter,
+        windowSize)
 
+    # ----- ECB+ ED ----- #
+    events_train_ecb_x, events_dev_ecb_x, events_test_ecb_x, events_ecb2Idx = DatasetExtender.createNumpyArraysForFeature(
+        train_sentences,
+        dev_sentences, test_sentences,
+        ext_ecb_position,
+        GermEvalReader.wordConverter,
+        windowSize)
 
-    print "shape of events_dev_x:", events_dev_x.shape
-    print events_dev_x[0]
+    # ----- TEMPEVAL 3 ED ----- #
+    events_train_tempeval_x, events_dev_tempeval_x, events_test_tempeval_x, events_tempeval2Idx = DatasetExtender.createNumpyArraysForFeature(
+        train_sentences,
+        dev_sentences, test_sentences,
+        ext_tempeval_position,
+        GermEvalReader.wordConverter,
+        windowSize)
 
-    print "shape of events_dev_pos_x:", events_dev_pos_x.shape
-    print events_dev_pos_x[0]
-
-    print "shape of events_dev_ner_x:", events_dev_ner_x.shape
-    print events_dev_ner_x[0]
-
-    print "shape of events_dev_casing_x:", events_dev_casing_x.shape
-    print events_dev_casing_x[0]
-
-    print "shape of events_dev_y:", events_dev_y.shape
-    print events_dev_y
-
-
-
-    print "shape of events_test_x:", events_test_x.shape
-    print events_test_x[0]
-
-    print "shape of events_test_pos_x:", events_test_pos_x.shape
-    print events_test_pos_x[0]
-
-    print "shape of events_test_ner_x:", events_test_ner_x.shape
-    print events_test_ner_x[0]
-
-    print "shape of events_test_casing_x:", events_test_casing_x.shape
-    print events_test_casing_x[0]
-
-    print "shape of events_test_y:", events_test_y.shape
-    print events_test_y
-
-
-
-    input_train = [events_train_x, events_train_pos_x, events_train_ner_x, events_train_casing_x]
-    input_dev = [events_dev_x, events_dev_pos_x, events_dev_ner_x, events_dev_casing_x]
-    input_test = [events_test_x, events_test_pos_x, events_test_ner_x, events_test_casing_x]
-
-    events_train_y_cat = np_utils.to_categorical(events_train_y, len(events_label2Idx))
-
-    dicts = [word2Idx, events_pos2Idx, events_ner2Idx, case2Idx, events_label2Idx, events_idx2Label]
-    return [input_train, events_train_y_cat], [input_dev, events_dev_y], [input_test, events_test_y], dicts
+    # PRINT SOME SANITY CHECKS
+    print 'Words - No: {0}/{1}/{2}, labelno {3}'.format(events_train_x.shape[0], events_dev_x.shape[0],
+                                                        events_test_x.shape[0], len(word2Idx))
+    print 'Casing - No: {0}/{1}/{2}, labelno {3}'.format(events_train_casing_x.shape[0], events_dev_casing_x.shape[0],
+                                                         events_test_casing_x.shape[0], len(case2Idx))
+    print 'POS - No: {0}/{1}/{2}, labelno {3}'.format(events_train_pos_x.shape[0], events_dev_pos_x.shape[0],
+                                                      events_test_pos_x.shape[0], len(events_pos2Idx))
+    print 'NER - No: {0}/{1}/{2}, labelno {3}'.format(events_train_ner_x.shape[0], events_dev_ner_x.shape[0],
+                                                      events_test_ner_x.shape[0], len(events_ner2Idx))
+    print 'Chunking - No: {0}/{1}/{2}, labelno {3}'.format(events_train_chunking_x.shape[0],
+                                                           events_dev_chunking_x.shape[0],
+                                                           events_test_chunking_x.shape[0], len(events_chunking2Idx))
+    print 'ACE - No: {0}/{1}/{2}, labelno {3}'.format(events_train_ace_x.shape[0], events_dev_ace_x.shape[0],
+                                                       events_test_ace_x.shape[0], len(events_ace2Idx))
+    print 'ECB Plus - No: {0}/{1}/{2}, labelno {3}'.format(events_train_ecb_x.shape[0], events_dev_ecb_x.shape[0],
+                                                       events_test_ecb_x.shape[0], len(events_ecb2Idx))
+    print 'Tempeval - No: {0}/{1}/{2}, labelno {3}'.format(events_train_tempeval_x.shape[0],
+                                                           events_dev_tempeval_x.shape[0],
+                                                           events_test_tempeval_x.shape[0], len(events_tempeval2Idx))
 
 def filterColumn(sentences, position):
     return map(lambda sentence: sentence[:, position], sentences)
 
 def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
-    train_sentences = GermEvalReader.readFile(events_trainFile, 0, 2)
-    dev_sentences = GermEvalReader.readFile(events_devFile, 0, 2)
-    test_sentences = GermEvalReader.readFile(events_testFile, 0, 2)
+    train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
+    dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
+    test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
     filename, file_extension = path.splitext(filename)
 
@@ -216,11 +212,11 @@ def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
     DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
 
 def getLabelDict():
-    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position)
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position, excludeList=['Contact'])
     # there is a tag in the test file which does not appear in the train file
     # so the dictionaries have to be updated in order not to get an error
-    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position)
-    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position)
+    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position, excludeList=['Contact'])
+    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position, excludeList=['Contact'])
     for tag in dev_label_dicts[0]:
         if tag not in events_label2Idx:
             events_label2Idx[tag] = len(events_label2Idx)

@@ -63,9 +63,9 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
 
     # ----- WORDS ----- #
     # get words from sentences
-    word_column_train = filterColumn(train_sentences, word_position)
-    word_column_dev = filterColumn(dev_sentences, word_position)
-    word_column_test = filterColumn(test_sentences, word_position)
+    word_column_train = DatasetExtender.filterColumn(train_sentences, word_position)
+    word_column_dev = DatasetExtender.filterColumn(dev_sentences, word_position)
+    word_column_test = DatasetExtender.filterColumn(test_sentences, word_position)
 
     # convert them to an index of the word embedding
     words_train = GermEvalReader.convertValue2Idx(word_column_train, word2Idx, GermEvalReader.wordConverter)
@@ -80,9 +80,9 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
     # ----- LABELS ----- #
 
     # get labels from sentences
-    label_column_train = filterColumn(train_sentences, ext_label_position)
-    label_column_dev = filterColumn(dev_sentences, ext_label_position)
-    label_column_test = filterColumn(test_sentences, ext_label_position)
+    label_column_train = DatasetExtender.filterColumn(train_sentences, ext_label_position)
+    label_column_dev = DatasetExtender.filterColumn(dev_sentences, ext_label_position)
+    label_column_test = DatasetExtender.filterColumn(test_sentences, ext_label_position)
 
     # create dictionaries
     events_label2Idx, events_idx2Label = DatasetExtender.getDict(label_column_train)
@@ -110,23 +110,23 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
     events_test_casing_x = GermEvalReader.createNumpyArray(casing_test, windowSize, case2Idx)
 
     # ----- POS ----- #
-    events_train_pos_x, events_dev_pos_x, events_test_pos_x, events_pos2Idx = createNumpyArraysForFeature(train_sentences, dev_sentences, test_sentences, ext_pos_position, GermEvalReader.wordConverter, windowSize)
+    events_train_pos_x, events_dev_pos_x, events_test_pos_x, events_pos2Idx = DatasetExtender.createNumpyArraysForFeature(train_sentences, dev_sentences, test_sentences, ext_pos_position, GermEvalReader.wordConverter, windowSize)
 
     # ------ NER ------ #
-    events_train_ner_x, events_dev_ner_x, events_test_ner_x, events_ner2Idx = createNumpyArraysForFeature(train_sentences,
+    events_train_ner_x, events_dev_ner_x, events_test_ner_x, events_ner2Idx = DatasetExtender.createNumpyArraysForFeature(train_sentences,
                                                                                           dev_sentences, test_sentences,
                                                                                           ext_ner_position,
                                                                                           GermEvalReader.wordConverter,
                                                                                           windowSize)
     # ------ CHUNKING ------ #
-    events_train_chunking_x, events_dev_chunking_x, events_test_chunking_x, events_chunking2Idx = createNumpyArraysForFeature(train_sentences,
+    events_train_chunking_x, events_dev_chunking_x, events_test_chunking_x, events_chunking2Idx = DatasetExtender.createNumpyArraysForFeature(train_sentences,
                                                                                           dev_sentences, test_sentences,
                                                                                           ext_chunking_position,
                                                                                           GermEvalReader.wordConverter,
                                                                                           windowSize)
     
     # ----- ECB PLUS ED ----- #
-    events_train_ecb_x, events_dev_ecb_x, events_test_ecb_x, events_ecb2Idx = createNumpyArraysForFeature(
+    events_train_ecb_x, events_dev_ecb_x, events_test_ecb_x, events_ecb2Idx = DatasetExtender.createNumpyArraysForFeature(
         train_sentences,
         dev_sentences, test_sentences,
         ext_ecb_position,
@@ -134,7 +134,7 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
         windowSize)
     
     # ----- TAC 2015 ED ----- #
-    events_train_tac_x, events_dev_tac_x, events_test_tac_x, events_tac2Idx = createNumpyArraysForFeature(
+    events_train_tac_x, events_dev_tac_x, events_test_tac_x, events_tac2Idx = DatasetExtender.createNumpyArraysForFeature(
         train_sentences,
         dev_sentences, test_sentences,
         ext_tac_position,
@@ -142,7 +142,7 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
         windowSize)
     
     # ----- TEMPEVAL 3 ED ----- #
-    events_train_tempeval_x, events_dev_tempeval_x, events_test_tempeval_x, events_tempeval2Idx = createNumpyArraysForFeature(
+    events_train_tempeval_x, events_dev_tempeval_x, events_test_tempeval_x, events_tempeval2Idx = DatasetExtender.createNumpyArraysForFeature(
         train_sentences,
         dev_sentences, test_sentences,
         ext_tempeval_position,
@@ -169,8 +169,6 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
     dicts = [word2Idx, events_pos2Idx, events_ner2Idx, events_chunking2Idx, events_ecb2Idx, events_tac2Idx, events_tempeval2Idx, case2Idx, events_label2Idx, events_idx2Label]
     return [input_train, events_train_y_cat], [input_dev, events_dev_y], [input_test, events_test_y], dicts
 
-def filterColumn(sentences, position):
-    return map(lambda sentence: sentence[:, position], sentences)
 
 def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
     train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
@@ -185,20 +183,3 @@ def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
 
 def getLabelDict():
     return GermEvalReader.getLabelDict(events_trainFile, label_position)
-
-def createNumpyArraysForFeature(train_sentences, dev_sentences, test_sentences, position, converter, windowSize):
-    column_train = filterColumn(train_sentences, position)
-    column_dev = filterColumn(dev_sentences, position)
-    column_test = filterColumn(test_sentences, position)
-
-    label2Idx, Idx2label = DatasetExtender.getDict(column_train, withAddLabels=True)
-
-    train = GermEvalReader.convertValue2Idx(column_train, label2Idx, converter)
-    dev = GermEvalReader.convertValue2Idx(column_dev, label2Idx, converter)
-    test = GermEvalReader.convertValue2Idx(column_test, label2Idx, converter)
-
-    train_x = GermEvalReader.createNumpyArray(train, windowSize, label2Idx)
-    dev_x = GermEvalReader.createNumpyArray(dev, windowSize, label2Idx)
-    test_x = GermEvalReader.createNumpyArray(test, windowSize, label2Idx)
-
-    return train_x, dev_x, test_x, label2Idx

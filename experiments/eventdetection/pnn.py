@@ -72,16 +72,16 @@ def buildAndTrainPNNModel(reader, name_prefix='', learning_params=None, config=[
     return train_scores, dev_scores, test_scores
 
 
-def buildAndTrainAceModel(learning_params=None, config={}):
+def buildAndTrainAceModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(ACEED.readDataset, 'ace_', learning_params=learning_params, config=config)
 
-def buildAndTrainEcbModel(learning_params=None, config={}):
+def buildAndTrainEcbModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(ACEED.readDataset, 'ecb_', learning_params=learning_params, config=config)
 
-def buildAndTrainTacModel(learning_params=None, config={}):
+def buildAndTrainTacModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(ACEED.readDataset, 'tac_', learning_params=learning_params, config=config)
 
-def buildAndTrainTempevalModel(learning_params=None, config={}):
+def buildAndTrainTempevalModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(ACEED.readDataset, 'tempeval_', learning_params=learning_params, config=config)
 
 def run_pnn_exp_with_fixed_params():

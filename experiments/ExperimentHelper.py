@@ -7,7 +7,7 @@ def run_build_model(task, exp, params, build_model_func, score_name,
         train_scores, dev_scores, test_scores = build_model_func(params)
     else:
         train_scores, dev_scores, test_scores = build_model_func(params, transfer_config)
-        transfer_models = '-'.join(sorted(list(transfer_config)))
+        transfer_models = '-'.join(sorted(filter(lambda model: model not in ['words', 'casing'], transfer_config)))
 
     print params
     for (score, sample) in train_scores:

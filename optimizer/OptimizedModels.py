@@ -21,7 +21,7 @@ ud_pos_model_path = 'optimizer/saved_models/best_ud_pos_94.29.hd5'
 ner_model_path = 'optimizer/saved_models/best_ner_87.94.hd5'
 chunking_model_path = 'optimizer/saved_models/best_chunking_90.71.hd5'
 ace_ed_model_path = 'optimizer/saved_models/ace_ed_64.12.hd5'
-tac_ed_model_path = 'optimizer/saved_models/tac_57.42.hd5'
+tac_ed_model_path = 'optimizer/saved_models/tac_57.75.hd5'
 ecb_ed_model_path = 'optimizer/saved_models/ecbplus_ed_78.20.hd5'
 tempeval_ed_model_path = 'optimizer/saved_models/tempeval_ed_82.65.hd5'
 

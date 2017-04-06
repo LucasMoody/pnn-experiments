@@ -1,4 +1,5 @@
 from transfer import TransferUtils
+import numpy as np
 
 def augment_features(input):
     return input
@@ -19,4 +20,15 @@ def apply_coral(datasets):
         X, W = TransferUtils.whiten(source_dataset['train']['input'][0])
         # recolor source
         source_dataset['train']['input'][0] = TransferUtils.recoloring(X, R)
+    return working_ds
+
+def convertToEmbeddingValues(datasets, embeddings):
+    # copy everything so that function is immutable
+    working_ds = list(datasets)
+    working_ds = map(lambda ds: ds.copy(), working_ds)
+
+    for idx, ds in enumerate(datasets):
+        input = ds['train']['input']
+        windows_words = input[0]
+        working_ds[0]['train']['input'][0] = map(lambda window: np.array(map(lambda word: embeddings[word], window)).flatten(), windows_words)
     return working_ds

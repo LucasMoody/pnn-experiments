@@ -1,4 +1,5 @@
 import numpy as np
+from datasets import GermEvalReader
 
 def extendDataset(filename, sentences, extensions):
     overall_word_idx = 0
@@ -27,3 +28,22 @@ def getDict(column, withAddLabels=False):
     idx2Label = {v: k for k, v in label2Idx.items()}
     return label2Idx, idx2Label
 
+def createNumpyArraysForFeature(train_sentences, dev_sentences, test_sentences, position, converter, windowSize):
+    column_train = filterColumn(train_sentences, position)
+    column_dev = filterColumn(dev_sentences, position)
+    column_test = filterColumn(test_sentences, position)
+
+    label2Idx, Idx2label = getDict(column_train, withAddLabels=True)
+
+    train = GermEvalReader.convertValue2Idx(column_train, label2Idx, converter)
+    dev = GermEvalReader.convertValue2Idx(column_dev, label2Idx, converter)
+    test = GermEvalReader.convertValue2Idx(column_test, label2Idx, converter)
+
+    train_x = GermEvalReader.createNumpyArray(train, windowSize, label2Idx)
+    dev_x = GermEvalReader.createNumpyArray(dev, windowSize, label2Idx)
+    test_x = GermEvalReader.createNumpyArray(test, windowSize, label2Idx)
+
+    return train_x, dev_x, test_x, label2Idx
+
+def filterColumn(sentences, position):
+    return map(lambda sentence: sentence[:, position], sentences)

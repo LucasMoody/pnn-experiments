@@ -69,11 +69,10 @@ def extendHelper(reader, word2Idx, case2Idx, best_window_size,
     n_in_x = train_x.shape[1]
     n_in_casing = train_case_x.shape[1]
 
-    # build pos model
     input_layers, inputs = InputBuilder.buildStandardModelInput(
         embeddings, case2Idx, n_in_x, n_in_casing)
     model_pipeline = pipeline_model_builder(
-        input_layers, inputs, window_size=best_window_size)
+        input_layers, inputs)
 
     # predict data
     pred_train = model_pipeline.predict(input_train, verbose=0).argmax(axis=-1)
@@ -90,42 +89,117 @@ def extendHelper(reader, word2Idx, case2Idx, best_window_size,
 
 
 def extendAceED():
-    # ----- labels from pos for ace ----- #
+    # ----- labels from pos  ----- #
     pred_train_labels_for_pos, pred_dev_labels_for_pos, pred_test_labels_for_pos = extendHelper(
         ACEED.readDataset, word2Idx, case2Idx, best_pos_window_size,
         OptimizedModels.getWSJPOSModelGivenInput, WSJPos.getLabelDict())
 
-    # ----- labels from ner for ace ----- #
+    # ----- labels from ner  ----- #
     pred_train_labels_for_ner, pred_dev_labels_for_ner, pred_test_labels_for_ner = extendHelper(
         ACEED.readDataset, word2Idx, case2Idx, best_ner_window_size,
         OptimizedModels.getNERModelGivenInput, CoNLLNer.getLabelDict())
 
-    # ----- labels from chunking for ace ----- #
+    # ----- labels from chunking  ----- #
     pred_train_labels_for_chunking, pred_dev_labels_for_chunking, pred_test_labels_for_chunking = extendHelper(
         ACEED.readDataset, word2Idx, case2Idx, best_chunking_window_size,
         OptimizedModels.getChunkingModelGivenInput, CoNLLChunking.getLabelDict())
 
-    # ----- labels from tac for ace ----- #
-    pred_train_labels_for_tac, pred_dev_labels_for_tac, pred_test_labels_for_tac = extendHelper(
-        ACEED.readDataset, word2Idx, case2Idx, best_tac_window_size,
-        OptimizedModels.getTacEDModelGivenInput, TACED.getLabelDict())
 
-    # ----- labels from ecb for ace ----- #
+    # ----- labels from ecb  ----- #
     pred_train_labels_for_ecb, pred_dev_labels_for_ecb, pred_test_labels_for_ecb = extendHelper(
         ACEED.readDataset, word2Idx, case2Idx, best_ecb_window_size,
         OptimizedModels.getEcbEDModelGivenInput, ECBPlusED.getLabelDict())
 
-    # ----- labels from tempeval for ace ----- #
+    # ----- labels from tac  ----- #
+    pred_train_labels_for_tac, pred_dev_labels_for_tac, pred_test_labels_for_tac = extendHelper(
+        ACEED.readDataset, word2Idx, case2Idx, best_tac_window_size,
+        OptimizedModels.getTacEDModelGivenInput, TACED.getLabelDict())
+
+    # ----- labels from tempeval  ----- #
     pred_train_labels_for_tempeval, pred_dev_labels_for_tempeval, pred_test_labels_for_tempeval = extendHelper(
         ACEED.readDataset, word2Idx, case2Idx, best_tempeval_window_size,
         OptimizedModels.getTempevalEDModelGivenInput, TempevalED.getLabelDict())
 
-    train_extensions = [pred_train_labels_for_pos, pred_train_labels_for_ner, pred_train_labels_for_chunking, pred_train_labels_for_tac, pred_train_labels_for_ecb, pred_train_labels_for_tempeval]
-    dev_extensions = [pred_dev_labels_for_pos, pred_dev_labels_for_ner, pred_dev_labels_for_chunking, pred_dev_labels_for_tac, pred_dev_labels_for_ecb, pred_dev_labels_for_tempeval]
-    test_extensions = [pred_test_labels_for_pos, pred_test_labels_for_ner, pred_test_labels_for_chunking, pred_test_labels_for_tac, pred_test_labels_for_ecb, pred_test_labels_for_tempeval]
+    train_extensions = [pred_train_labels_for_pos, pred_train_labels_for_ner, pred_train_labels_for_chunking, pred_train_labels_for_ecb, pred_train_labels_for_tac, pred_train_labels_for_tempeval]
+    dev_extensions = [pred_dev_labels_for_pos, pred_dev_labels_for_ner, pred_dev_labels_for_chunking, pred_dev_labels_for_ecb, pred_dev_labels_for_tac, pred_dev_labels_for_tempeval]
+    test_extensions = [pred_test_labels_for_pos, pred_test_labels_for_ner, pred_test_labels_for_chunking, pred_test_labels_for_ecb, pred_test_labels_for_tac, pred_test_labels_for_tempeval]
 
     ACEED.extendDataset("./datasets/ace_ed/data/events.conllu",
                         train_extensions, dev_extensions, test_extensions)
+
+
+def extendED(config, dataset):
+    train_extensions = []
+    dev_extensions = []
+    test_extensions = []
+
+    for ds in config:
+
+        if 'pos' == ds:
+            # ----- labels from pos  ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx, best_pos_window_size,
+                OptimizedModels.getWSJPOSModelGivenInput, WSJPos.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+
+        elif 'ner' == ds:
+            # ----- labels from ner  ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx, best_ner_window_size,
+                OptimizedModels.getNERModelGivenInput, CoNLLNer.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+
+        elif 'chunking' == ds:
+            # ----- labels from chunking  ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx, best_chunking_window_size,
+                OptimizedModels.getChunkingModelGivenInput, CoNLLChunking.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+            
+        elif 'ace' == ds:
+            # ----- labels from ace ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx, best_ace_window_size,
+                OptimizedModels.getAceEDModelGivenInput, ACEED.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+
+        elif 'ecb' == ds:
+            # ----- labels from ecb  ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx, best_ecb_window_size,
+                OptimizedModels.getEcbEDModelGivenInput, ECBPlusED.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+
+            
+        elif 'tac' == ds:
+            # ----- labels from tac  ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx, best_tac_window_size,
+                OptimizedModels.getTacEDModelGivenInput, TACED.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+
+        elif 'tempeval' == ds:
+            # ----- labels from tempeval  ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx, best_tempeval_window_size,
+                OptimizedModels.getTempevalEDModelGivenInput, TempevalED.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+
+        dataset.extendDataset(train_extensions, dev_extensions, test_extensions)
 
 
 def buildAndTrainAceModel(learning_params=None, config=[]):

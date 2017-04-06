@@ -104,6 +104,7 @@ def buildAndTrainMultiTaskModelWithCoral(learning_params = None, config=[]):
         params = learning_params
 
     datasets = getDataForConfig(params, config)
+    datasets = InputTransformer.convertToEmbeddingValues(datasets, embeddings)
     datasets = InputTransformer.apply_coral(datasets)
     # calculate input dimensions
     # take the first dataset for it, because model input looks the same for all
