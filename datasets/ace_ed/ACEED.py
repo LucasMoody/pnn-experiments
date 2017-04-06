@@ -7,9 +7,11 @@ events_trainFile = 'datasets/ace_ed/data/train.txt'
 events_devFile = 'datasets/ace_ed/data/dev.txt'
 events_testFile = 'datasets/ace_ed/data/test.txt'
 
-trainFileExt = 'datasets/ace_ed/data/events_train_ext.conllu'
-devFileExt = 'datasets/ace_ed/data/events_dev_ext.conllu'
-testFileExt = 'datasets/ace_ed/data/events_test_ext.conllu'
+trainFileExt = 'datasets/ace_ed/data/train_ext.conllu'
+devFileExt = 'datasets/ace_ed/data/dev_ext.conllu'
+testFileExt = 'datasets/ace_ed/data/test_ext.conllu'
+
+directory = 'datasets/ace_ed/data/'
 
 word_position = 0
 label_position = 4
@@ -170,16 +172,14 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
     return [input_train, events_train_y_cat], [input_dev, events_dev_y], [input_test, events_test_y], dicts
 
 
-def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
+def extendDataset(train_extensions, dev_extensions, test_extensions):
     train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
     dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
     test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
-    filename, file_extension = path.splitext(filename)
-
-    DatasetExtender.extendDataset("{0}_train_ext{1}".format(filename, file_extension), train_sentences, train_extensions)
-    DatasetExtender.extendDataset("{0}_dev_ext{1}".format(filename, file_extension), dev_sentences, dev_extensions)
-    DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
+    DatasetExtender.extendDataset("{0}train_ext.conllu".format(directory), train_sentences, train_extensions)
+    DatasetExtender.extendDataset("{0}dev_ext.conllu".format(directory), dev_sentences, dev_extensions)
+    DatasetExtender.extendDataset("{0}test_ext.conllu".format(directory), test_sentences, test_extensions)
 
 def getLabelDict():
     return GermEvalReader.getLabelDict(events_trainFile, label_position)

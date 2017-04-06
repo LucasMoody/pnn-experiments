@@ -7,9 +7,11 @@ events_trainFile = 'datasets/ecbplus_ed/data/train.txt'
 events_devFile = 'datasets/ecbplus_ed/data/dev.txt'
 events_testFile = 'datasets/ecbplus_ed/data/test.txt'
 
-trainFileExt = 'datasets/ecbplus_ed/data/events_train_ext.conllu'
-devFileExt = 'datasets/ecbplus_ed/data/events_dev_ext.conllu'
-testFileExt = 'datasets/ecbplus_ed/data/events_test_ext.conllu'
+trainFileExt = 'datasets/ecbplus_ed/data/train_ext.conllu'
+devFileExt = 'datasets/ecbplus_ed/data/dev_ext.conllu'
+testFileExt = 'datasets/ecbplus_ed/data/test_ext.conllu'
+
+directory = 'datasets/ecbplus_ed/data/'
 
 word_position = 0
 label_position = 1
@@ -189,16 +191,14 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
 def filterColumn(sentences, position):
     return map(lambda sentence: sentence[:, position], sentences)
 
-def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
+def extendDataset(train_extensions, dev_extensions, test_extensions):
     train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
     dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
     test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
-    filename, file_extension = path.splitext(filename)
-
-    DatasetExtender.extendDataset("{0}_train_ext{1}".format(filename, file_extension), train_sentences, train_extensions)
-    DatasetExtender.extendDataset("{0}_dev_ext{1}".format(filename, file_extension), dev_sentences, dev_extensions)
-    DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
+    DatasetExtender.extendDataset("{0}train_ext.conllu".format(directory), train_sentences, train_extensions)
+    DatasetExtender.extendDataset("{0}dev_ext.conllu".format(directory), dev_sentences, dev_extensions)
+    DatasetExtender.extendDataset("{0}test_ext.conllu".format(directory), test_sentences, test_extensions)
 
 def getLabelDict():
     return GermEvalReader.getLabelDict(events_trainFile, label_position)

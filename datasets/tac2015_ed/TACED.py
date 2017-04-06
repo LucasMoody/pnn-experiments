@@ -7,9 +7,11 @@ events_trainFile = 'datasets/tac2015_ed/data/train.txt'
 events_devFile = 'datasets/tac2015_ed/data/dev.txt'
 events_testFile = 'datasets/tac2015_ed/data/test.txt'
 
-trainFileExt = 'datasets/tac2015_ed/data/events_train_ext.conllu'
-devFileExt = 'datasets/tac2015_ed/data/events_dev_ext.conllu'
-testFileExt = 'datasets/tac2015_ed/data/events_test_ext.conllu'
+trainFileExt = 'datasets/tac2015_ed/data/train_ext.conllu'
+devFileExt = 'datasets/tac2015_ed/data/dev_ext.conllu'
+testFileExt = 'datasets/tac2015_ed/data/test_ext.conllu'
+
+directory = 'datasets/tac2015_ed/data/'
 
 word_position = 1
 label_position = 3
@@ -111,6 +113,17 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
 
     # create dictionaries
     events_label2Idx, events_idx2Label = DatasetExtender.getDict(label_column_train)
+    # there is a tag in the test file which does not appear in the train file
+    # so the dictionaries have to be updated in order not to get an error
+    dev_label_dicts = DatasetExtender.getDict(label_column_dev)
+    test_label_dicts = DatasetExtender.getDict(label_column_test)
+    for tag in dev_label_dicts[0]:
+        if tag not in events_label2Idx:
+            events_label2Idx[tag] = len(events_label2Idx)
+    for tag in test_label_dicts[0]:
+        if tag not in events_label2Idx:
+            events_label2Idx[tag] = len(events_label2Idx)
+    events_idx2Label = {v: k for k, v in events_label2Idx.items()}
 
     # convert labels into index
     labels_train = GermEvalReader.convertValue2Idx(label_column_train, events_label2Idx, GermEvalReader.labelConverter)
@@ -197,19 +210,42 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
                                                            events_dev_tempeval_x.shape[0],
                                                            events_test_tempeval_x.shape[0], len(events_tempeval2Idx))
 
+    # ----- PREPARE RESULT ----- #
+    input_train = [events_train_x, events_train_casing_x, events_train_pos_x, events_train_ner_x,
+                   events_train_chunking_x, events_train_ace_x, events_train_ecb_x, events_train_tempeval_x]
+    input_dev = [events_dev_x, events_dev_casing_x, events_dev_pos_x, events_dev_ner_x, events_dev_chunking_x,
+                 events_dev_ace_x, events_dev_ecb_x, events_dev_tempeval_x]
+    input_test = [events_test_x, events_test_casing_x, events_test_pos_x, events_test_ner_x, events_test_chunking_x,
+                  events_test_ace_x, events_test_ecb_x, events_test_tempeval_x]
+
+    events_train_y_cat = np_utils.to_categorical(events_train_y, len(events_label2Idx))
+
+    dicts = [word2Idx, events_pos2Idx, events_ner2Idx, events_chunking2Idx, events_ace2Idx, events_ecb2Idx,
+             events_tempeval2Idx, case2Idx, events_label2Idx, events_idx2Label]
+    return [input_train, events_train_y_cat], [input_dev, events_dev_y], [input_test, events_test_y], dicts
+
 def filterColumn(sentences, position):
     return map(lambda sentence: sentence[:, position], sentences)
 
-def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
+def extendDataset(train_extensions, dev_extensions, test_extensions):
     train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
     dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
     test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
-    filename, file_extension = path.splitext(filename)
+    # exclude all Contact labels as they are badly annotated
+    train_sentences = filter(
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+        train_sentences)
+    dev_sentences = filter(
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+        dev_sentences)
+    test_sentences = filter(
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+        test_sentences)
 
-    DatasetExtender.extendDataset("{0}_train_ext{1}".format(filename, file_extension), train_sentences, train_extensions)
-    DatasetExtender.extendDataset("{0}_dev_ext{1}".format(filename, file_extension), dev_sentences, dev_extensions)
-    DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
+    DatasetExtender.extendDataset("{0}train_ext.conllu".format(directory), train_sentences, train_extensions)
+    DatasetExtender.extendDataset("{0}dev_ext.conllu".format(directory), dev_sentences, dev_extensions)
+    DatasetExtender.extendDataset("{0}test_ext.conllu".format(directory), test_sentences, test_extensions)
 
 def getLabelDict():
     events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position, excludeList=['Contact'])
