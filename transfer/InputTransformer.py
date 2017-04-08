@@ -1,8 +1,13 @@
 from transfer import TransferUtils
 import numpy as np
 
-def augment_features(input):
-    return input
+def augment_features(datasets):# copy everything so that function is immutable
+    working_ds = list(datasets)
+    working_ds = map(lambda ds: ds.copy(), working_ds)
+    no_feat = len(datasets)
+    for idx, source_dataset in enumerate(working_ds):
+        ''
+    return working_ds
 
 def apply_coral(datasets):
     # copy everything so that function is immutable

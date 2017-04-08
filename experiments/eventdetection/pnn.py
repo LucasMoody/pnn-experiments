@@ -1,5 +1,8 @@
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
 from datasets.ace_ed import ACEED
+from datasets.ecbplus_ed import ECBPlusED
+from datasets.tac2015_ed import TACED
+from datasets.tempeval3_ed import TempevalED
 from models import Trainer, Senna
 from models import InputBuilder
 from transfer import TransferModelBuilder
@@ -108,7 +111,7 @@ def buildAndTrainAceModel(learning_params=None, config=[]):
 
 def buildAndTrainEcbModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(
-        ACEED.readDataset,
+        ECBPlusED.readDataset,
         'ecb_',
         learning_params=learning_params,
         config=config)
@@ -116,7 +119,7 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
 
 def buildAndTrainTacModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(
-        ACEED.readDataset,
+        TACED.readDataset,
         'tac_',
         learning_params=learning_params,
         config=config)
@@ -124,7 +127,7 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
 
 def buildAndTrainTempevalModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(
-        ACEED.readDataset,
+        TempevalED.readDataset,
         'tempeval_',
         learning_params=learning_params,
         config=config)
