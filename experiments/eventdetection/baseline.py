@@ -10,17 +10,6 @@ from parameters import parameter_space
 import config
 from experiments import ExperimentHelper
 
-# settings
-default_params = {
-    'update_word_embeddings': False,
-    'window_size': 3,
-    'batch_size': 128,
-    'hidden_dims': 100,
-    'activation': 'relu',
-    'dropout': 0.3,
-    'optimizer': 'adam'
-}
-
 number_of_epochs = config.number_of_epochs
 
 # ----- metric results -----#
@@ -45,10 +34,7 @@ word2Idx = Embeddings.word2Idx
 
 
 def buildBaselineModel(reader, name_prefix='', learning_params=None):
-    if learning_params is None:
-        params = default_params
-    else:
-        params = learning_params
+    params = learning_params
 
     [input_train, train_y_cat], [input_dev,
                                  dev_y], [input_test, test_y], dicts = reader(

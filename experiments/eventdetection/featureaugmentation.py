@@ -9,10 +9,12 @@ from datasets.tempeval3_ed import TempevalED
 from datasets.ecbplus_ed import ECBPlusED
 from models import Trainer, InputBuilder, Senna
 from measurements import Measurer
+from transfer import InputTransformer
 import random
 from parameters import parameter_space
 import config
 from experiments import ExperimentHelper
+import numpy as np
 
 number_of_epochs = config.number_of_epochs
 
@@ -34,6 +36,8 @@ n_in_case = len(case2Idx)
 
 # Read in embeddings
 embeddings = Embeddings.embeddings
+# add a 0 row to the embeddings
+embeddings = np.vstack([embeddings, np.zeros((1, embeddings.shape[1]))])
 word2Idx = Embeddings.word2Idx
 
 
@@ -120,10 +124,12 @@ def datasetFormat(name, dataset):
     }
 
 
-def buildAndTrainMultiTaskModel(learning_params, config=[]):
+def buildAndTrainFeatureAugmentationModel(learning_params, config=[]):
     params = learning_params
 
     datasets = getDataForConfig(params, config)
+    datasets = InputTransformer.augment_features(datasets, len(embeddings) - 1, case2Idx['other'])
+
     # calculate input dimensions
     # take the first dataset for it, because model input looks the same for all
     first_dataset = datasets[0]
@@ -203,7 +209,7 @@ def run_baseline_exp_with_fixed_params():
 
         if 'tempeval' in config.tasks:
             runTempevalExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
+                           ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
             runTempevalExp(fixed_params, ['pos', 'ner', 'chunking'])
             runTempevalExp(fixed_params, ['pos', 'ner'])
             runTempevalExp(fixed_params, ['pos', 'chunking'])
@@ -241,9 +247,9 @@ def run_baseline_exp_with_fixed_params():
 def runAceExp(params, config):
     ExperimentHelper.run_build_model(
         'ace',
-        'multitask',
+        'featureaugmentation',
         params,
-        buildAndTrainMultiTaskModel,
+        buildAndTrainFeatureAugmentationModel,
         'f1',
         transfer_config=['ace'] + config)
 
@@ -251,9 +257,9 @@ def runAceExp(params, config):
 def runEcbExp(params, config):
     ExperimentHelper.run_build_model(
         'ecb',
-        'multitask',
+        'featureaugmentation',
         params,
-        buildAndTrainMultiTaskModel,
+        buildAndTrainFeatureAugmentationModel,
         'f1',
         transfer_config=['ecb'] + config)
 
@@ -261,9 +267,9 @@ def runEcbExp(params, config):
 def runTacExp(params, config):
     ExperimentHelper.run_build_model(
         'tac',
-        'multitask',
+        'featureaugmentation',
         params,
-        buildAndTrainMultiTaskModel,
+        buildAndTrainFeatureAugmentationModel,
         'f1',
         transfer_config=['tac'] + config)
 
@@ -271,9 +277,9 @@ def runTacExp(params, config):
 def runTempevalExp(params, config):
     ExperimentHelper.run_build_model(
         'tempeval',
-        'multitask',
+        'featureaugmentation',
         params,
-        buildAndTrainMultiTaskModel,
+        buildAndTrainFeatureAugmentationModel,
         'f1',
         transfer_config=['tempeval'] + config)
 

@@ -27,4 +27,4 @@ def samplePNNRanges(train, no_ranges):
 
 def sampleSimplePNNRanges(train, no_ranges):
     #return [500, 1000, 2000, 8000, 20000]
-    return [10000, 20000]
+    return [10000, 20000, 30000]

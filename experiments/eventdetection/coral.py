@@ -114,7 +114,7 @@ def buildAndTrainMultiTaskModelWithCoral(learning_params = None, config=[]):
     n_in_case = train_input[1].shape[1] # train_case is the second element of train input
 
     # ----- Build Model ----- #
-    input_layers, inputs = InputBuilder.buildStandardModelInput(embeddings, case2Idx, n_in_x, n_in_case,
+    input_layers, inputs = InputBuilder.buildCoralModelInput(embeddings, case2Idx, n_in_x, n_in_case,
                                                                 params['update_word_embeddings'])
     model_info = map(lambda data: (data['name'], data['train']['y'].shape[1]),datasets)
 

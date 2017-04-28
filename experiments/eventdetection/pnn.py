@@ -12,17 +12,6 @@ from experiments import ExperimentHelper
 from parameters import parameter_space
 import random
 
-# settings
-default_params = {
-    'update_word_embeddings': False,
-    'window_size': 3,
-    'batch_size': 128,
-    'hidden_dims': 100,
-    'activation': 'tanh',
-    'dropout': 0.3,
-    'optimizer': 'adam'
-}
-
 number_of_epochs = config.number_of_epochs
 
 # ----- metric results -----#
@@ -49,10 +38,7 @@ def buildAndTrainPNNModel(reader,
                           name_prefix='',
                           learning_params=None,
                           config=[]):
-    if learning_params is None:
-        params = default_params
-    else:
-        params = learning_params
+    params = learning_params
 
     print 'PNN config:', config
 
@@ -150,244 +136,114 @@ def run_pnn_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ace' in config.tasks:
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=[
-                    'pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'
-                ])
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=['ecb', 'tac', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=['ecb', 'tac'])
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=['ecb', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=['tac', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=['ecb'])
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=['tac'])
-            ExperimentHelper.run_build_model(
-                'ace',
-                'pnn',
-                fixed_params,
-                buildAndTrainAceModel,
-                'f1',
-                transfer_config=['tempeval'])
-
-        if 'ecb' in config.tasks:
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=[
-                    'pos', 'ner', 'chunking', 'ace', 'tac', 'tempeval'
-                ])
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=['ace', 'tac', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=['ace', 'tac'])
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=['ace', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=['tac', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=['ace'])
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=['tac'])
-            ExperimentHelper.run_build_model(
-                'ecb',
-                'pnn',
-                fixed_params,
-                buildAndTrainEcbModel,
-                'f1',
-                transfer_config=['tempeval'])
+            runAceExp(fixed_params,
+                      ['pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'])
+            runAceExp(fixed_params, ['pos', 'ner', 'chunking'])
+            runAceExp(fixed_params, ['pos', 'ner'])
+            runAceExp(fixed_params, ['pos', 'chunking'])
+            runAceExp(fixed_params, ['ner', 'chunking'])
+            runAceExp(fixed_params, ['pos'])
+            runAceExp(fixed_params, ['ner'])
+            runAceExp(fixed_params, ['chunking'])
+            runAceExp(fixed_params, ['ecb', 'tac', 'tempeval'])
+            runAceExp(fixed_params, ['ecb', 'tac'])
+            runAceExp(fixed_params, ['tac', 'tempeval'])
+            runAceExp(fixed_params, ['ecb', 'tempeval'])
+            runAceExp(fixed_params, ['ecb'])
+            runAceExp(fixed_params, ['tac'])
+            runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=[
-                    'pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'
-                ])
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=['ace', 'ecb', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=['ace', 'ecb'])
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=['ecb', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=['ace', 'tempeval'])
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=['ecb'])
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=['ace'])
-            ExperimentHelper.run_build_model(
-                'tac',
-                'pnn',
-                fixed_params,
-                buildAndTrainTacModel,
-                'f1',
-                transfer_config=['tempeval'])
+            runTacExp(fixed_params,
+                      ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'])
+            runTacExp(fixed_params, ['pos', 'ner', 'chunking'])
+            runTacExp(fixed_params, ['pos', 'ner'])
+            runTacExp(fixed_params, ['pos', 'chunking'])
+            runTacExp(fixed_params, ['ner', 'chunking'])
+            runTacExp(fixed_params, ['pos'])
+            runTacExp(fixed_params, ['ner'])
+            runTacExp(fixed_params, ['chunking'])
+            runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
+            runTacExp(fixed_params, ['ace', 'ecb'])
+            runTacExp(fixed_params, ['ace', 'tempeval'])
+            runTacExp(fixed_params, ['ecb', 'tempeval'])
+            runTacExp(fixed_params, ['ecb'])
+            runTacExp(fixed_params, ['ace'])
+            runTacExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=[
-                    'pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'
-                ])
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=['ace', 'ecb', 'tac'])
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=['ecb', 'tac'])
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=['ace', 'ecb'])
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=['ace', 'tac'])
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=['ecb'])
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=['tac'])
-            ExperimentHelper.run_build_model(
-                'tempeval',
-                'pnn',
-                fixed_params,
-                buildAndTrainTempevalModel,
-                'f1',
-                transfer_config=['ace'])
+            runTempevalExp(fixed_params,
+                      ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
+            runTempevalExp(fixed_params, ['pos', 'ner', 'chunking'])
+            runTempevalExp(fixed_params, ['pos', 'ner'])
+            runTempevalExp(fixed_params, ['pos', 'chunking'])
+            runTempevalExp(fixed_params, ['ner', 'chunking'])
+            runTempevalExp(fixed_params, ['pos'])
+            runTempevalExp(fixed_params, ['ner'])
+            runTempevalExp(fixed_params, ['chunking'])
+            runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
+            runTempevalExp(fixed_params, ['ace', 'ecb'])
+            runTempevalExp(fixed_params, ['ace', 'tac'])
+            runTempevalExp(fixed_params, ['ecb', 'tac'])
+            runTempevalExp(fixed_params, ['ecb'])
+            runTempevalExp(fixed_params, ['ace'])
+            runTempevalExp(fixed_params, ['tac'])
 
+        if 'ecb' in config.tasks:
+            runEcbExp(fixed_params,
+                      ['pos', 'ner', 'chunking', 'ace', 'tac', 'tempeval'])
+            runEcbExp(fixed_params, ['pos', 'ner', 'chunking'])
+            runEcbExp(fixed_params, ['pos', 'ner'])
+            runEcbExp(fixed_params, ['pos', 'chunking'])
+            runEcbExp(fixed_params, ['ner', 'chunking'])
+            runEcbExp(fixed_params, ['pos'])
+            runEcbExp(fixed_params, ['ner'])
+            runEcbExp(fixed_params, ['chunking'])
+            runEcbExp(fixed_params, ['ace', 'tac', 'tempeval'])
+            runEcbExp(fixed_params, ['ace', 'tac'])
+            runEcbExp(fixed_params, ['tac', 'tempeval'])
+            runEcbExp(fixed_params, ['ace', 'tempeval'])
+            runEcbExp(fixed_params, ['ace'])
+            runEcbExp(fixed_params, ['tac'])
+            runEcbExp(fixed_params, ['tempeval'])
+
+def runAceExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ace',
+        'pnn',
+        params,
+        buildAndTrainAceModel,
+        'f1',
+        transfer_config=config)
+
+
+def runEcbExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ecb',
+        'pnn',
+        params,
+        buildAndTrainEcbModel,
+        'f1',
+        transfer_config=config)
+
+
+def runTacExp(params, config):
+    ExperimentHelper.run_build_model(
+        'tac',
+        'pnn',
+        params,
+         buildAndTrainTacModel,
+        'f1',
+        transfer_config=config)
+
+
+def runTempevalExp(params, config):
+    ExperimentHelper.run_build_model(
+        'tempeval',
+        'pnn',
+        params,
+        buildAndTrainTempevalModel,
+        'f1',
+        transfer_config=config)
 
 run_pnn_exp_with_fixed_params()
