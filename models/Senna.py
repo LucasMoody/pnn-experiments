@@ -261,8 +261,13 @@ def buildMultiTaskModelGivenInput(input_layers, inputs, params, model_info):
     hidden_dropout = Dropout(params['dropout'])(hidden)
 
     for name, n_out in model_info:
+        second_hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name + 'second hidden')
+        second_hidden = second_hidden_layer(hidden_dropout)
+
+        second_hidden_dropout = Dropout(params['dropout'])(second_hidden)
+
         output_layer = Dense(output_dim=n_out, activation='softmax', name=name + 'output')
-        output = output_layer(hidden_dropout)
+        output = output_layer(second_hidden_dropout)
 
         model = Model(input=inputs, output=[output])
 
