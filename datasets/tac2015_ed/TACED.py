@@ -90,9 +90,9 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
 
     # ----- WORDS ----- #
     # get words from sentences
-    word_column_train = DatasetExtender.filterColumn(train_sentences, word_position)
-    word_column_dev = DatasetExtender.filterColumn(dev_sentences, word_position)
-    word_column_test = DatasetExtender.filterColumn(test_sentences, word_position)
+    word_column_train = DatasetExtender.filterColumn(train_sentences, ext_word_position)
+    word_column_dev = DatasetExtender.filterColumn(dev_sentences, ext_word_position)
+    word_column_test = DatasetExtender.filterColumn(test_sentences, ext_word_position)
 
     # convert them to an index of the word embedding
     words_train = GermEvalReader.convertValue2Idx(word_column_train, word2Idx, GermEvalReader.wordConverter)
@@ -234,13 +234,13 @@ def extendDataset(train_extensions, dev_extensions, test_extensions):
 
     # exclude all Contact labels as they are badly annotated
     train_sentences = filter(
-        lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False),
         train_sentences)
     dev_sentences = filter(
-        lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False),
         dev_sentences)
     test_sentences = filter(
-        lambda s: not reduce(lambda result, word: result or 'Contact' in word[ext_label_position], s, False),
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False),
         test_sentences)
 
     DatasetExtender.extendDataset("{0}train_ext.conllu".format(directory), train_sentences, train_extensions)

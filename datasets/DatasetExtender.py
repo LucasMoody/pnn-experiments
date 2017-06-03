@@ -14,6 +14,7 @@ def extendDataset(filename, sentences, extensions):
                 f.write("\n")
                 overall_word_idx += 1
             f.write("\n")
+    print "{} number of words".format(overall_word_idx)
 
 def getDict(column, withAddLabels=False):
     # join sentences

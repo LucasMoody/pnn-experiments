@@ -79,28 +79,28 @@ def buildBaselineModel(reader, name_prefix='', learning_params=None):
 def buildAndTrainAceEDModel(learning_params=None):
     return buildBaselineModel(
         ACEED.readDataset,
-        name_prefix='ace_ed_',
+        name_prefix='ace_',
         learning_params=learning_params)
 
 
 def buildAndTrainTacEDModel(learning_params=None):
     return buildBaselineModel(
         TACED.readDataset,
-        name_prefix='tac_ed_',
+        name_prefix='tac_',
         learning_params=learning_params)
 
 
 def buildAndTrainTempevalEDModel(learning_params=None):
     return buildBaselineModel(
         TempevalED.readDataset,
-        name_prefix='tempeval_ed_',
+        name_prefix='tempeval_',
         learning_params=learning_params)
 
 
 def buildAndTrainECBPlusEDModel(learning_params=None):
     return buildBaselineModel(
         ECBPlusED.readDataset,
-        name_prefix='ecb_ed_',
+        name_prefix='ecb_',
         learning_params=learning_params)
 
 
@@ -125,20 +125,18 @@ def run_baseline_exp_with_fixed_params():
                                              buildAndTrainAceEDModel, 'f1',
                                              'none')
 
+        if 'ecb' in config.tasks:
+            ExperimentHelper.run_build_model('ecb', 'baseline', fixed_params,
+                                             buildAndTrainECBPlusEDModel,
+                                             'f1', 'none')
+
         if 'tac' in config.tasks:
             ExperimentHelper.run_build_model('tac', 'baseline', fixed_params,
                                              buildAndTrainTacEDModel, 'f1',
                                              'none')
 
         if 'tempeval' in config.tasks:
-            ExperimentHelper.run_build_model(
-                'tempeval', 'baseline', fixed_params,
+            ExperimentHelper.run_build_model('tempeval', 'baseline', fixed_params,
                 buildAndTrainTempevalEDModel, 'f1', 'none')
-
-        if 'ecb' in config.tasks:
-            ExperimentHelper.run_build_model('ecb', 'baseline', fixed_params,
-                                             buildAndTrainTempevalEDModel,
-                                             'f1', 'none')
-
 
 run_baseline_exp_with_fixed_params()

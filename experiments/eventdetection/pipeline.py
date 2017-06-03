@@ -364,7 +364,7 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
     input_layers_merged = merge(input_layers, mode='concat')
 
     model = Senna.buildModelGivenInput(
-        input_layers_merged, inputs, params, n_out, name_prefix='ace_')
+        input_layers_merged, inputs, params, n_out, name_prefix='ecb_')
 
     # SELECT FEATURES WHICH APPEAR IN THE CONFIG
     indices = sorted(
@@ -659,7 +659,7 @@ def run_models_as_input_exp_with_fixed_params():
 
         if 'tempeval' in config.tasks:
             runTempevalExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
+                           ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
             runTempevalExp(fixed_params, ['pos', 'ner', 'chunking'])
             runTempevalExp(fixed_params, ['pos', 'ner'])
             runTempevalExp(fixed_params, ['pos', 'chunking'])
@@ -693,6 +693,7 @@ def run_models_as_input_exp_with_fixed_params():
             runEcbExp(fixed_params, ['tac'])
             runEcbExp(fixed_params, ['tempeval'])
 
+
 def runAceExp(params, config):
     ExperimentHelper.run_build_model(
         'ace',
@@ -701,6 +702,7 @@ def runAceExp(params, config):
         buildAndTrainAceModel,
         'f1',
         transfer_config=['words', 'casing'] + config)
+
 
 def runEcbExp(params, config):
     ExperimentHelper.run_build_model(
@@ -711,6 +713,7 @@ def runEcbExp(params, config):
         'f1',
         transfer_config=['words', 'casing'] + config)
 
+
 def runTacExp(params, config):
     ExperimentHelper.run_build_model(
         'tac',
@@ -719,6 +722,7 @@ def runTacExp(params, config):
         buildAndTrainTacModel,
         'f1',
         transfer_config=['words', 'casing'] + config)
+
 
 def runTempevalExp(params, config):
     ExperimentHelper.run_build_model(

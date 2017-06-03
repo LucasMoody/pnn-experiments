@@ -154,7 +154,7 @@ def run_baseline_exp_with_fixed_params():
         'update_word_embeddings': False,
         'window_size': 3,
         'batch_size': 32,
-        'hidden_dims': 100,
+        'hidden_dims': 500,
         'activation': 'tanh',
         'dropout': 0.3,
         'optimizer': 'adam',
@@ -166,7 +166,7 @@ def run_baseline_exp_with_fixed_params():
         print fixed_params
 
         if 'ace' in config.tasks:
-            runAceExp(fixed_params,
+            '''runAceExp(fixed_params,
                       ['pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'])
             runAceExp(fixed_params, ['pos', 'ner', 'chunking'])
             runAceExp(fixed_params, ['pos', 'ner'])
@@ -179,9 +179,9 @@ def run_baseline_exp_with_fixed_params():
             runAceExp(fixed_params, ['ecb', 'tac'])
             runAceExp(fixed_params, ['tac', 'tempeval'])
             runAceExp(fixed_params, ['ecb', 'tempeval'])
-            runAceExp(fixed_params, ['ecb'])
+            runAceExp(fixed_params, ['ecb'])'''
             runAceExp(fixed_params, ['tac'])
-            runAceExp(fixed_params, ['tempeval'])
+            #runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
             runTacExp(fixed_params,

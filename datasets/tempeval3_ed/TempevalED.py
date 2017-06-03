@@ -77,9 +77,9 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
 
     # ----- WORDS ----- #
     # get words from sentences
-    word_column_train = DatasetExtender.filterColumn(train_sentences, word_position)
-    word_column_dev = DatasetExtender.filterColumn(dev_sentences, word_position)
-    word_column_test = DatasetExtender.filterColumn(test_sentences, word_position)
+    word_column_train = DatasetExtender.filterColumn(train_sentences, ext_word_position)
+    word_column_dev = DatasetExtender.filterColumn(dev_sentences, ext_word_position)
+    word_column_test = DatasetExtender.filterColumn(test_sentences, ext_word_position)
 
     # convert them to an index of the word embedding
     words_train = GermEvalReader.convertValue2Idx(word_column_train, word2Idx, GermEvalReader.wordConverter)
