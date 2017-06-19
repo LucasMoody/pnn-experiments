@@ -166,7 +166,7 @@ def run_baseline_exp_with_fixed_params():
         print fixed_params
 
         if 'ace' in config.tasks:
-            '''runAceExp(fixed_params,
+            runAceExp(fixed_params,
                       ['pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'])
             runAceExp(fixed_params, ['pos', 'ner', 'chunking'])
             runAceExp(fixed_params, ['pos', 'ner'])
@@ -179,12 +179,12 @@ def run_baseline_exp_with_fixed_params():
             runAceExp(fixed_params, ['ecb', 'tac'])
             runAceExp(fixed_params, ['tac', 'tempeval'])
             runAceExp(fixed_params, ['ecb', 'tempeval'])
-            runAceExp(fixed_params, ['ecb'])'''
+            runAceExp(fixed_params, ['ecb'])
             runAceExp(fixed_params, [])
-            #runAceExp(fixed_params, ['tempeval'])
+            runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
-            '''runTacExp(fixed_params,
+            runTacExp(fixed_params,
                       ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'])
             runTacExp(fixed_params, ['pos', 'ner', 'chunking'])
             runTacExp(fixed_params, ['pos', 'ner'])
@@ -197,9 +197,9 @@ def run_baseline_exp_with_fixed_params():
             runTacExp(fixed_params, ['ace', 'ecb'])
             runTacExp(fixed_params, ['ace', 'tempeval'])
             runTacExp(fixed_params, ['ecb', 'tempeval'])
-            runTacExp(fixed_params, ['ecb'])'''
+            runTacExp(fixed_params, ['ecb'])
             runTacExp(fixed_params, ['ace'])
-            #runTacExp(fixed_params, ['tempeval'])
+            runTacExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
             runTempevalExp(fixed_params,
