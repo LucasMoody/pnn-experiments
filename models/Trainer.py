@@ -2,6 +2,7 @@ import time
 import numpy as np
 import Sampler
 import config
+import copy
 from plots import LearningCurve
 from logs import Logger
 #sample_fun = Sampler.sampleEqualRanges
@@ -133,7 +134,23 @@ def trainMultiTaskModelWithIncreasingData(models, datasets, number_of_epochs, mi
         start_time = time.time()
         # replace train for focused dataset
         # copy everything because datasets are going to be shuffled
-        cur_datasets = list(map(lambda data: data.copy(), datasets))
+        def copyDataset(dataset):
+            return {
+                'train': {
+                    'input': list(map(lambda input: input.copy(), dataset['train']['input'].copy())),
+                    'y': dataset['train']['y'].copy()
+                },
+                'dev': {
+                    'input': list(map(lambda input: input.copy(), dataset['dev']['input'].copy())),
+                    'y': dataset['dev']['y'].copy()
+                },
+                'test': {
+                    'input': list(map(lambda input: input.copy(), dataset['test']['input'].copy())),
+                    'y': dataset['test']['y'].copy()
+                }
+            }
+        #cur_datasets = list(map(lambda data: copyDataset(data), datasets))
+        cur_datasets = copy.deepcopy(datasets)
         cur_datasets[0]['train']['input'] = map(lambda x: x[0:sample], datasets[0]['train']['input'])
         cur_datasets[0]['train']['y'] = cur_datasets[0]['train']['y'][0:sample]
 
