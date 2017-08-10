@@ -61,7 +61,7 @@ def buildBaselineModel(reader, name_prefix='', learning_params=None):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(
+    scores = Trainer.trainModelWithIncreasingData(
         model,
         input_train,
         train_y_cat,
@@ -73,7 +73,7 @@ def buildBaselineModel(reader, name_prefix='', learning_params=None):
         test_y,
         measurer=biof1)
 
-    return train_scores, dev_scores, test_scores
+    return scores
 
 
 def buildAndTrainAceEDModel(learning_params=None):

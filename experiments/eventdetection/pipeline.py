@@ -266,7 +266,7 @@ def buildAndTrainAceModel(learning_params, config=[]):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(
+    return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
         train_y_cat,
@@ -277,9 +277,6 @@ def buildAndTrainAceModel(learning_params, config=[]):
         model_test,
         test_y,
         measurer=biof1)
-
-    return train_scores, dev_scores, test_scores
-
 
 def buildAndTrainEcbModel(learning_params=None, config=[]):
     params = learning_params
@@ -375,7 +372,7 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(
+    return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
         train_y_cat,
@@ -386,9 +383,6 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
         model_test,
         test_y,
         measurer=biof1)
-
-    return train_scores, dev_scores, test_scores
-
 
 def buildAndTrainTacModel(learning_params=None, config=[]):
     params = learning_params
@@ -483,7 +477,7 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(
+    return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
         train_y_cat,
@@ -494,9 +488,6 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
         model_test,
         test_y,
         measurer=biof1)
-
-    return train_scores, dev_scores, test_scores
-
 
 def buildAndTrainTempevalModel(learning_params=None, config=[]):
     params = learning_params
@@ -591,7 +582,7 @@ def buildAndTrainTempevalModel(learning_params=None, config=[]):
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModelWithIncreasingData(
+    return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
         train_y_cat,
@@ -602,9 +593,6 @@ def buildAndTrainTempevalModel(learning_params=None, config=[]):
         model_test,
         test_y,
         measurer=biof1)
-
-    return train_scores, dev_scores, test_scores
-
 
 def run_models_as_input_exp_with_fixed_params():
     fixed_params = {
@@ -622,15 +610,6 @@ def run_models_as_input_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ace' in config.tasks:
-            runAceExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'])
-            runAceExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runAceExp(fixed_params, ['pos', 'ner'])
-            runAceExp(fixed_params, ['pos', 'chunking'])
-            runAceExp(fixed_params, ['ner', 'chunking'])
-            runAceExp(fixed_params, ['pos'])
-            runAceExp(fixed_params, ['ner'])
-            runAceExp(fixed_params, ['chunking'])
             runAceExp(fixed_params, ['ecb', 'tac', 'tempeval'])
             runAceExp(fixed_params, ['ecb', 'tac'])
             runAceExp(fixed_params, ['tac', 'tempeval'])
@@ -640,15 +619,6 @@ def run_models_as_input_exp_with_fixed_params():
             runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
-            runTacExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'])
-            runTacExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runTacExp(fixed_params, ['pos', 'ner'])
-            runTacExp(fixed_params, ['pos', 'chunking'])
-            runTacExp(fixed_params, ['ner', 'chunking'])
-            runTacExp(fixed_params, ['pos'])
-            runTacExp(fixed_params, ['ner'])
-            runTacExp(fixed_params, ['chunking'])
             runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
             runTacExp(fixed_params, ['ace', 'ecb'])
             runTacExp(fixed_params, ['ace', 'tempeval'])
@@ -658,15 +628,6 @@ def run_models_as_input_exp_with_fixed_params():
             runTacExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
-            runTempevalExp(fixed_params,
-                           ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
-            runTempevalExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runTempevalExp(fixed_params, ['pos', 'ner'])
-            runTempevalExp(fixed_params, ['pos', 'chunking'])
-            runTempevalExp(fixed_params, ['ner', 'chunking'])
-            runTempevalExp(fixed_params, ['pos'])
-            runTempevalExp(fixed_params, ['ner'])
-            runTempevalExp(fixed_params, ['chunking'])
             runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
             runTempevalExp(fixed_params, ['ace', 'ecb'])
             runTempevalExp(fixed_params, ['ace', 'tac'])
@@ -676,15 +637,6 @@ def run_models_as_input_exp_with_fixed_params():
             runTempevalExp(fixed_params, ['tac'])
 
         if 'ecb' in config.tasks:
-            runEcbExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ace', 'tac', 'tempeval'])
-            runEcbExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runEcbExp(fixed_params, ['pos', 'ner'])
-            runEcbExp(fixed_params, ['pos', 'chunking'])
-            runEcbExp(fixed_params, ['ner', 'chunking'])
-            runEcbExp(fixed_params, ['pos'])
-            runEcbExp(fixed_params, ['ner'])
-            runEcbExp(fixed_params, ['chunking'])
             runEcbExp(fixed_params, ['ace', 'tac', 'tempeval'])
             runEcbExp(fixed_params, ['ace', 'tac'])
             runEcbExp(fixed_params, ['tac', 'tempeval'])

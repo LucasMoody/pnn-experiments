@@ -33,11 +33,13 @@ def readFileExt(filepath, max_sentences=-1):
     sentences = []
     sentence = []
 
+    counter = 0
     for line in open(filepath):
         line = line.strip()
         splits = line.split()
+        if not len(line) == 0: counter += 1
 
-        if len(line) == 0 or line[0] == '#' or splits[0].upper() == '-DOCSTART-':
+        if len(line) == 0:
             if len(sentence) > 0:
                 sentences.append(np.array(sentence))
                 sentence = []

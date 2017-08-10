@@ -143,11 +143,8 @@ def buildAndTrainMultiTaskModel(learning_params, config=[]):
                                                  model_info)
 
     # ----- Train Model ----- #
-    train_scores, dev_scores, test_scores = Trainer.trainMultiTaskModelWithIncreasingData(
+    return Trainer.trainMultiTaskModelWithIncreasingData(
         models, datasets, number_of_epochs, params['batch_size'])
-
-    return train_scores, dev_scores, test_scores
-
 
 def run_baseline_exp_with_fixed_params():
     fixed_params = {
@@ -166,33 +163,15 @@ def run_baseline_exp_with_fixed_params():
         print fixed_params
 
         if 'ace' in config.tasks:
-            runAceExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'])
-            runAceExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runAceExp(fixed_params, ['pos', 'ner'])
-            runAceExp(fixed_params, ['pos', 'chunking'])
-            runAceExp(fixed_params, ['ner', 'chunking'])
-            runAceExp(fixed_params, ['pos'])
-            runAceExp(fixed_params, ['ner'])
-            runAceExp(fixed_params, ['chunking'])
             runAceExp(fixed_params, ['ecb', 'tac', 'tempeval'])
             runAceExp(fixed_params, ['ecb', 'tac'])
             runAceExp(fixed_params, ['tac', 'tempeval'])
             runAceExp(fixed_params, ['ecb', 'tempeval'])
             runAceExp(fixed_params, ['ecb'])
-            runAceExp(fixed_params, [])
+            runAceExp(fixed_params, ['tac'])
             runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
-            runTacExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'])
-            runTacExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runTacExp(fixed_params, ['pos', 'ner'])
-            runTacExp(fixed_params, ['pos', 'chunking'])
-            runTacExp(fixed_params, ['ner', 'chunking'])
-            runTacExp(fixed_params, ['pos'])
-            runTacExp(fixed_params, ['ner'])
-            runTacExp(fixed_params, ['chunking'])
             runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
             runTacExp(fixed_params, ['ace', 'ecb'])
             runTacExp(fixed_params, ['ace', 'tempeval'])
@@ -202,15 +181,6 @@ def run_baseline_exp_with_fixed_params():
             runTacExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
-            runTempevalExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'])
-            runTempevalExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runTempevalExp(fixed_params, ['pos', 'ner'])
-            runTempevalExp(fixed_params, ['pos', 'chunking'])
-            runTempevalExp(fixed_params, ['ner', 'chunking'])
-            runTempevalExp(fixed_params, ['pos'])
-            runTempevalExp(fixed_params, ['ner'])
-            runTempevalExp(fixed_params, ['chunking'])
             runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
             runTempevalExp(fixed_params, ['ace', 'ecb'])
             runTempevalExp(fixed_params, ['ace', 'tac'])
@@ -220,15 +190,6 @@ def run_baseline_exp_with_fixed_params():
             runTempevalExp(fixed_params, ['tac'])
 
         if 'ecb' in config.tasks:
-            runEcbExp(fixed_params,
-                      ['pos', 'ner', 'chunking', 'ace', 'tac', 'tempeval'])
-            runEcbExp(fixed_params, ['pos', 'ner', 'chunking'])
-            runEcbExp(fixed_params, ['pos', 'ner'])
-            runEcbExp(fixed_params, ['pos', 'chunking'])
-            runEcbExp(fixed_params, ['ner', 'chunking'])
-            runEcbExp(fixed_params, ['pos'])
-            runEcbExp(fixed_params, ['ner'])
-            runEcbExp(fixed_params, ['chunking'])
             runEcbExp(fixed_params, ['ace', 'tac', 'tempeval'])
             runEcbExp(fixed_params, ['ace', 'tac'])
             runEcbExp(fixed_params, ['tac', 'tempeval'])

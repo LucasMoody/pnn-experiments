@@ -34,13 +34,13 @@ embeddings = Embeddings.embeddings
 word2Idx = Embeddings.word2Idx
 
 
-def buildAndTrainPNNModel(reader,
-                          name_prefix='',
-                          learning_params=None,
-                          config=[]):
+def buildAndTrainFinetuningModel(reader,
+                                 name_prefix='',
+                                 learning_params=None,
+                                 config=[]):
     params = learning_params
 
-    print 'PNN config:', config
+    print 'Finetuning config:', config
 
     [input_train, train_y_cat], [input_dev,
                                  dev_y], [input_test, test_y], dicts = reader(
@@ -62,13 +62,13 @@ def buildAndTrainPNNModel(reader,
     transfer_models = TransferModelBuilder.buildTransferModels(
         input_layers, inputs, params=params, config=config)
 
-    model = Senna.buildModelWithPNN(
+    model = Senna.buildModelWithFinetuning(
         input_layers,
         inputs,
         params,
         n_out,
-        additional_models=transfer_models,
-        name_prefix=name_prefix)
+        transfer_models[0],
+        name_prefix)
 
     # ----- Train Model ----- #
     biof1 = Measurer.create_compute_BIOf1(idx2Label)
@@ -85,7 +85,7 @@ def buildAndTrainPNNModel(reader,
         measurer=biof1)
 
 def buildAndTrainAceModel(learning_params=None, config=[]):
-    return buildAndTrainPNNModel(
+    return buildAndTrainFinetuningModel(
         ACEED.readDataset,
         'ace_',
         learning_params=learning_params,
@@ -93,7 +93,7 @@ def buildAndTrainAceModel(learning_params=None, config=[]):
 
 
 def buildAndTrainEcbModel(learning_params=None, config=[]):
-    return buildAndTrainPNNModel(
+    return buildAndTrainFinetuningModel(
         ECBPlusED.readDataset,
         'ecb_',
         learning_params=learning_params,
@@ -101,7 +101,7 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
 
 
 def buildAndTrainTacModel(learning_params=None, config=[]):
-    return buildAndTrainPNNModel(
+    return buildAndTrainFinetuningModel(
         TACED.readDataset,
         'tac_',
         learning_params=learning_params,
@@ -109,14 +109,14 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
 
 
 def buildAndTrainTempevalModel(learning_params=None, config=[]):
-    return buildAndTrainPNNModel(
+    return buildAndTrainFinetuningModel(
         TempevalED.readDataset,
         'tempeval_',
         learning_params=learning_params,
         config=config)
 
 
-def run_pnn_exp_with_fixed_params():
+def run_finetuning_exp_with_fixed_params():
     fixed_params = {
         'update_word_embeddings': False,
         'window_size': 3,
@@ -133,45 +133,29 @@ def run_pnn_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ace' in config.tasks:
-            runAceExp(fixed_params, ['ecb', 'tac', 'tempeval'])
-            runAceExp(fixed_params, ['ecb', 'tac'])
-            runAceExp(fixed_params, ['tac', 'tempeval'])
-            runAceExp(fixed_params, ['ecb', 'tempeval'])
             runAceExp(fixed_params, ['ecb'])
             runAceExp(fixed_params, ['tac'])
             runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
-            runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
-            runTacExp(fixed_params, ['ace', 'ecb'])
-            runTacExp(fixed_params, ['ace', 'tempeval'])
-            runTacExp(fixed_params, ['ecb', 'tempeval'])
-            runTacExp(fixed_params, ['ecb'])
-            runTacExp(fixed_params, ['ace'])
-            runTacExp(fixed_params, ['tempeval'])
+            runAceExp(fixed_params, ['ace'])
+            runAceExp(fixed_params, ['ecb'])
+            runAceExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
-            runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
-            runTempevalExp(fixed_params, ['ace', 'ecb'])
-            runTempevalExp(fixed_params, ['ace', 'tac'])
-            runTempevalExp(fixed_params, ['ecb', 'tac'])
-            runTempevalExp(fixed_params, ['ecb'])
-            runTempevalExp(fixed_params, ['ace'])
-            runTempevalExp(fixed_params, ['tac'])
+            runAceExp(fixed_params, ['ace'])
+            runAceExp(fixed_params, ['ecb'])
+            runAceExp(fixed_params, ['tac'])
 
         if 'ecb' in config.tasks:
-            runEcbExp(fixed_params, ['ace', 'tac', 'tempeval'])
-            runEcbExp(fixed_params, ['ace', 'tac'])
-            runEcbExp(fixed_params, ['tac', 'tempeval'])
-            runEcbExp(fixed_params, ['ace', 'tempeval'])
-            runEcbExp(fixed_params, ['ace'])
-            runEcbExp(fixed_params, ['tac'])
-            runEcbExp(fixed_params, ['tempeval'])
+            runAceExp(fixed_params, ['ace'])
+            runAceExp(fixed_params, ['tac'])
+            runAceExp(fixed_params, ['tempeval'])
 
 def runAceExp(params, config):
     ExperimentHelper.run_build_model(
         'ace',
-        'pnn',
+        'finetuning',
         params,
         buildAndTrainAceModel,
         'f1',
@@ -181,7 +165,7 @@ def runAceExp(params, config):
 def runEcbExp(params, config):
     ExperimentHelper.run_build_model(
         'ecb',
-        'pnn',
+        'finetuning',
         params,
         buildAndTrainEcbModel,
         'f1',
@@ -191,7 +175,7 @@ def runEcbExp(params, config):
 def runTacExp(params, config):
     ExperimentHelper.run_build_model(
         'tac',
-        'pnn',
+        'finetuning',
         params,
          buildAndTrainTacModel,
         'f1',
@@ -201,10 +185,10 @@ def runTacExp(params, config):
 def runTempevalExp(params, config):
     ExperimentHelper.run_build_model(
         'tempeval',
-        'pnn',
+        'finetuning',
         params,
         buildAndTrainTempevalModel,
         'f1',
         transfer_config=config)
 
-run_pnn_exp_with_fixed_params()
+run_finetuning_exp_with_fixed_params()

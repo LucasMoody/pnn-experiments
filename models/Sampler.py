@@ -27,7 +27,7 @@ def samplePNNRanges(train, no_ranges):
 
 def sampleSimplePNNRanges(train, no_ranges):
     #return [20000]
-    sizes = [1000, 2000, 8000, 10000, 20000, 30000, 40000, 50000, train[0].shape[0]]
     #sizes = [1000, 2000, 8000, 10000, 20000, 30000, 40000, 50000, train[0].shape[0]]
-    #sizes = [1000]
+    #sizes = [1000, 2000, 8000, 10000, 20000, 30000]
+    sizes = [8000, 10000]
     return filter(lambda size: size <= train[0].shape[0], sizes)

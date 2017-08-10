@@ -27,6 +27,26 @@ def buildModelGivenInput(input_layers, inputs, params, n_out, metrics=[], useHid
 
     return model
 
+def buildModelWithFinetuning(input_layers, inputs, params, n_out, transfer_model, name_prefix=''):
+
+    input_dropout_layer = Dropout(params['dropout'])
+    hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name_prefix + 'hidden',
+                         weights=getHiddenLayerWeights(transfer_model))
+    input_dropout = input_dropout_layer(input_layers)
+    hidden = hidden_layer(input_dropout)
+
+    output_layer = Dense(output_dim=n_out, activation='softmax', name=name_prefix + 'output')
+    hidden_dropout = Dropout(params['dropout'])(hidden)
+    output = output_layer(hidden_dropout)
+
+    model = Model(input=inputs, output=[output])
+
+    model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'])
+
+    print model.summary()
+
+    return model
+
 def buildModelWithPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
     # ----- GET TENSOR OF TRANSFER MODELS ----- #
     transfer_model_hidden_layers = []
@@ -278,3 +298,8 @@ def buildMultiTaskModelGivenInput(input_layers, inputs, params, model_info):
         models.append(model)
 
     return models
+
+def getHiddenLayerWeights(model):
+    num_layers = len(model.layers)
+    hidden_layer = model.layers[num_layers - 3]
+    return [hidden_layer.W.get_value(), hidden_layer.b.get_value()]

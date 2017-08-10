@@ -17,9 +17,10 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     print "%d epochs" % number_of_epochs
     print "%d mini batches" % (len(X_train[0]) / minibatch_size)
 
-    best_train_score = (-1, 0)
-    best_dev_score = (-1, 0)
-    best_test_score = (-1, 0)
+    best_epoch = 0
+    best_train_score = -1
+    best_dev_score = -1
+    best_test_score = -1
     best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
     dev_scores = []
@@ -43,17 +44,17 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         #measurements_train = measurer(pred_train, Y_train.argmax(axis=1))
         # update best scores
         # compare dev scores to get best one
-        if score_dev > best_dev_score[0]:
-            best_dev_score = (score_dev, epoch)
+        if score_dev > best_dev_score:
+            best_dev_score = score_dev
+            best_epoch = epoch
             best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
-        print 'Current dev_score: {0:.4f} and current patience: {1}'.format(score_dev * 100, epoch - best_dev_score[1])
+        print 'Current dev_score: {0:.4f} and current patience: {1}'.format(score_dev * 100, epoch - best_epoch)
         #print 'Current train_score/dev_score: {0:.4f}/{1:.4f} and current patience: {2}'.format(measurements_train[0] * 100, measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
         #dev_scores.append(measurements_dev[0] * 100)
         #train_scores.append(measurements_train[0] * 100)
         # early stopping
-        best_dev_score_epoch = best_dev_score[1]
-        if epoch - best_dev_score_epoch > early_stopping_strike:
+        if epoch - best_epoch > early_stopping_strike:
             break
 
 
@@ -73,29 +74,23 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
     pred_test = model.predict(X_test, verbose=0).argmax(axis=-1)  # test_case_x
     # calculate scores of predictions
-    score_train = measurer(pred_train, Y_train.argmax(axis=1))
+    best_train_score = measurer(pred_train, Y_train.argmax(axis=1))
     score_dev = measurer(pred_dev, Y_dev)
-    score_test = measurer(pred_test, Y_test)
+    best_test_score = measurer(pred_test, Y_test)
 
     # test whether earlier calculated dev score is the same as with reset weights
-    if best_dev_score[0] != score_dev:
+    if best_dev_score != score_dev:
         raise ValueError('Newly calculated best score should be the same as earlier saved one!')
-    # assign new best scores
-    best_dev_epoch = best_dev_score[1]
-    best_train_score = (score_train, best_dev_epoch)
-    best_test_score = (score_test, best_dev_epoch)
-    print 'best train/dev/test score: {0:.4f}/{1:.4f}/{2:.4f} in epoch: {3}'.format(best_train_score[0] * 100,
-                                                                                    best_dev_score[0] * 100,
-                                                                                    best_test_score[0] * 100,
-                                                                                    best_dev_score[1])
-    return best_train_score, best_dev_score, best_test_score
+    print 'best train/dev/test score: {0:.4f}/{1:.4f}/{2:.4f} in epoch: {3}'.format(best_train_score * 100,
+                                                                                    best_dev_score * 100,
+                                                                                    best_test_score * 100,
+                                                                                    best_epoch)
+    return best_train_score, best_dev_score, best_test_score, best_epoch
 
 def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurer):
     ranges = sample_fun(X_train, no_samples)
 
-    train_scores = []
-    dev_scores = []
-    test_scores = []
+    scores = []
 
     print "%d samples" % no_samples
     weights = map(lambda x: x.copy(), model.get_weights())
@@ -106,25 +101,21 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
 
         sampled_train_x = map(lambda x: x[0:sample], X_train)
         sampled_train_y = Y_train[0:sample]
-        # todo print sum of weights
+
         print 'Weight sum before training', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
-        best_train_scores, best_dev_scores, best_test_scores = trainModel(model, sampled_train_x, sampled_train_y, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurer)
+        best_train_score, best_dev_score, best_test_score, epoch = trainModel(model, sampled_train_x, sampled_train_y, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurer)
         model.set_weights(weights)
         print 'Weight sum after resetting', reduce(lambda a, b: a + np.sum(b), model.get_weights(), 0)
         print "%.2f sec for sample training" % (time.time() - start_time)
-        train_scores.append((best_train_scores, sample))
-        dev_scores.append((best_dev_scores, sample))
-        test_scores.append((best_test_scores, sample))
+        scores.append([best_train_score, best_dev_score, best_test_score, epoch, sample])
 
-    return train_scores, dev_scores, test_scores
+    return scores
 
 def trainMultiTaskModelWithIncreasingData(models, datasets, number_of_epochs, minibatch_size):
     focused_dataset = datasets[0]
     ranges = sample_fun(focused_dataset['train']['input'], no_samples)
 
-    train_scores = []
-    dev_scores = []
-    test_scores = []
+    scores = []
 
     print "%d samples" % no_samples
     model_weights = map(lambda model: map(lambda x: x.copy(), model.get_weights()), models)
@@ -155,22 +146,22 @@ def trainMultiTaskModelWithIncreasingData(models, datasets, number_of_epochs, mi
         cur_datasets[0]['train']['y'] = cur_datasets[0]['train']['y'][0:sample]
 
         print 'Weight sum before training', sum_model_weights(models)
-        best_train_score, best_dev_score, best_test_score = trainMultiTaskModels(models, cur_datasets, number_of_epochs, minibatch_size)
+        best_train_score, best_dev_score, best_test_score, epoch = trainMultiTaskModels(models, cur_datasets, number_of_epochs, minibatch_size)
         for idx, model in enumerate(models):
             weights = model_weights[idx]
             model.set_weights(weights)
         print 'Weight sum after resetting', sum_model_weights(models)
         print "%.2f sec for sample training" % (time.time() - start_time)
-        train_scores.append((best_train_score, sample))
-        dev_scores.append((best_dev_score, sample))
-        test_scores.append((best_test_score, sample))
+        scores.append([best_train_score, best_dev_score, best_test_score, epoch, sample])
 
-    return train_scores, dev_scores, test_scores
+    return scores
 
 def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
-    best_train_score = (-1, 0)
-    best_dev_score = (-1, 0)
-    best_test_score = (-1, 0)
+    best_epoch = 0
+    best_train_score = -1
+    best_dev_score = -1
+    best_test_score = -1
+
     best_model_weights = map(lambda model: map(lambda x: x.copy(), model.get_weights()), models)
     # maximum number of epochs
     global_batch_start = 0
@@ -210,14 +201,14 @@ def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
                 print 'Model for {0} with score: {1:.4f}'.format(model_data['name'], measurements_dev * 100)
                 dev_scores.append(measurements_dev)
             # check whether the best score of the focused model is improved
-            if dev_scores[0] > best_dev_score[0]:
-                best_dev_score = (dev_scores[0], virtual_epoch_counter)
+            if dev_scores[0] > best_dev_score:
+                best_dev_score = dev_scores[0]
+                best_epoch = virtual_epoch_counter
                 best_model_weights = map(lambda model: map(lambda x: x.copy(), model.get_weights()), models)
                 print 'Weight sum in best epoch:', sum_model_weights(models)
             # early stopping check
-            best_dev_score_epoch = best_dev_score[1]
-            patience = virtual_epoch_counter - best_dev_score_epoch
-            print '{0:.4f}/{1:.4f} with patience: {2}'.format(best_dev_score[0], dev_scores[0], patience)
+            patience = virtual_epoch_counter - best_epoch
+            print '{0:.4f}/{1:.4f} with patience: {2}'.format(best_dev_score, dev_scores[0], patience)
             if patience > early_stopping_strike:
                 break
             virtual_epoch_counter += 1
@@ -244,20 +235,16 @@ def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
     pred_dev = focused_model.predict(focused_dev_x, verbose=0).argmax(axis=-1)  # Prediction of the classes
     pred_test = focused_model.predict(focused_test_x, verbose=0).argmax(axis=-1)  # test_case_x
     # calculate scores of predictions
-    score_train = datasets[0]['measurer'](pred_train, focused_train_y.argmax(axis=1))
+    best_train_score = datasets[0]['measurer'](pred_train, focused_train_y.argmax(axis=1))
     score_dev = datasets[0]['measurer'](pred_dev, focused_dev_y)
-    score_test = datasets[0]['measurer'](pred_test, focused_test_y)
+    best_test_score = datasets[0]['measurer'](pred_test, focused_test_y)
 
     # test whether earlier calculated dev score is the same as with reset weights
-    if best_dev_score[0] != score_dev:
+    if best_dev_score != score_dev:
         raise ValueError('Newly calculated best score should be the same as earlier saved one!')
-    # assign new best scores
-    best_dev_epoch = best_dev_score[1]
-    best_train_score = (score_train, best_dev_epoch)
-    best_test_score = (score_test, best_dev_epoch)
 
-    print 'best train/dev/test score: {0:.4f}/{1:.4f}/{2:.4f} in epoch: {3}'.format(best_train_score[0] * 100, best_dev_score[0] * 100, best_test_score[0] * 100, best_dev_score[1])
-    return best_train_score, best_dev_score, best_test_score
+    print 'best train/dev/test score: {0:.4f}/{1:.4f}/{2:.4f} in epoch: {3}'.format(best_train_score * 100, best_dev_score * 100, best_test_score * 100, best_epoch)
+    return best_train_score, best_dev_score, best_test_score, best_epoch
 
 def unison_shuffled_copies(input, y):
     for x in input:
