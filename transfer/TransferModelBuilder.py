@@ -5,6 +5,9 @@ def buildTransferModels(input_layers, inputs, params, config):
     if 'pos' in config:
         transfer_models.append(OptimizedModels.getWSJPOSModelGivenInput(input_layers, inputs, params))
 
+    if 'ud_pos' in config:
+        transfer_models.append(OptimizedModels.getUDPOSModelGivenInput(input_layers, inputs, params))
+
     if 'ner' in config:
         transfer_models.append(OptimizedModels.getNERModelGivenInput(input_layers, inputs, params))
 

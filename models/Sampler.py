@@ -1,5 +1,5 @@
-import numpy as np
 import math
+import config
 
 def sampleEqualRanges(train, no_ranges):
     n_rows = train[0].shape[0]
@@ -28,6 +28,8 @@ def samplePNNRanges(train, no_ranges):
 def sampleSimplePNNRanges(train, no_ranges):
     #return [20000]
     #sizes = [1000, 2000, 8000, 10000, 20000, 30000, 40000, 50000, train[0].shape[0]]
-    sizes = [2000, 5000, 10000, 15000, 20000, 30000]
-    #sizes = [8000, 10000]
+    if config.dev_env:
+        sizes = [2000, 4000]
+    else:
+        sizes = [2000, 5000, 10000, 15000, 20000, 30000]
     return filter(lambda size: size <= train[0].shape[0], sizes)

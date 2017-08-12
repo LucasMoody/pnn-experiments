@@ -11,7 +11,7 @@ from logs import Logger
 sample_fun = Sampler.sampleSimplePNNRanges
 
 no_samples = config.number_of_samples
-early_stopping_strike = 10
+early_stopping_strike = 10 if not config.dev_env else 3
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurer):
     print "%d epochs" % number_of_epochs
@@ -37,6 +37,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
         model.fit(X_train, Y_train, nb_epoch=1, batch_size=minibatch_size, verbose=0, shuffle=True)
 
         print "%.2f sec for training" % (time.time() - start_time)
+        start_test_time = time.time()
         # only dev scores need to be calculated
         pred_dev = model.predict(X_dev, verbose=0).argmax(axis=-1)  # Prediction of the classes
         score_dev = measurer(pred_dev, Y_dev)
@@ -49,6 +50,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
             best_epoch = epoch
             best_model_weights = map(lambda x: x.copy(), model.get_weights())
 
+        print "%.2f sec for testing" % (time.time() - start_test_time)
         print 'Current dev_score: {0:.4f} and current patience: {1}'.format(score_dev * 100, epoch - best_epoch)
         #print 'Current train_score/dev_score: {0:.4f}/{1:.4f} and current patience: {2}'.format(measurements_train[0] * 100, measurements_dev[0] * 100, epoch - best_dev_scores[0][1])
         #dev_scores.append(measurements_dev[0] * 100)
