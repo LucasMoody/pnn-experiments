@@ -2,11 +2,8 @@ from keras.layers import Input, Embedding, Flatten, merge
 
 import embeddings.dependency_based_word_embeddings.DependencyBasedWordEmbeddings as Embeddings
 from models import Trainer, InputBuilder
-from datasets.ace_ed import ACEED
-from datasets.tac2015_ed import TACED
-from datasets.ecbplus_ed import ECBPlusED
-from datasets.tempeval3_ed import TempevalED
 from datasets.wsj_pos import WSJPos
+from datasets.universal_dependencies_pos import UDPos
 from datasets.conll_ner import CoNLLNer
 from datasets.conll_chunking import CoNLLChunking
 from models import Senna
@@ -76,20 +73,20 @@ def extendHelper(reader, word2Idx, case2Idx, best_window_size,
     return pred_train_labels, pred_dev_labels, pred_test_labels
 
 
-def extendAceED():
-    extendED(['pos', 'ner', 'chunking', 'ecb', 'tac', 'tempeval'], ACEED)
+def extendWSJPos():
+    extendED(['pos', 'ner', 'chunking', 'ud_pos'], WSJPos)
 
 
-def extendEcbED():
-    extendED(['pos', 'ner', 'chunking', 'ace', 'tac', 'tempeval'], ECBPlusED)
+def extendUDPos():
+    extendED(['ner', 'chunking', 'pos'], UDPos)
 
 
-def extendTacED():
-    extendED(['pos', 'ner', 'chunking', 'ace', 'ecb', 'tempeval'], TACED)
+def extendNER():
+    extendED(['pos', 'chunking'], CoNLLNer)
 
 
-def extendTempevalED():
-    extendED(['pos', 'ner', 'chunking', 'ace', 'ecb', 'tac'], TempevalED)
+def extendChunking():
+    extendED(['pos', 'ner'], CoNLLChunking)
 
 
 def extendED(config, dataset):
@@ -105,6 +102,16 @@ def extendED(config, dataset):
                 dataset.readDataset, word2Idx, case2Idx,
                 best_pos_window_size, OptimizedModels.getWSJPOSModelGivenInput,
                 WSJPos.getLabelDict())
+            train_extensions.append(pred_train_labels)
+            dev_extensions.append(pred_dev_labels)
+            test_extensions.append(pred_test_labels)
+
+        elif 'ud_pos' == ds:
+            # ----- labels from pos  ----- #
+            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
+                dataset.readDataset, word2Idx, case2Idx,
+                best_pos_window_size, OptimizedModels.getUDPOSModelGivenInput,
+                UDPos.getLabelDict())
             train_extensions.append(pred_train_labels)
             dev_extensions.append(pred_dev_labels)
             test_extensions.append(pred_test_labels)
@@ -129,79 +136,29 @@ def extendED(config, dataset):
             dev_extensions.append(pred_dev_labels)
             test_extensions.append(pred_test_labels)
 
-        elif 'ace' == ds:
-            # ----- labels from ace ----- #
-            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
-                dataset.readDataset, word2Idx, case2Idx, best_ace_window_size,
-                OptimizedModels.getAceEDModelGivenInput, ACEED.getLabelDict())
-            train_extensions.append(pred_train_labels)
-            dev_extensions.append(pred_dev_labels)
-            test_extensions.append(pred_test_labels)
-
-        elif 'ecb' == ds:
-            # ----- labels from ecb  ----- #
-            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
-                dataset.readDataset, word2Idx, case2Idx, best_ecb_window_size,
-                OptimizedModels.getEcbEDModelGivenInput,
-                ECBPlusED.getLabelDict())
-            train_extensions.append(pred_train_labels)
-            dev_extensions.append(pred_dev_labels)
-            test_extensions.append(pred_test_labels)
-
-        elif 'tac' == ds:
-            # ----- labels from tac  ----- #
-            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
-                dataset.readDataset, word2Idx, case2Idx, best_tac_window_size,
-                OptimizedModels.getTacEDModelGivenInput, TACED.getLabelDict())
-            train_extensions.append(pred_train_labels)
-            dev_extensions.append(pred_dev_labels)
-            test_extensions.append(pred_test_labels)
-
-        elif 'tempeval' == ds:
-            # ----- labels from tempeval  ----- #
-            pred_train_labels, pred_dev_labels, pred_test_labels = extendHelper(
-                dataset.readDataset, word2Idx, case2Idx,
-                best_tempeval_window_size,
-                OptimizedModels.getTempevalEDModelGivenInput,
-                TempevalED.getLabelDict())
-            train_extensions.append(pred_train_labels)
-            dev_extensions.append(pred_dev_labels)
-            test_extensions.append(pred_test_labels)
-
     dataset.extendDataset(train_extensions, dev_extensions, test_extensions)
 
     print '\n--------------------\n          DONE\n--------------------\n'
 
 
-def buildAndTrainAceModel(learning_params, config=[]):
+def buildAndTrainWSJPosModel(learning_params, config=[]):
     params = learning_params
 
     [input_train,
      train_y_cat], [input_dev,
-                    dev_y], [input_test, test_y], dicts = ACEED.readDatasetExt(
+                    dev_y], [input_test, test_y], dicts = WSJPos.readDatasetExt(
                         params['window_size'], word2Idx, case2Idx)
 
-    [
-        _, events_pos2Idx, events_ner2Idx, events_chunking2Idx, events_ecb2Idx,
-        events_tac2Idx, events_tempeval2Idx, _, events_label2Idx,
-        events_idx2Label
-    ] = dicts
+    [_, _, pos_ner2Idx, pos_chunking2Idx, pos_ud_pos2Idx, pos_label2Idx, pos_idx2Label] = dicts
 
-    [
-        events_train_x, events_train_casing_x, events_train_pos_x,
-        events_train_ner_x, events_train_chunking_x, events_train_ecb_x,
-        events_train_tac_x, events_train_tempeval_x
-    ] = input_train
+    [pos_train_x, pos_train_casing_x, pos_train_ner_x, pos_train_chunking_x, pos_train_ud_pos_x] = input_train
 
     n_out = train_y_cat.shape[1]
-    n_in_x = events_train_x.shape[1]
-    n_in_pos = events_train_pos_x.shape[1]
-    n_in_ner = events_train_ner_x.shape[1]
-    n_in_chunking = events_train_chunking_x.shape[1]
-    n_in_casing = events_train_casing_x.shape[1]
-    n_in_tac = events_train_tac_x.shape[1]
-    n_in_ecb = events_train_ecb_x.shape[1]
-    n_in_tempeval = events_train_tempeval_x.shape[1]
+    n_in_x = pos_train_x.shape[1]
+    n_in_ner = pos_train_ner_x.shape[1]
+    n_in_chunking = pos_train_chunking_x.shape[1]
+    n_in_ud_pos = pos_train_ud_pos_x.shape[1]
+    n_in_casing = pos_train_casing_x.shape[1]
 
     # prepare config
     config_values = {
@@ -215,35 +172,20 @@ def buildAndTrainAceModel(learning_params, config=[]):
             'idx': case2Idx,
             'pos': 1
         },
-        'pos': {
-            'n': n_in_pos,
-            'idx': events_pos2Idx,
-            'pos': 2
-        },
         'ner': {
             'n': n_in_ner,
-            'idx': events_ner2Idx,
-            'pos': 3
+            'idx': pos_ner2Idx,
+            'pos': 2
         },
         'chunking': {
             'n': n_in_chunking,
-            'idx': events_chunking2Idx,
+            'idx': pos_chunking2Idx,
+            'pos': 3
+        },
+        'ud_pos': {
+            'n': n_in_ud_pos,
+            'idx': pos_ud_pos2Idx,
             'pos': 4
-        },
-        'ecb': {
-            'n': n_in_ecb,
-            'idx': events_ecb2Idx,
-            'pos': 5
-        },
-        'tac': {
-            'n': n_in_tac,
-            'idx': events_tac2Idx,
-            'pos': 6
-        },
-        'tempeval': {
-            'n': n_in_tempeval,
-            'idx': events_tempeval2Idx,
-            'pos': 7
         }
     }
 
@@ -255,7 +197,7 @@ def buildAndTrainAceModel(learning_params, config=[]):
     input_layers_merged = merge(input_layers, mode='concat')
 
     model = Senna.buildModelGivenInput(
-        input_layers_merged, inputs, params, n_out, name_prefix='ace_')
+        input_layers_merged, inputs, params, n_out, name_prefix='wsj_pos_')
 
     # SELECT FEATURES WHICH APPEAR IN THE CONFIG
     indices = sorted(
@@ -265,7 +207,6 @@ def buildAndTrainAceModel(learning_params, config=[]):
     model_test = [input_test[i] for i in indices]
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
     return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
@@ -276,38 +217,27 @@ def buildAndTrainAceModel(learning_params, config=[]):
         dev_y,
         model_test,
         test_y,
-        measurer=biof1)
+        measurer=Measurer.measureAccuracy)
 
-def buildAndTrainEcbModel(learning_params=None, config=[]):
+def buildAndTrainUDPosModel(learning_params, config=[]):
     params = learning_params
 
     [input_train,
      train_y_cat], [input_dev,
                     dev_y], [input_test,
-                             test_y], dicts = ECBPlusED.readDatasetExt(
+                             test_y], dicts = UDPos.readDatasetExt(
                                  params['window_size'], word2Idx, case2Idx)
 
-    [
-        _, events_pos2Idx, events_ner2Idx, events_chunking2Idx, events_ace2Idx,
-        events_tac2Idx, events_tempeval2Idx, _, events_label2Idx,
-        events_idx2Label
-    ] = dicts
+    [_, _, pos_ner2Idx, pos_chunking2Idx, pos_wsj_pos2Idx, pos_label2Idx, pos_idx2Label] = dicts
 
-    [
-        events_train_x, events_train_casing_x, events_train_pos_x,
-        events_train_ner_x, events_train_chunking_x, events_train_ace_x,
-        events_train_tac_x, events_train_tempeval_x
-    ] = input_train
+    [pos_train_x, pos_train_casing_x, pos_train_ner_x, pos_train_chunking_x, pos_train_wsj_pos_x] = input_train
 
     n_out = train_y_cat.shape[1]
-    n_in_x = events_train_x.shape[1]
-    n_in_pos = events_train_pos_x.shape[1]
-    n_in_ner = events_train_ner_x.shape[1]
-    n_in_chunking = events_train_chunking_x.shape[1]
-    n_in_casing = events_train_casing_x.shape[1]
-    n_in_tac = events_train_tac_x.shape[1]
-    n_in_ace = events_train_ace_x.shape[1]
-    n_in_tempeval = events_train_tempeval_x.shape[1]
+    n_in_x = pos_train_x.shape[1]
+    n_in_ner = pos_train_ner_x.shape[1]
+    n_in_chunking = pos_train_chunking_x.shape[1]
+    n_in_wsj_pos = pos_train_wsj_pos_x.shape[1]
+    n_in_casing = pos_train_casing_x.shape[1]
 
     # prepare config
     config_values = {
@@ -321,35 +251,20 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
             'idx': case2Idx,
             'pos': 1
         },
-        'pos': {
-            'n': n_in_pos,
-            'idx': events_pos2Idx,
-            'pos': 2
-        },
         'ner': {
             'n': n_in_ner,
-            'idx': events_ner2Idx,
-            'pos': 3
+            'idx': pos_ner2Idx,
+            'pos': 2
         },
         'chunking': {
             'n': n_in_chunking,
-            'idx': events_chunking2Idx,
+            'idx': pos_chunking2Idx,
+            'pos': 3
+        },
+        'pos': {
+            'n': n_in_wsj_pos,
+            'idx': pos_wsj_pos2Idx,
             'pos': 4
-        },
-        'ace': {
-            'n': n_in_ace,
-            'idx': events_ace2Idx,
-            'pos': 5
-        },
-        'tac': {
-            'n': n_in_tac,
-            'idx': events_tac2Idx,
-            'pos': 6
-        },
-        'tempeval': {
-            'n': n_in_tempeval,
-            'idx': events_tempeval2Idx,
-            'pos': 7
         }
     }
 
@@ -361,7 +276,7 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
     input_layers_merged = merge(input_layers, mode='concat')
 
     model = Senna.buildModelGivenInput(
-        input_layers_merged, inputs, params, n_out, name_prefix='ecb_')
+        input_layers_merged, inputs, params, n_out, name_prefix='ud_pos_')
 
     # SELECT FEATURES WHICH APPEAR IN THE CONFIG
     indices = sorted(
@@ -371,7 +286,6 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
     model_test = [input_test[i] for i in indices]
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
     return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
@@ -382,37 +296,25 @@ def buildAndTrainEcbModel(learning_params=None, config=[]):
         dev_y,
         model_test,
         test_y,
-        measurer=biof1)
+        measurer=Measurer.measureAccuracy)
 
-def buildAndTrainTacModel(learning_params=None, config=[]):
+def buildAndTrainNerModel(learning_params, config=[]):
     params = learning_params
 
     [input_train,
      train_y_cat], [input_dev,
-                    dev_y], [input_test, test_y], dicts = TACED.readDatasetExt(
+                    dev_y], [input_test, test_y], dicts = CoNLLNer.readDatasetExt(
                         params['window_size'], word2Idx, case2Idx)
 
-    [
-        _, events_pos2Idx, events_ner2Idx, events_chunking2Idx, events_ace2Idx,
-        events_ecb2Idx, events_tempeval2Idx, _, events_label2Idx,
-        events_idx2Label
-    ] = dicts
+    [_, _, ner_pos2Idx, ner_chunking2Idx, ner_label2Idx, ner_idx2Label] = dicts
 
-    [
-        events_train_x, events_train_casing_x, events_train_pos_x,
-        events_train_ner_x, events_train_chunking_x, events_train_ace_x,
-        events_train_ecb_x, events_train_tempeval_x
-    ] = input_train
+    [ner_train_x, ner_train_casing_x, ner_train_pos_x, ner_train_chunking_x] = input_train
 
     n_out = train_y_cat.shape[1]
-    n_in_x = events_train_x.shape[1]
-    n_in_pos = events_train_pos_x.shape[1]
-    n_in_ner = events_train_ner_x.shape[1]
-    n_in_chunking = events_train_chunking_x.shape[1]
-    n_in_casing = events_train_casing_x.shape[1]
-    n_in_ace = events_train_ace_x.shape[1]
-    n_in_ecb = events_train_ecb_x.shape[1]
-    n_in_tempeval = events_train_tempeval_x.shape[1]
+    n_in_x = ner_train_x.shape[1]
+    n_in_pos = ner_train_pos_x.shape[1]
+    n_in_chunking = ner_train_chunking_x.shape[1]
+    n_in_casing = ner_train_casing_x.shape[1]
 
     # prepare config
     config_values = {
@@ -428,33 +330,13 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
         },
         'pos': {
             'n': n_in_pos,
-            'idx': events_pos2Idx,
+            'idx': ner_pos2Idx,
             'pos': 2
-        },
-        'ner': {
-            'n': n_in_ner,
-            'idx': events_ner2Idx,
-            'pos': 3
         },
         'chunking': {
             'n': n_in_chunking,
-            'idx': events_chunking2Idx,
-            'pos': 4
-        },
-        'ace': {
-            'n': n_in_ace,
-            'idx': events_ace2Idx,
-            'pos': 5
-        },
-        'ecb': {
-            'n': n_in_ecb,
-            'idx': events_ecb2Idx,
-            'pos': 6
-        },
-        'tempeval': {
-            'n': n_in_tempeval,
-            'idx': events_tempeval2Idx,
-            'pos': 7
+            'idx': ner_chunking2Idx,
+            'pos': 3
         }
     }
 
@@ -466,7 +348,7 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
     input_layers_merged = merge(input_layers, mode='concat')
 
     model = Senna.buildModelGivenInput(
-        input_layers_merged, inputs, params, n_out, name_prefix='tac_')
+        input_layers_merged, inputs, params, n_out, name_prefix='ner_')
 
     # SELECT FEATURES WHICH APPEAR IN THE CONFIG
     indices = sorted(
@@ -476,7 +358,7 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
     model_test = [input_test[i] for i in indices]
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
+    biof1 = Measurer.create_compute_BIOf1(ner_idx2Label)
     return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
@@ -489,35 +371,24 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
         test_y,
         measurer=biof1)
 
-def buildAndTrainTempevalModel(learning_params=None, config=[]):
+def buildAndTrainChunkingModel(learning_params, config=[]):
     params = learning_params
 
     [input_train,
      train_y_cat], [input_dev,
                     dev_y], [input_test,
-                             test_y], dicts = TempevalED.readDatasetExt(
+                             test_y], dicts = CoNLLChunking.readDatasetExt(
                                  params['window_size'], word2Idx, case2Idx)
 
-    [
-        _, events_pos2Idx, events_ner2Idx, events_chunking2Idx, events_ace2Idx,
-        events_ecb2Idx, events_tac2Idx, _, events_label2Idx, events_idx2Label
-    ] = dicts
+    [_, _, chunking_pos2Idx, chunking_ner2Idx, chunking_label2Idx, chunking_idx2Label] = dicts
 
-    [
-        events_train_x, events_train_casing_x, events_train_pos_x,
-        events_train_ner_x, events_train_chunking_x, events_train_ace_x,
-        events_train_ecb_x, events_train_tac_x
-    ] = input_train
+    [chunking_train_x, chunking_train_casing_x, chunking_train_pos_x, chunking_train_ner_x] = input_train
 
     n_out = train_y_cat.shape[1]
-    n_in_x = events_train_x.shape[1]
-    n_in_pos = events_train_pos_x.shape[1]
-    n_in_ner = events_train_ner_x.shape[1]
-    n_in_chunking = events_train_chunking_x.shape[1]
-    n_in_casing = events_train_casing_x.shape[1]
-    n_in_ace = events_train_ace_x.shape[1]
-    n_in_ecb = events_train_ecb_x.shape[1]
-    n_in_tac = events_train_tac_x.shape[1]
+    n_in_x = chunking_train_x.shape[1]
+    n_in_pos = chunking_train_pos_x.shape[1]
+    n_in_ner = chunking_train_ner_x.shape[1]
+    n_in_casing = chunking_train_casing_x.shape[1]
 
     # prepare config
     config_values = {
@@ -533,33 +404,13 @@ def buildAndTrainTempevalModel(learning_params=None, config=[]):
         },
         'pos': {
             'n': n_in_pos,
-            'idx': events_pos2Idx,
+            'idx': chunking_pos2Idx,
             'pos': 2
         },
         'ner': {
             'n': n_in_ner,
-            'idx': events_ner2Idx,
+            'idx': chunking_ner2Idx,
             'pos': 3
-        },
-        'chunking': {
-            'n': n_in_chunking,
-            'idx': events_chunking2Idx,
-            'pos': 4
-        },
-        'ace': {
-            'n': n_in_ace,
-            'idx': events_ace2Idx,
-            'pos': 5
-        },
-        'ecb': {
-            'n': n_in_ecb,
-            'idx': events_ecb2Idx,
-            'pos': 6
-        },
-        'tac': {
-            'n': n_in_tac,
-            'idx': events_tac2Idx,
-            'pos': 7
         }
     }
 
@@ -571,7 +422,7 @@ def buildAndTrainTempevalModel(learning_params=None, config=[]):
     input_layers_merged = merge(input_layers, mode='concat')
 
     model = Senna.buildModelGivenInput(
-        input_layers_merged, inputs, params, n_out, name_prefix='tempeval_')
+        input_layers_merged, inputs, params, n_out, name_prefix='chunking_')
 
     # SELECT FEATURES WHICH APPEAR IN THE CONFIG
     indices = sorted(
@@ -581,7 +432,7 @@ def buildAndTrainTempevalModel(learning_params=None, config=[]):
     model_test = [input_test[i] for i in indices]
 
     # ----- Train Model ----- #
-    biof1 = Measurer.create_compute_BIOf1(events_idx2Label)
+    biof1 = Measurer.create_compute_BIOf1(chunking_idx2Label)
     return Trainer.trainModelWithIncreasingData(
         model,
         model_train,
@@ -609,85 +460,68 @@ def run_models_as_input_exp_with_fixed_params():
     for model_nr in range(max_evals):
         print "Model nr. ", model_nr
 
-        if 'ace' in config.tasks:
-            runAceExp(fixed_params, ['ecb', 'tac', 'tempeval'])
-            runAceExp(fixed_params, ['ecb', 'tac'])
-            runAceExp(fixed_params, ['tac', 'tempeval'])
-            runAceExp(fixed_params, ['ecb', 'tempeval'])
-            runAceExp(fixed_params, ['ecb'])
-            runAceExp(fixed_params, ['tac'])
-            runAceExp(fixed_params, ['tempeval'])
+        if 'wsj_pos' in config.tasks:
+            runWSJPosExp(fixed_params, ['ner', 'chunking'])
+            runWSJPosExp(fixed_params, ['ner'])
+            runWSJPosExp(fixed_params, ['chunking'])
+            runWSJPosExp(fixed_params, ['ud_pos'])
 
-        if 'tac' in config.tasks:
-            runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
-            runTacExp(fixed_params, ['ace', 'ecb'])
-            runTacExp(fixed_params, ['ace', 'tempeval'])
-            runTacExp(fixed_params, ['ecb', 'tempeval'])
-            runTacExp(fixed_params, ['ecb'])
-            runTacExp(fixed_params, ['ace'])
-            runTacExp(fixed_params, ['tempeval'])
+        if 'ner' in config.tasks:
+            runNerExp(fixed_params, ['pos', 'chunking'])
+            runNerExp(fixed_params, ['pos'])
+            runNerExp(fixed_params, ['chunking'])
 
-        if 'tempeval' in config.tasks:
-            runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
-            runTempevalExp(fixed_params, ['ace', 'ecb'])
-            runTempevalExp(fixed_params, ['ace', 'tac'])
-            runTempevalExp(fixed_params, ['ecb', 'tac'])
-            runTempevalExp(fixed_params, ['ecb'])
-            runTempevalExp(fixed_params, ['ace'])
-            runTempevalExp(fixed_params, ['tac'])
+        if 'chunking' in config.tasks:
+            runChunkingExp(fixed_params, ['pos', 'ner'])
+            runChunkingExp(fixed_params, ['pos'])
+            runChunkingExp(fixed_params, ['ner'])
 
-        if 'ecb' in config.tasks:
-            runEcbExp(fixed_params, ['ace', 'tac', 'tempeval'])
-            runEcbExp(fixed_params, ['ace', 'tac'])
-            runEcbExp(fixed_params, ['tac', 'tempeval'])
-            runEcbExp(fixed_params, ['ace', 'tempeval'])
-            runEcbExp(fixed_params, ['ace'])
-            runEcbExp(fixed_params, ['tac'])
-            runEcbExp(fixed_params, ['tempeval'])
+        if 'ud_pos' in config.tasks:
+            runUDPosExp(fixed_params, ['pos'])
 
 
-def runAceExp(params, config):
+def runWSJPosExp(params, config):
     ExperimentHelper.run_build_model(
-        'ace',
+        'wsj_pos',
         'pipeline',
         params,
-        buildAndTrainAceModel,
+        buildAndTrainWSJPosModel,
+        'acc',
+        transfer_config=['words', 'casing'] + config)
+
+
+def runUDPosExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ud_pos',
+        'pipeline',
+        params,
+        buildAndTrainUDPosModel,
+        'acc',
+        transfer_config=['words', 'casing'] + config)
+
+
+def runNerExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ner',
+        'pipeline',
+        params,
+        buildAndTrainNerModel,
         'f1',
         transfer_config=['words', 'casing'] + config)
 
 
-def runEcbExp(params, config):
+def runChunkingExp(params, config):
     ExperimentHelper.run_build_model(
-        'ecb',
+        'chunking',
         'pipeline',
         params,
-        buildAndTrainEcbModel,
+        buildAndTrainChunkingModel,
         'f1',
         transfer_config=['words', 'casing'] + config)
 
 
-def runTacExp(params, config):
-    ExperimentHelper.run_build_model(
-        'tac',
-        'pipeline',
-        params,
-        buildAndTrainTacModel,
-        'f1',
-        transfer_config=['words', 'casing'] + config)
-
-
-def runTempevalExp(params, config):
-    ExperimentHelper.run_build_model(
-        'tempeval',
-        'pipeline',
-        params,
-        buildAndTrainTempevalModel,
-        'f1',
-        transfer_config=['words', 'casing'] + config)
-
-
-#extendAceED()
-#extendEcbED()
-#extendTacED()
-#extendTempevalED()
+#extendWSJPos()
+#extendUDPos()
+#extendNER()
+#extendChunking()
 run_models_as_input_exp_with_fixed_params()

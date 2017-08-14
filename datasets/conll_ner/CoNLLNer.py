@@ -3,32 +3,34 @@ from keras.utils import np_utils
 from os import path
 import numpy as np
 
-ner_trainFile = 'datasets/conll_ner/data/train.txt'
-ner_devFile = 'datasets/conll_ner/data/dev.txt'
-ner_testFile = 'datasets/conll_ner/data/test.txt'
+trainFile = 'datasets/conll_ner/data/train.txt'
+devFile = 'datasets/conll_ner/data/dev.txt'
+testFile = 'datasets/conll_ner/data/test.txt'
 
-ner_trainFileExt = 'datasets/conll_ner/data/eng_train_ext.conllu'
-ner_devFileExt = 'datasets/conll_ner/data/eng_dev_ext.conllu'
-ner_testFileExt = 'datasets/conll_ner/data/eng_test_ext.conllu'
+ner_trainFileExt = 'datasets/conll_ner/data/train_ext.conllu'
+ner_devFileExt = 'datasets/conll_ner/data/dev_ext.conllu'
+ner_testFileExt = 'datasets/conll_ner/data/test_ext.conllu'
+
+directory = 'datasets/conll_ner/data/'
 
 word_position = 0
-label_position = 1
-pos_position = 2
-chunking_position = 3
-other_positions = [pos_position ,chunking_position]
-positions = [word_position, label_position]
-positions.extend(other_positions)
+label_position = 3
+
+ext_word_position = 0
+ext_label_position = 1
+ext_pos_position = 2
+ext_chunking_position = 3
 
 def readDataset(windowSize, word2Idx, caseLookup):
 
     # Read in data
     print "Read in data and create matrices"
-    ner_train_sentences = GermEvalReader.readFile(ner_trainFile, 0, 3)
-    ner_dev_sentences = GermEvalReader.readFile(ner_devFile, 0, 3)
-    ner_test_sentences = GermEvalReader.readFile(ner_testFile, 0, 3)
+    ner_train_sentences = GermEvalReader.readFile(trainFile, word_position, label_position)
+    ner_dev_sentences = GermEvalReader.readFile(devFile, word_position, label_position)
+    ner_test_sentences = GermEvalReader.readFile(testFile, word_position, label_position)
 
     #Label mapping for POS
-    ner_label2Idx, ner_idx2Label = GermEvalReader.getLabelDict(ner_trainFile)
+    ner_label2Idx, ner_idx2Label = GermEvalReader.getLabelDict(trainFile)
 
     # Create numpy arrays
     ner_train_x, ner_train_case_x, ner_train_y = GermEvalReader.createNumpyArrayWithCasing(
@@ -60,20 +62,20 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
 
     # create dictionaries
     # Label mapping for POS
-    label_column_train = filterColumn(ner_train_sentences, label_position)
-    word_column_train = filterColumn(ner_train_sentences, word_position)
-    pos_column_train = filterColumn(ner_train_sentences, pos_position)
-    chunking_column_train = filterColumn(ner_train_sentences, chunking_position)
+    label_column_train = filterColumn(ner_train_sentences, ext_label_position)
+    word_column_train = filterColumn(ner_train_sentences, ext_word_position)
+    pos_column_train = filterColumn(ner_train_sentences, ext_pos_position)
+    chunking_column_train = filterColumn(ner_train_sentences, ext_chunking_position)
 
-    label_column_dev = filterColumn(ner_dev_sentences, label_position)
-    word_column_dev = filterColumn(ner_dev_sentences, word_position)
-    pos_column_dev = filterColumn(ner_dev_sentences, pos_position)
-    chunking_column_dev = filterColumn(ner_dev_sentences, chunking_position)
+    label_column_dev = filterColumn(ner_dev_sentences, ext_label_position)
+    word_column_dev = filterColumn(ner_dev_sentences, ext_word_position)
+    pos_column_dev = filterColumn(ner_dev_sentences, ext_pos_position)
+    chunking_column_dev = filterColumn(ner_dev_sentences, ext_chunking_position)
 
-    label_column_test = filterColumn(ner_test_sentences, label_position)
-    word_column_test = filterColumn(ner_test_sentences, word_position)
-    pos_column_test = filterColumn(ner_test_sentences, pos_position)
-    chunking_column_test = filterColumn(ner_test_sentences, chunking_position)
+    label_column_test = filterColumn(ner_test_sentences, ext_label_position)
+    word_column_test = filterColumn(ner_test_sentences, ext_word_position)
+    pos_column_test = filterColumn(ner_test_sentences, ext_pos_position)
+    chunking_column_test = filterColumn(ner_test_sentences, ext_chunking_position)
 
     ner_label2Idx, ner_idx2Label = DatasetExtender.getDict(label_column_train)
     ner_pos2Idx, ner_idx2pos = DatasetExtender.getDict(pos_column_train, withAddLabels=True)
@@ -168,28 +170,26 @@ def readDatasetExt(windowSize, word2Idx, case2Idx):
 
 
 
-    input_train = [ner_train_x, ner_train_pos_x, ner_train_chunking_x, ner_train_casing_x]
-    input_dev = [ner_dev_x, ner_dev_pos_x, ner_dev_chunking_x, ner_dev_casing_x]
-    input_test = [ner_test_x, ner_test_pos_x, ner_test_chunking_x, ner_test_casing_x]
+    input_train = [ner_train_x, ner_train_casing_x, ner_train_pos_x, ner_train_chunking_x]
+    input_dev = [ner_dev_x, ner_dev_casing_x, ner_dev_pos_x, ner_dev_chunking_x]
+    input_test = [ner_test_x, ner_test_casing_x, ner_test_pos_x, ner_test_chunking_x]
 
     ner_train_y_cat = np_utils.to_categorical(ner_train_y, len(ner_label2Idx))
 
-    dicts = [word2Idx, ner_pos2Idx, ner_chunking2Idx, case2Idx, ner_label2Idx, ner_idx2Label]
+    dicts = [word2Idx, case2Idx, ner_pos2Idx, ner_chunking2Idx, ner_label2Idx, ner_idx2Label]
     return [input_train, ner_train_y_cat], [input_dev, ner_dev_y], [input_test, ner_test_y], dicts
 
 def filterColumn(sentences, position):
     return map(lambda sentence: sentence[:, position], sentences)
 
-def extendDataset(filename, train_extensions, dev_extensions, test_extensions):
-    train_sentences = GermEvalReader.readFile(ner_trainFile, 0, 3)
-    dev_sentences = GermEvalReader.readFile(ner_devFile, 0, 3)
-    test_sentences = GermEvalReader.readFile(ner_testFile, 0, 3)
+def extendDataset(train_extensions, dev_extensions, test_extensions):
+    train_sentences = GermEvalReader.readFile(trainFile, word_position, label_position)
+    dev_sentences = GermEvalReader.readFile(devFile, word_position, label_position)
+    test_sentences = GermEvalReader.readFile(testFile, word_position, label_position)
 
-    filename, file_extension = path.splitext(filename)
-
-    DatasetExtender.extendDataset("{0}_train_ext{1}".format(filename, file_extension), train_sentences, train_extensions)
-    DatasetExtender.extendDataset("{0}_dev_ext{1}".format(filename, file_extension), dev_sentences, dev_extensions)
-    DatasetExtender.extendDataset("{0}_test_ext{1}".format(filename, file_extension), test_sentences, test_extensions)
+    DatasetExtender.extendDataset("{0}train_ext.conllu".format(directory), train_sentences, train_extensions)
+    DatasetExtender.extendDataset("{0}dev_ext.conllu".format(directory), dev_sentences, dev_extensions)
+    DatasetExtender.extendDataset("{0}test_ext.conllu".format(directory), test_sentences, test_extensions)
 
 def getLabelDict():
-    return GermEvalReader.getLabelDict(ner_trainFile)
+    return GermEvalReader.getLabelDict(trainFile)

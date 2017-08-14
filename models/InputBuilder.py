@@ -79,6 +79,11 @@ def buildPipelineModelInput(config):
         inputs.append(input)
         input_layers.append(input_layer)
 
+    if 'ud_pos' in config:
+        input, input_layer = buildInputNodes(config, 'ud_pos')
+        inputs.append(input)
+        input_layers.append(input_layer)
+
 
     return input_layers, inputs
 

@@ -12,8 +12,8 @@ def save_results(path, task, set, params, score, score_epoch):
 
 
 def save_reduced_datasets_results(path, experiment, task, params, train_score, dev_score, test_score, score_epoch, dataset_size, add_models='none'):
-    line = '{experiment}, {task}, {dataset_size}, {update_word_embeddings}, {window_size}, {batch_size}, {hidden_dims}, {activation},' \
-           '{dropout}, {optimizer}, {train_score}, {dev_score}, {test_score}, {score_epoch}, {datetime}, {add_models}\n'.format(
+    line = '{experiment},{task},{dataset_size},{update_word_embeddings},{window_size},{batch_size},{hidden_dims},{activation},' \
+           '{dropout},{optimizer},{train_score},{dev_score},{test_score},{score_epoch},{datetime},{add_models}\n'.format(
         task=task, update_word_embeddings=params['update_word_embeddings'], window_size=params['window_size'],
         batch_size=params['batch_size'], hidden_dims=params['hidden_dims'], activation=params['activation'],
         dropout=params['dropout'], optimizer=params['optimizer'], train_score=train_score, dev_score=dev_score, test_score=test_score, score_epoch=score_epoch,
