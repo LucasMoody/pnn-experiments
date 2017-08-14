@@ -4,7 +4,6 @@ from os import path
 import numpy as np
 
 events_trainFile = 'datasets/ecbplus_ed/data/train.txt'
-events_devFile = 'datasets/ecbplus_ed/data/dev.txt'
 events_testFile = 'datasets/ecbplus_ed/data/test.txt'
 
 trainFileExt = 'datasets/ecbplus_ed/data/train_ext.conllu'
@@ -29,8 +28,10 @@ def readDataset(windowSize, word2Idx, case2Idx):
 
     # Read in data
     print "Read in data and create matrices"
-    events_train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
-    events_dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
+    events_train_dev_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
+    train_end = int(round(0.7 * len(events_train_dev_sentences)))
+    events_train_sentences = events_train_dev_sentences[0:train_end]
+    events_dev_sentences = events_train_dev_sentences[train_end:]
     events_test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
     #Label mapping for ED
@@ -192,8 +193,10 @@ def filterColumn(sentences, position):
     return map(lambda sentence: sentence[:, position], sentences)
 
 def extendDataset(train_extensions, dev_extensions, test_extensions):
-    train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
-    dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
+    train_dev_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
+    train_end = int(round(0.7 * len(train_dev_sentences)))
+    train_sentences = train_dev_sentences[0:train_end]
+    dev_sentences = train_dev_sentences[train_end:]
     test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
     DatasetExtender.extendDataset("{0}train_ext.conllu".format(directory), train_sentences, train_extensions)
