@@ -143,13 +143,13 @@ def run_finetuning_exp_with_fixed_params():
             runAceExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
-            runAceExp(fixed_params, ['ace'])
+            #runAceExp(fixed_params, ['ace'])
             runAceExp(fixed_params, ['ecb'])
-            runAceExp(fixed_params, ['tac'])
+            #runAceExp(fixed_params, ['tac'])
 
         if 'ecb' in config.tasks:
-            runAceExp(fixed_params, ['ace'])
-            runAceExp(fixed_params, ['tac'])
+            #runAceExp(fixed_params, ['ace'])
+            #runAceExp(fixed_params, ['tac'])
             runAceExp(fixed_params, ['tempeval'])
 
 def runAceExp(params, config):

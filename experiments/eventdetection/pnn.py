@@ -133,39 +133,39 @@ def run_pnn_exp_with_fixed_params():
         print "Model nr. ", model_nr
 
         if 'ace' in config.tasks:
-            runAceExp(fixed_params, ['ecb', 'tac', 'tempeval'])
-            runAceExp(fixed_params, ['ecb', 'tac'])
-            runAceExp(fixed_params, ['tac', 'tempeval'])
+            #runAceExp(fixed_params, ['ecb', 'tac', 'tempeval'])
+            #runAceExp(fixed_params, ['ecb', 'tac'])
+            #runAceExp(fixed_params, ['tac', 'tempeval'])
             runAceExp(fixed_params, ['ecb', 'tempeval'])
             runAceExp(fixed_params, ['ecb'])
             runAceExp(fixed_params, ['tac'])
             runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
-            runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
-            runTacExp(fixed_params, ['ace', 'ecb'])
-            runTacExp(fixed_params, ['ace', 'tempeval'])
+            #runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
+            #runTacExp(fixed_params, ['ace', 'ecb'])
+            #runTacExp(fixed_params, ['ace', 'tempeval'])
             runTacExp(fixed_params, ['ecb', 'tempeval'])
             runTacExp(fixed_params, ['ecb'])
             runTacExp(fixed_params, ['ace'])
             runTacExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
-            runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
+            '''runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
             runTempevalExp(fixed_params, ['ace', 'ecb'])
             runTempevalExp(fixed_params, ['ace', 'tac'])
             runTempevalExp(fixed_params, ['ecb', 'tac'])
-            runTempevalExp(fixed_params, ['ecb'])
             runTempevalExp(fixed_params, ['ace'])
-            runTempevalExp(fixed_params, ['tac'])
+            runTempevalExp(fixed_params, ['tac'])'''
+            runTempevalExp(fixed_params, ['ecb'])
 
         if 'ecb' in config.tasks:
-            runEcbExp(fixed_params, ['ace', 'tac', 'tempeval'])
+            '''runEcbExp(fixed_params, ['ace', 'tac', 'tempeval'])
             runEcbExp(fixed_params, ['ace', 'tac'])
             runEcbExp(fixed_params, ['tac', 'tempeval'])
             runEcbExp(fixed_params, ['ace', 'tempeval'])
             runEcbExp(fixed_params, ['ace'])
-            runEcbExp(fixed_params, ['tac'])
+            runEcbExp(fixed_params, ['tac'])'''
             runEcbExp(fixed_params, ['tempeval'])
 
 def runAceExp(params, config):
