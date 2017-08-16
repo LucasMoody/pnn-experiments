@@ -138,19 +138,19 @@ def run_finetuning_exp_with_fixed_params():
             runAceExp(fixed_params, ['tempeval'])
 
         if 'tac' in config.tasks:
-            runAceExp(fixed_params, ['ace'])
-            runAceExp(fixed_params, ['ecb'])
-            runAceExp(fixed_params, ['tempeval'])
+            runTacExp(fixed_params, ['ace'])
+            runTacExp(fixed_params, ['ecb'])
+            runTacExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
-            #runAceExp(fixed_params, ['ace'])
-            runAceExp(fixed_params, ['ecb'])
-            #runAceExp(fixed_params, ['tac'])
+            #runTempevalExp(fixed_params, ['ace'])
+            runTempevalExp(fixed_params, ['ecb'])
+            #runTempevalExp(fixed_params, ['tac'])
 
         if 'ecb' in config.tasks:
-            #runAceExp(fixed_params, ['ace'])
-            #runAceExp(fixed_params, ['tac'])
-            runAceExp(fixed_params, ['tempeval'])
+            #runEcbExp(fixed_params, ['ace'])
+            #runEcbExp(fixed_params, ['tac'])
+            runEcbExp(fixed_params, ['tempeval'])
 
 def runAceExp(params, config):
     ExperimentHelper.run_build_model(
