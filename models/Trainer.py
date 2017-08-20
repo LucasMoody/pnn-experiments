@@ -90,7 +90,7 @@ def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev,
     return best_train_score, best_dev_score, best_test_score, best_epoch
 
 def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurer):
-    start_time = time.time()
+    start_process_time = time.time()
     ranges = sample_fun(X_train, no_samples)
 
     scores = []
@@ -112,7 +112,7 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
         print "%.2f sec for sample training" % (time.time() - start_time)
         scores.append([best_train_score, best_dev_score, best_test_score, epoch, sample])
 
-    print "%.2f sec for whole learning process" % (time.time() - start_time)
+    print "%.2f sec for whole learning process" % (time.time() - start_process_time)
     return scores
 
 def trainMultiTaskModelWithIncreasingData(models, datasets, number_of_epochs, minibatch_size):
