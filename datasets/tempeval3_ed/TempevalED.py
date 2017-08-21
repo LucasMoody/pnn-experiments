@@ -237,3 +237,9 @@ def getLabelDict():
             events_label2Idx[tag] = len(events_label2Idx)
     events_idx2Label = {v: k for k, v in events_label2Idx.items()}
     return events_label2Idx, events_idx2Label
+
+def getRawSentences():
+    train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
+    dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
+    test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
+    return train_sentences, dev_sentences, test_sentences

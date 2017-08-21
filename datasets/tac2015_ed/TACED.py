@@ -261,3 +261,20 @@ def getLabelDict():
             events_label2Idx[tag] = len(events_label2Idx)
     events_idx2Label = {v: k for k, v in events_label2Idx.items()}
     return events_label2Idx, events_idx2Label
+
+def getRawSentences():
+    train_sentences = GermEvalReader.readFile(events_trainFile, word_position, label_position)
+    dev_sentences = GermEvalReader.readFile(events_devFile, word_position, label_position)
+    test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
+
+    # exclude all Contact labels as they are badly annotated
+    train_sentences = filter(
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False),
+        train_sentences)
+    dev_sentences = filter(
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False),
+        dev_sentences)
+    test_sentences = filter(
+        lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False),
+        test_sentences)
+    return train_sentences, dev_sentences, test_sentences

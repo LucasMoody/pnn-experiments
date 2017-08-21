@@ -208,3 +208,9 @@ def extendDataset(train_extensions, dev_extensions, test_extensions):
 
 def getLabelDict():
     return GermEvalReader.getLabelDict(trainFile, tagPosition=1)
+
+def getRawSentences():
+    train_sentences = GermEvalReader.readFile(trainFile, word_position, label_position)
+    dev_sentences = GermEvalReader.readFile(devFile, word_position, label_position)
+    test_sentences = GermEvalReader.readFile(testFile, word_position, label_position)
+    return train_sentences, dev_sentences, test_sentences

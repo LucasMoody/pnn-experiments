@@ -116,6 +116,7 @@ def trainModelWithIncreasingData(model, X_train, Y_train, number_of_epochs, mini
     return scores
 
 def trainMultiTaskModelWithIncreasingData(models, datasets, number_of_epochs, minibatch_size):
+    start_process_time = time.time()
     focused_dataset = datasets[0]
     ranges = sample_fun(focused_dataset['train']['input'], no_samples)
 
@@ -158,6 +159,7 @@ def trainMultiTaskModelWithIncreasingData(models, datasets, number_of_epochs, mi
         print "%.2f sec for sample training" % (time.time() - start_time)
         scores.append([best_train_score, best_dev_score, best_test_score, epoch, sample])
 
+    print "%.2f sec for whole learning process" % (time.time() - start_process_time)
     return scores
 
 def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
@@ -170,8 +172,8 @@ def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
     # maximum number of epochs
     global_batch_start = 0
     virtual_epoch_counter = 0
+    start_time = time.time()
     while virtual_epoch_counter < number_of_epochs:
-        start_time = time.time()
         # models are trained by turns
         for idx, model in enumerate(models):
             model_data = datasets[idx]
@@ -204,7 +206,7 @@ def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
                 measurements_dev = model_data['measurer'](pred_dev, model_data['dev']['y'])
                 print 'Model for {0} with score: {1:.4f}'.format(model_data['name'], measurements_dev * 100)
                 dev_scores.append(measurements_dev)
-            # check whether the best score of the focused model is improved
+            # check whether the best score of the focused model has improved
             if dev_scores[0] > best_dev_score:
                 best_dev_score = dev_scores[0]
                 best_epoch = virtual_epoch_counter
@@ -217,6 +219,7 @@ def trainMultiTaskModels(models, datasets, number_of_epochs, minibatch_size):
                 break
             virtual_epoch_counter += 1
             print "%.2f sec for prediction" % (time.time() - start_prediction_time)
+            start_time = time.time()
 
     # ----- score calculations and weight resetting to best score ----- #
     # set back weights to best epoch

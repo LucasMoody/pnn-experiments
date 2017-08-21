@@ -105,8 +105,12 @@ def buildModelWithSimplePNN(input_layers, inputs, params, n_out, metrics=[], add
         model.layers[num_layers - 3].trainable = False
         model.layers[num_layers - 1].trainable = False
 
+    # INPUT DROPOUT
+    input_dropout_layer = Dropout(params['dropout'])
+    input_dropout = input_dropout_layer(input_layers)
+
     hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name_prefix + 'hidden')
-    hidden = hidden_layer(input_layers)
+    hidden = hidden_layer(input_dropout)
 
     # only use hidden layer
     hidden_merged = merge([hidden] + transfer_model_hidden_layers, mode='concat')
@@ -124,6 +128,7 @@ def buildModelWithSimplePNN(input_layers, inputs, params, n_out, metrics=[], add
     return model
 
 def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
+    adapter_size = 10
     # ----- GET TENSOR OF TRANSFER MODELS ----- #
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
@@ -144,7 +149,7 @@ def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], ad
     input_dropout = input_dropout_layer(input_layers)
 
     # ADAPTER - HIDDEN #
-    hidden_adapter_layer = Dense(100, activation=params['activation'], name=name_prefix + 'hidden_adapter')
+    hidden_adapter_layer = Dense(adapter_size, activation=params['activation'], name=name_prefix + 'hidden_adapter')
     if (len(transfer_model_hidden_layers) > 1):
         hidden_adapter = hidden_adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
     else:
@@ -157,7 +162,7 @@ def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], ad
     hidden = hidden_layer(embeddings_hidden_merged)
 
     # ADAPTER - OUTPUT
-    output_adapter_layer = Dense(100, activation=params['activation'], name=name_prefix + 'output_adapter')
+    output_adapter_layer = Dense(adapter_size, activation=params['activation'], name=name_prefix + 'output_adapter')
     if (len(transfer_model_output_layers) > 1):
         output_adapter = output_adapter_layer(merge(transfer_model_output_layers, mode='concat'))
     else:

@@ -25,24 +25,30 @@ df_nlp.task = df_nlp['task'].str.strip()
 def medianAndStdFunc(data):
     return u'{0:.3f}\u00B1{1:.3f}%'.format(np.median(data) * 100, np.std(data) * 100)
 
+def avgAndStdFunc(data):
+    return u'{0:.3f}\u00B1{1:.3f}%'.format(np.average(data) * 100, np.std(data) * 100)
+
+current_metric = medianAndStdFunc
+
 def get_results_for_task(df, task, source_tasks, aggfuncs, minSize, maxSize):
     multitask_transfer_spec = map(lambda t: '-'.join(sorted(t.split('-') + [task])),source_tasks)
-    tmp = df[(df.task == task) & (df.transfer.isin(source_tasks + ['none'] + multitask_transfer_spec)) & (df['sample'] >= minSize) & (df['sample'] <= maxSize)]
+    tmp = df[(df.score_dev != 0) & (df.task == task) & (df.transfer.isin(source_tasks + ['none'] + multitask_transfer_spec)) & (df['sample'] >= minSize) & (df['sample'] <= maxSize)]
     print 'Target task: {0}, source tasks: {1}, metric: {2}\n\n'.format(task, source_tasks, ','.join(map(lambda func: func.__name__,aggfuncs)))
     print pd.pivot_table(tmp, index=['exp'], columns='sample', values='score_test', aggfunc=aggfuncs)
     #print pd.pivot_table(tmp, index=['exp'], columns='sample', values='score_test', aggfunc=aggfunc)
     print '\n---------------------------------------------------\n'
 
-get_results_for_task(df_ed, 'tac', ['tempeval', 'ecb', 'ecb-tempeval'], [len], 2000, 30000)
-get_results_for_task(df_ed, 'tac', ['ace'], [len], 2000, 30000)
-get_results_for_task(df_ed, 'ace', ['tempeval', 'ecb', 'ecb-tempeval'], [len], 5000, 30000)
-get_results_for_task(df_ed, 'ace', ['tac'], [len], 5000, 30000)
-get_results_for_task(df_ed, 'ecb', ['tempeval'], [len], 1000, 30000)
-get_results_for_task(df_ed, 'tempeval', ['ecb'], [len], 1000, 30000)
+get_results_for_task(df_ed, 'tac', ['tempeval', 'ecb', 'ecb-tempeval'], [current_metric], 2000, 30000)
+get_results_for_task(df_ed, 'tac', ['ace'], [current_metric], 2000, 30000)
+get_results_for_task(df_ed, 'ace', ['tempeval', 'ecb', 'ecb-tempeval'], [current_metric], 5000, 30000)
+get_results_for_task(df_ed, 'ace', ['tac'], [current_metric], 5000, 30000)
+get_results_for_task(df_ed, 'ecb', ['tempeval'], [current_metric], 1000, 30000)
+get_results_for_task(df_ed, 'tempeval', ['ecb'], [current_metric], 1000, 30000)
 
-get_results_for_task(df_nlp, 'wsj_pos', ['ner', 'chunking', 'chunking-ner'], [len], 2000, 30000)
-get_results_for_task(df_nlp, 'ner', ['pos', 'chunking', 'chunking-pos'], [len], 2000, 30000)
-get_results_for_task(df_nlp, 'chunking', ['pos', 'ner', 'ner-pos'], [len], 2000, 30000)
+get_results_for_task(df_nlp, 'wsj_pos', ['ner', 'chunking', 'chunking-ner'], [current_metric], 2000, 30000)
+get_results_for_task(df_nlp, 'ud_pos', ['ud_pos'], [current_metric], 2000, 30000)
+get_results_for_task(df_nlp, 'ner', ['pos', 'chunking', 'chunking-pos'], [current_metric], 2000, 30000)
+get_results_for_task(df_nlp, 'chunking', ['pos', 'ner', 'ner-pos'], [current_metric], 2000, 30000)
 #get_results_for_task(df_test, 'ace', ['tempeval', 'ecb'], [np.std])
 #get_results_for_task(df_test, 'ace', ['tac'], [np.std])
 #get_results_for_task(df_test, 'wsj_pos', ['ner', 'chunking'], np.median)

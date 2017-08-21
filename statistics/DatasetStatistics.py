@@ -29,7 +29,7 @@ word2Idx = Embeddings.word2Idx
 
 def calcDescriptiveStats(reader):
     [input_train, train_y_cat], [input_dev,
-                                 dev_y], [input_test, test_y], dicts = reader(
+                                 dev_y], [input_test, test_y], dicts = reader.readDataset(
         3, word2Idx, case2Idx)
     [train_x, train_case_x] = input_train
     [dev_x, dev_case_x] = input_dev
@@ -52,6 +52,8 @@ def calcDescriptiveStats(reader):
     print 'test'
     computeFrequencies(test_y, idx2Label)
 
+    sentences_len = map(lambda sentence: len(sentence), reader.getRawSentences())
+    print 'No. of train/dev/test sentences: {}/{}/{}'.format(sentences_len[0], sentences_len[1], sentences_len[2])
 
     return ''
 
@@ -62,25 +64,25 @@ def computeFrequencies(y, idx2Label):
 
 
 print 'ECB..............'
-calcDescriptiveStats(ECBPlusED.readDataset)
+calcDescriptiveStats(ECBPlusED)
 print '\n--------------------\n'
 print 'Tempeval..............'
-calcDescriptiveStats(TempevalED.readDataset)
+calcDescriptiveStats(TempevalED)
 print '\n--------------------\n'
 print 'Ace..............'
-calcDescriptiveStats(ACEED.readDataset)
+calcDescriptiveStats(ACEED)
 print '\n--------------------\n'
 print 'Tac..............'
-calcDescriptiveStats(TACED.readDataset)
+calcDescriptiveStats(TACED)
 print '\n--------------------\n'
 print 'WSJ..............'
-calcDescriptiveStats(WSJPos.readDataset)
+calcDescriptiveStats(WSJPos)
 print '\n--------------------\n'
 print 'UD..............'
-calcDescriptiveStats(UDPos.readDataset)
+calcDescriptiveStats(UDPos)
 print '\n--------------------\n'
 print 'NER..............'
-calcDescriptiveStats(CoNLLNer.readDataset)
+calcDescriptiveStats(CoNLLNer)
 print '\n--------------------\n'
 print 'Chunking..............'
-calcDescriptiveStats(CoNLLChunking.readDataset)
+calcDescriptiveStats(CoNLLChunking)

@@ -8,3 +8,4 @@ number_of_samples = int(os.environ.get('NUMBER_OF_SAMPLES'))
 tasks = os.environ.get('TASKS', 'ner,chunking,pos').split(',')
 dev_env = os.environ.get('DEV', 'False') == 'True'
 patience = int(os.environ.get('PATIENCE', 10))
+samples = map(lambda sample: int(sample), os.environ.get('SAMPLES', '').split(','))
