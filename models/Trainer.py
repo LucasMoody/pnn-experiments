@@ -11,7 +11,7 @@ from logs import Logger
 sample_fun = Sampler.sampleSimplePNNRanges
 
 no_samples = config.number_of_samples
-early_stopping_strike = 10 if not config.dev_env else 3
+early_stopping_strike = config.patience if not config.dev_env else 3
 
 def trainModel(model, X_train, Y_train, number_of_epochs, minibatch_size, X_dev, Y_dev, X_test, Y_test, measurer):
     print "%d epochs" % number_of_epochs
