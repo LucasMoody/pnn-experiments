@@ -28,7 +28,7 @@ def medianAndStdFunc(data):
 def avgAndStdFunc(data):
     return u'{0:.3f}\u00B1{1:.3f}%'.format(np.average(data) * 100, np.std(data) * 100)
 
-current_metric = medianAndStdFunc
+current_metric = len
 
 def get_results_for_task(df, task, source_tasks, aggfuncs, minSize, maxSize):
     multitask_transfer_spec = map(lambda t: '-'.join(sorted(t.split('-') + [task])),source_tasks)

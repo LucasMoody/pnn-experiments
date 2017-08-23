@@ -3,6 +3,7 @@ from keras.models import Model
 import theano
 import numpy as np
 from transfer import TransferUtils
+import config
 
 def buildModelGivenInput(input_layers, inputs, params, n_out, metrics=[], useHiddenWeights=False, additional_models=[], name_prefix=''):
 
@@ -128,7 +129,7 @@ def buildModelWithSimplePNN(input_layers, inputs, params, n_out, metrics=[], add
     return model
 
 def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
-    adapter_size = 10
+    adapter_size = config.adapter_size
     # ----- GET TENSOR OF TRANSFER MODELS ----- #
     transfer_model_hidden_layers = []
     transfer_model_output_layers = []
@@ -156,10 +157,11 @@ def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], ad
         hidden_adapter = hidden_adapter_layer(transfer_model_hidden_layers[0])
 
     # HIDDEN LAYER #
-    embeddings_hidden_merged = merge([input_dropout, hidden_adapter], mode='concat')
+    #embeddings_hidden_merged = merge([input_dropout, hidden_adapter], mode='concat')
+    embeddings_hidden_merged = merge([input_layers, hidden_adapter], mode='concat')
 
     hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name_prefix + 'hidden')
-    hidden = hidden_layer(embeddings_hidden_merged)
+    hidden = hidden_layer(input_dropout_layer(embeddings_hidden_merged))
 
     # ADAPTER - OUTPUT
     output_adapter_layer = Dense(adapter_size, activation=params['activation'], name=name_prefix + 'output_adapter')
