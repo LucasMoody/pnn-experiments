@@ -156,10 +156,12 @@ def run_pnn_exp_with_fixed_params():
         if 'ud_pos' in config.tasks:
             runUDPosExp(fixed_params, ['pos'])
 
+adapter_size = str(config.adapter_size)
+
 def runWSJPosExp(params, config):
     ExperimentHelper.run_build_model(
         'wsj_pos',
-        'pnn_adapter',
+        'pnn_adapter_' + adapter_size,
         params,
         buildAndTrainWSJPosModel,
         'acc',
@@ -169,7 +171,7 @@ def runWSJPosExp(params, config):
 def runUDPosExp(params, config):
     ExperimentHelper.run_build_model(
         'ud_pos',
-        'pnn_adapter',
+        'pnn_adapter_' + adapter_size,
         params,
         buildAndTrainUDPosModel,
         'acc',
@@ -179,7 +181,7 @@ def runUDPosExp(params, config):
 def runNerExp(params, config):
     ExperimentHelper.run_build_model(
         'ner',
-        'pnn_adapter',
+        'pnn_adapter_' + adapter_size,
         params,
         buildAndTrainNERModel,
         'f1',
@@ -189,7 +191,7 @@ def runNerExp(params, config):
 def runChunkingExp(params, config):
     ExperimentHelper.run_build_model(
         'chunking',
-        'pnn_adapter',
+        'pnn_adapter_' + adapter_size,
         params,
         buildAndTrainChunkingEDModel,
         'f1',

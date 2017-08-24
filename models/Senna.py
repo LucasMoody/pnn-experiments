@@ -128,6 +128,51 @@ def buildModelWithSimplePNN(input_layers, inputs, params, n_out, metrics=[], add
 
     return model
 
+def buildModelWithSimpleAdapterPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
+    adapter_size = config.adapter_size
+    transfer_model_hidden_layers = []
+    transfer_model_output_layers = []
+
+    for model in additional_models:
+        num_layers = len(model.layers)
+        hidden = model.layers[num_layers - 3].output
+        output = model.layers[num_layers - 1].output
+
+        transfer_model_hidden_layers.append(hidden)
+        transfer_model_output_layers.append(output)
+
+        model.layers[num_layers - 3].trainable = False
+        model.layers[num_layers - 1].trainable = False
+
+    # INPUT DROPOUT
+    input_dropout_layer = Dropout(params['dropout'])
+    input_dropout = input_dropout_layer(input_layers)
+
+    hidden_layer = Dense(params['hidden_dims'], activation=params['activation'], name=name_prefix + 'hidden')
+    hidden = hidden_layer(input_dropout)
+
+    # ADAPTER - HIDDEN #
+    adapter_layer = Dense(adapter_size, activation=params['activation'], name=name_prefix + 'hidden_adapter')
+    if (len(transfer_model_hidden_layers) > 1):
+        hidden_adapter = adapter_layer(merge(transfer_model_hidden_layers, mode='concat'))
+    else:
+        hidden_adapter = adapter_layer(transfer_model_hidden_layers[0])
+
+    # only use hidden layer
+    hidden_merged = merge([hidden, hidden_adapter], mode='concat')
+    hidden_dropout = Dropout(params['dropout'])(hidden_merged)
+
+    output_layer = Dense(output_dim=n_out, activation='softmax', name=name_prefix + 'output')
+    output = output_layer(hidden_dropout)
+
+    model = Model(input=inputs, output=[output])
+
+    model.compile(loss='categorical_crossentropy', optimizer=params['optimizer'], metrics=metrics)
+
+    print model.summary()
+
+    return model
+
 def buildModelWithAdapterPNN(input_layers, inputs, params, n_out, metrics=[], additional_models=[], name_prefix=''):
     adapter_size = config.adapter_size
     # ----- GET TENSOR OF TRANSFER MODELS ----- #

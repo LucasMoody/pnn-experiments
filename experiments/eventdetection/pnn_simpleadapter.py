@@ -62,7 +62,7 @@ def buildAndTrainPNNModel(reader,
     transfer_models = TransferModelBuilder.buildTransferModels(
         input_layers, inputs, params=params, config=config)
 
-    model = Senna.buildModelWithAdapterPNN(
+    model = Senna.buildModelWithSimpleAdapterPNN(
         input_layers,
         inputs,
         params,
@@ -145,9 +145,9 @@ def run_pnn_exp_with_fixed_params():
             #runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
             #runTacExp(fixed_params, ['ace', 'ecb'])
             #runTacExp(fixed_params, ['ace', 'tempeval'])
-            runTacExp(fixed_params, ['ace'])
             runTacExp(fixed_params, ['ecb', 'tempeval'])
             runTacExp(fixed_params, ['ecb'])
+            runTacExp(fixed_params, ['ace'])
             runTacExp(fixed_params, ['tempeval'])
 
         if 'tempeval' in config.tasks:
@@ -173,7 +173,7 @@ adapter_size = str(config.adapter_size)
 def runAceExp(params, config):
     ExperimentHelper.run_build_model(
         'ace',
-        'pnn_adapter_' + adapter_size,
+        'pnn_simple_adapter_' + adapter_size,
         params,
         buildAndTrainAceModel,
         'f1',
@@ -183,7 +183,7 @@ def runAceExp(params, config):
 def runEcbExp(params, config):
     ExperimentHelper.run_build_model(
         'ecb',
-        'pnn_adapter_' + adapter_size,
+        'pnn_simple_adapter_' + adapter_size,
         params,
         buildAndTrainEcbModel,
         'f1',
@@ -193,7 +193,7 @@ def runEcbExp(params, config):
 def runTacExp(params, config):
     ExperimentHelper.run_build_model(
         'tac',
-        'pnn_adapter_' + adapter_size,
+        'pnn_simple_adapter_' + adapter_size,
         params,
          buildAndTrainTacModel,
         'f1',
@@ -203,7 +203,7 @@ def runTacExp(params, config):
 def runTempevalExp(params, config):
     ExperimentHelper.run_build_model(
         'tempeval',
-        'pnn_adapter_' + adapter_size,
+        'pnn_simple_adapter_' + adapter_size,
         params,
         buildAndTrainTempevalModel,
         'f1',
