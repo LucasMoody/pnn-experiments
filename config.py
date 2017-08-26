@@ -9,6 +9,7 @@ tasks = os.environ.get('TASKS', 'ner,chunking,pos').split(',')
 dev_env = os.environ.get('DEV', 'False') == 'True'
 patience = int(os.environ.get('PATIENCE', 10))
 samples = os.environ.get('SAMPLES', '')
+ed_source_tasks = os.environ.get('ED_SOURCE_TASKS', 'uncategorized,categorized')
 if samples:
     samples = map(lambda sample: int(sample), samples.split(','))
 else:
