@@ -74,7 +74,7 @@ def extendHelper(reader, word2Idx, case2Idx, best_window_size,
 
 
 def extendWSJPos():
-    extendED(['pos', 'ner', 'chunking', 'ud_pos'], WSJPos)
+    extendED(['ner', 'chunking', 'ud_pos'], WSJPos)
 
 
 def extendUDPos():
