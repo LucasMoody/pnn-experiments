@@ -25,6 +25,13 @@ ext_ace_position = 5
 ext_ecb_position = 6
 ext_tempeval_position = 7
 
+def dataset_filter(dataset, label_filter):
+    return filter(lambda sentence: reduce(lambda result, word: result and label_filter(word[1]), sentence, True),
+                  dataset)
+
+def label_filter(label):
+    return 'Contact' not in label
+
 def readDataset(windowSize, word2Idx, case2Idx):
 
     # Read in data
@@ -34,17 +41,17 @@ def readDataset(windowSize, word2Idx, case2Idx):
     events_test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
     # exclude all Contact labels as they are badly annotated
-    events_train_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False), events_train_sentences)
-    events_dev_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False), events_dev_sentences)
-    events_test_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[1], s, False), events_test_sentences)
+    events_train_sentences = dataset_filter(events_train_sentences, label_filter)
+    events_dev_sentences = dataset_filter(events_dev_sentences, label_filter)
+    events_test_sentences = dataset_filter(events_test_sentences, label_filter)
 
     #Label mapping for ED
-    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position, excludeList=['Contact'])
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position, label_filter=label_filter)
 
     # there is a tag in the test file which does not appear in the train file
     # so the dictionaries have to be updated in order not to get an error
-    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position, excludeList=['Contact'])
-    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position, excludeList=['Contact'])
+    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position, label_filter=label_filter)
+    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position, label_filter=label_filter)
     for tag in dev_label_dicts[0]:
         if tag not in events_label2Idx:
             events_label2Idx[tag] = len(events_label2Idx)
@@ -248,11 +255,11 @@ def extendDataset(train_extensions, dev_extensions, test_extensions):
     DatasetExtender.extendDataset("{0}test_ext.conllu".format(directory), test_sentences, test_extensions)
 
 def getLabelDict():
-    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position, excludeList=['Contact'])
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position, label_filter=label_filter)
     # there is a tag in the test file which does not appear in the train file
     # so the dictionaries have to be updated in order not to get an error
-    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position, excludeList=['Contact'])
-    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position, excludeList=['Contact'])
+    dev_label_dicts = GermEvalReader.getLabelDict(events_devFile, label_position, label_filter=label_filter)
+    test_label_dicts = GermEvalReader.getLabelDict(events_testFile, label_position, label_filter=label_filter)
     for tag in dev_label_dicts[0]:
         if tag not in events_label2Idx:
             events_label2Idx[tag] = len(events_label2Idx)
