@@ -61,6 +61,12 @@ def run_optimizer_with_fixed_params():
         if 'ace' in config.tasks:
             run_build_model('ace', fixed_params, OptimizedModels.getAceEDModel, 'f1')
 
+        if 'ace_wo_contacts' in config.tasks:
+            run_build_model('ace_wo_contacts', fixed_params, OptimizedModels.getAceWoContactsEDModel, 'f1')
+
+        if 'ace_wo_movement' in config.tasks:
+            run_build_model('ace_wo_movement', fixed_params, OptimizedModels.getAceWoMovementEDModel, 'f1')
+
         if 'tac' in config.tasks:
             run_build_model('tac', fixed_params, OptimizedModels.getTacEDModel, 'f1')
 
@@ -71,15 +77,10 @@ def run_optimizer_with_fixed_params():
             run_build_model('ecb', fixed_params, OptimizedModels.getEcbPlusEDModel, 'f1')
 
 def run_build_model(task, params, build_model_func, score_name):
-    (train_score, train_epoch), (dev_score, dev_epoch), (test_score, test_epoch) = build_model_func(params)
+    best_train_score, best_dev_score, best_test_score, best_epoch = build_model_func(params)
     print params
-    print "Max {0} train {1}: {2:.4f} in epoch: {3}".format(score_name, task, train_score, train_epoch)
-    Logger.save_results(config.optimized_models_log_path, task, 'train', params, train_score, test_epoch)
-    print "Max {0} dev {1}: {2:.4f} in epoch: {3}".format(score_name, task, dev_score, dev_epoch)
-    Logger.save_results(config.optimized_models_log_path, task, 'dev', params, dev_score, dev_epoch)
-    print "Max {0} test {1}: {2:.4f} in epoch: {3}".format(score_name, task, dev_score, dev_epoch)
-    Logger.save_results(config.optimized_models_log_path, task, 'test', params, dev_score, dev_epoch)
-
+    print "Max {0} train/dev/test {1}: {2:.4f}/{3:.4f}/{4:.4f} in epoch: {5}".format(score_name, task, best_train_score, best_dev_score, best_test_score, best_epoch)
+    Logger.save_results(config.optimized_models_log_path, task, params, best_train_score, best_dev_score, best_test_score, best_epoch)
     print '\n\n-------------------- END --------------------\n\n'
 
 run_optimizer_with_fixed_params()

@@ -262,6 +262,32 @@ def getAceEDModel(learning_params=None):
                           name_prefix='ace_',
                           learning_params=learning_params)
 
+def getAceWoContactsEDModel(learning_params=None):
+    return getModelHelper(ACEED.readFilteredDataset,
+                          Measurer.create_compute_BIOf1,
+                          name_prefix='ace_without_contacts_',
+                          learning_params=learning_params)
+
+def getAceWoContactsEDModel(learning_params=None):
+    def label_filter(label):
+        return not ('Meet' in label or 'Phone-Write' in label)
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter)
+    return getModelHelper(reader,
+                          Measurer.create_compute_BIOf1,
+                          name_prefix='ace_without_contacts_',
+                          learning_params=learning_params)
+
+def getAceWoMovementEDModel(learning_params=None):
+    def label_filter(label):
+        return 'Transport' not in label
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter)
+    return getModelHelper(reader,
+                          Measurer.create_compute_BIOf1,
+                          name_prefix='ace_without_movement_',
+                          learning_params=learning_params)
+
 
 def getTacEDModel(learning_params=None):
     return getModelHelper(TACED.readDataset,
@@ -499,7 +525,7 @@ def getModelHelper(reader,
 
     # ----- Train Model ----- #
     measurer = measurer_creator(idx2Label)
-    train_scores, dev_scores, test_scores = Trainer.trainModel(
+    best_train_score, best_dev_score, best_test_score, best_epoch = Trainer.trainModel(
         model,
         input_train,
         train_y_cat,
@@ -511,5 +537,5 @@ def getModelHelper(reader,
         test_y,
         measurer=measurer)
     model.save_weights('optimizer/saved_models/{0}{1:.2f}.hd5'.format(
-        name_prefix, dev_scores[0] * 100))
-    return train_scores, dev_scores, test_scores
+        name_prefix, best_dev_score * 100))
+    return best_train_score, best_dev_score, best_test_score, best_epoch

@@ -216,7 +216,7 @@ def normalizeWord(line):
     return line.strip();
 
 # Create a mapping for our labels
-def getLabelDict(trainFile, tagPosition=3, excludeList=[]):
+def getLabelDict(trainFile, tagPosition=3, label_filter = lambda label: True):
     label2Idx = {}
     for line in open(trainFile):
         line = line.strip()
@@ -226,7 +226,7 @@ def getLabelDict(trainFile, tagPosition=3, excludeList=[]):
             if len(splits) > tagPosition:
                 tag = splits[tagPosition]
 
-                if tag not in label2Idx and reduce(lambda result, excludedWord: result and excludedWord not in tag, excludeList, True):
+                if tag not in label2Idx and label_filter(tag):
                     label2Idx[tag] = len(label2Idx)
 
     idx2Label = {v: k for k, v in label2Idx.items()}
