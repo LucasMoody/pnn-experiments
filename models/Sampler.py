@@ -30,10 +30,8 @@ def sampleSimplePNNRanges(train, no_ranges):
     #sizes = [1000, 2000, 8000, 10000, 20000, 30000, 40000, 50000, train[0].shape[0]]
     if config.dev_env:
         sizes = [2000, 4000]
-    elif config.samples == 'ALL':
-        sizes = [train[0].shape[0]]
     elif config.samples:
-        sizes = config.samples
+        sizes = map(lambda size: train[0].shape[0] if size == 'ALL' else int(size), config.samples)
     else:
         sizes = [2000, 5000, 10000, 15000, 20000, 30000]
     return filter(lambda size: size <= train[0].shape[0], sizes)

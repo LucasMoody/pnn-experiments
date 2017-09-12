@@ -8,12 +8,6 @@ number_of_samples = int(os.environ.get('NUMBER_OF_SAMPLES'))
 tasks = os.environ.get('TASKS', 'ner,chunking,pos').split(',')
 dev_env = os.environ.get('DEV', 'False') == 'True'
 patience = int(os.environ.get('PATIENCE', 10))
-samples = os.environ.get('SAMPLES', '')
+samples = os.environ.get('SAMPLES', '').split(',')
 ed_source_tasks = os.environ.get('ED_SOURCE_TASKS', 'uncategorized,categorized').split(',')
-if samples == 'ALL':
-    samples == 'ALL'
-elif samples:
-    samples = map(lambda sample: int(sample), samples.split(','))
-else:
-    samples = []
 adapter_size = int(os.environ.get('ADAPTER_SIZE', 10))
