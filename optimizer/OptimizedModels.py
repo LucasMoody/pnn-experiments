@@ -24,7 +24,7 @@ ace_ed_model_path = 'optimizer/saved_models/ace_ed_64.12.hd5'
 tac_ed_model_path = 'optimizer/saved_models/tac_57.75.hd5'
 ecb_ed_model_path = 'optimizer/saved_models/ecbplus_ed_78.20.hd5'
 tempeval_ed_model_path = 'optimizer/saved_models/tempeval_ed_82.65.hd5'
-ace_wo_contacts_model_path = 'optimizer/saved_models/ace_without_contacts_65.54.hd5'
+ace_wo_contacts_model_path = 'optimizer/saved_models/aace_without_contacts_62.58-49.62.hd5'
 ace_wo_movement_model_path = 'optimizer/saved_models/ace_without_movement_65.92.hd5'
 
 fixed_params_pos = {
