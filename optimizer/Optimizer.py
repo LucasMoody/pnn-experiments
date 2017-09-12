@@ -33,7 +33,7 @@ def run_optimizer_with_fixed_params():
     fixed_params = {
         'update_word_embeddings': False,
         'window_size': 3,
-        'batch_size': 128,
+        'batch_size': 16,
         'hidden_dims': 100,
         'activation': 'tanh',
         'dropout': 0.3,
@@ -63,6 +63,12 @@ def run_optimizer_with_fixed_params():
 
         if 'ace_wo_contacts' in config.tasks:
             run_build_model('ace_wo_contacts', fixed_params, OptimizedModels.getAceWoContactsEDModel, 'f1')
+
+        if 'ace_wo_business' in config.tasks:
+            run_build_model('ace_wo_business', fixed_params, OptimizedModels.getAceWoBusinessEDModel, 'f1')
+
+        if 'ace_wo_justice' in config.tasks:
+            run_build_model('ace_wo_justice', fixed_params, OptimizedModels.getAceWoJusticeEDModel, 'f1')
 
         if 'ace_wo_movement' in config.tasks:
             run_build_model('ace_wo_movement', fixed_params, OptimizedModels.getAceWoMovementEDModel, 'f1')

@@ -25,4 +25,10 @@ def buildTransferModels(input_layers, inputs, params, config):
 
     if 'tempeval' in config:
         transfer_models.append(OptimizedModels.getTempevalEDModelGivenInput(input_layers, inputs, params))
+
+    if 'ace_wo_contacts' in config:
+        transfer_models.append(OptimizedModels.getAceWoContactsModelGivenInput(input_layers, inputs, params))
+
+    if 'ace_wo_movement' in config:
+        transfer_models.append(OptimizedModels.getAceWoMovementModelGivenInput(input_layers, inputs, params))
     return transfer_models

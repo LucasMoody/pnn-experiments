@@ -91,6 +91,47 @@ def buildAndTrainAceModel(learning_params=None, config=[]):
         learning_params=learning_params,
         config=config)
 
+def dataset_filter_creator(label_filter):
+    def contains_labels(sentence):
+        return reduce(lambda result, word: result or label_filter(word[1]), sentence, False)
+
+    def containsOnlyOs(sentence):
+        return reduce(lambda result, word: result and word[1] == 'O', sentence, True)
+
+    def dataset_filter(dataset):
+        return filter(
+            lambda sentence: containsOnlyOs(sentence) or contains_labels(sentence),
+            dataset)
+    def dataset_wo_Os_filter(dataset):
+        return filter(
+            lambda sentence: contains_labels(sentence),
+            dataset)
+    return dataset_filter,dataset_wo_Os_filter
+
+def buildAndTrainAceOnlyContactsModel(learning_params=None, config=[]):
+    def label_filter(label):
+        return 'Meet' in label or 'Phone-Write' in label
+    def reader(window_size, word2Idx, case2Idx):
+        dataset_filter, dataset_wo_Os_filter =  dataset_filter_creator(label_filter)
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
+    return buildAndTrainPNNModel(
+        reader,
+        'ace_only_contacts_',
+        learning_params=learning_params,
+        config=config)
+
+def buildAndTrainAceOnlyMovementModel(learning_params=None, config=[]):
+    def label_filter(label):
+        return 'Transport' in label
+    def reader(window_size, word2Idx, case2Idx):
+        dataset_filter, dataset_wo_Os_filter =  dataset_filter_creator(label_filter)
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
+    return buildAndTrainPNNModel(
+        reader,
+        'ace_only_movement_',
+        learning_params=learning_params,
+        config=config)
+
 
 def buildAndTrainEcbModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(
@@ -143,6 +184,17 @@ def run_pnn_exp_with_fixed_params():
             if 'categorized' in config.ed_source_tasks:
                 runAceExp(fixed_params, ['tac'])
 
+        if 'ace_only_contacts' in config.tasks:
+            runAceOnlyContactsExp(fixed_params, ['ace_wo_contacts'])
+            runAceOnlyContactsExp(fixed_params, ['tempeval'])
+            runAceOnlyContactsExp(fixed_params, ['ecb'])
+
+        if 'ace_only_movement' in config.tasks:
+            runAceOnlyMovementExp(fixed_params, ['ace_wo_contacts'])
+            runAceOnlyMovementExp(fixed_params, ['tempeval'])
+            runAceOnlyMovementExp(fixed_params, ['ecb'])
+            #runAceOnlyMovementExp(fixed_params, ['ace_wo_movement'])
+
         if 'tac' in config.tasks:
             #runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
             #runTacExp(fixed_params, ['ace', 'ecb'])
@@ -180,6 +232,24 @@ def runAceExp(params, config):
         'pnn_adapter_' + adapter_size,
         params,
         buildAndTrainAceModel,
+        'f1',
+        transfer_config=config)
+
+def runAceOnlyContactsExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ace_only_contacts',
+        'pnn_adapter_' + adapter_size,
+        params,
+        buildAndTrainAceOnlyContactsModel,
+        'f1',
+        transfer_config=config)
+
+def runAceOnlyMovementExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ace_only_movement',
+        'pnn_adapter_' + adapter_size,
+        params,
+        buildAndTrainAceOnlyMovementModel,
         'f1',
         transfer_config=config)
 

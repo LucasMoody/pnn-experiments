@@ -233,6 +233,17 @@ def getLabelDict(trainFile, tagPosition=3, label_filter = lambda label: True):
 
     return label2Idx, idx2Label
 
+def getLabelDictSimple(dataset):
+    label2Idx = {}
+    for sentence in dataset:
+        for word in sentence:
+            label = word[1]
+            if label not in label2Idx:
+                label2Idx[label] = len(label2Idx)
+    idx2Label = {v: k for k, v in label2Idx.items()}
+
+    return label2Idx, idx2Label
+
 def getLabelDictExt(trainFile, tagPosition=3):
     label2Idx = {}
     for line in open(trainFile):

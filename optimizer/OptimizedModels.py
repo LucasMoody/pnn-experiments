@@ -24,6 +24,8 @@ ace_ed_model_path = 'optimizer/saved_models/ace_ed_64.12.hd5'
 tac_ed_model_path = 'optimizer/saved_models/tac_57.75.hd5'
 ecb_ed_model_path = 'optimizer/saved_models/ecbplus_ed_78.20.hd5'
 tempeval_ed_model_path = 'optimizer/saved_models/tempeval_ed_82.65.hd5'
+ace_wo_contacts_model_path = 'optimizer/saved_models/ace_without_contacts_65.54.hd5'
+ace_wo_movement_model_path = 'optimizer/saved_models/ace_without_movement_65.92.hd5'
 
 fixed_params_pos = {
     'update_word_embeddings': False,
@@ -272,17 +274,51 @@ def getAceWoContactsEDModel(learning_params=None):
     def label_filter(label):
         return not ('Meet' in label or 'Phone-Write' in label)
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter)
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
     return getModelHelper(reader,
                           Measurer.create_compute_BIOf1,
                           name_prefix='ace_without_contacts_',
+                          learning_params=learning_params)
+
+def getAceWoBusinessEDModel(learning_params=None):
+    def label_filter(label):
+        return not ('Declare-Bankruptcy' in label or 'End-Org' in label or 'Merge-Org' in label or 'Start-Org' in label)
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+    return getModelHelper(reader,
+                          Measurer.create_compute_BIOf1,
+                          name_prefix='ace_without_business_',
+                          learning_params=learning_params)
+
+def getAceWoJusticeEDModel(learning_params=None):
+    def label_filter(label):
+        return not ('Acquit' in label
+                    or 'Appeal' in label
+                    or 'Arrest-Jail' in label
+                    or 'Charge-Indict' in label
+                    or 'Convict' in label
+                    or 'Appeal' in label
+                    or 'Execute' in label
+                    or 'Fine' in label
+                    or 'Pardon' in label
+                    or 'Release-Parole' in label
+                    or 'Sentence' in label
+                    or 'Sue' in label
+                    or 'Trial-Hearing' in label
+                    or 'Extradite' in label)
+
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+    return getModelHelper(reader,
+                          Measurer.create_compute_BIOf1,
+                          name_prefix='ace_without_justice_',
                           learning_params=learning_params)
 
 def getAceWoMovementEDModel(learning_params=None):
     def label_filter(label):
         return 'Transport' not in label
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter)
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
     return getModelHelper(reader,
                           Measurer.create_compute_BIOf1,
                           name_prefix='ace_without_movement_',
@@ -369,6 +405,13 @@ def getChunkingModelGivenInput(input_layers,
         model_path=chunking_model_path)
 
 
+def dataset_filter_creator(label_filter):
+    def dataset_filter(dataset):
+        def contains_labels(sentence):
+            return reduce(lambda result, word: result and label_filter(word[1]), sentence, True)
+        return filter(contains_labels, dataset)
+    return dataset_filter
+
 def getAceEDModelGivenInput(input_layers,
                             inputs,
                             learning_params=None,
@@ -382,6 +425,42 @@ def getAceEDModelGivenInput(input_layers,
         name_prefix='ace_ed_',
         learning_params=learning_params,
         model_path=ace_ed_model_path)
+
+def getAceWoContactsModelGivenInput(input_layers,
+                            inputs,
+                            learning_params=None,
+                            window_size=None,
+                            use_existing_model=True):
+    def label_filter(label):
+        return not ('Meet' in label or 'Phone-Write' in label)
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+    return getModelGivenInputHelper(
+        reader,
+        input_layers,
+        inputs,
+        Measurer.create_compute_BIOf1,
+        name_prefix='ace_wo_contacts_',
+        learning_params=learning_params,
+        model_path=ace_wo_contacts_model_path)
+
+def getAceWoMovementModelGivenInput(input_layers,
+                            inputs,
+                            learning_params=None,
+                            window_size=None,
+                            use_existing_model=True):
+    def label_filter(label):
+        return not ('Transport' in label)
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+    return getModelGivenInputHelper(
+        reader,
+        input_layers,
+        inputs,
+        Measurer.create_compute_BIOf1,
+        name_prefix='ace_wo_movement_',
+        learning_params=learning_params,
+        model_path=ace_wo_movement_model_path)
 
 
 def getEcbEDModelGivenInput(input_layers,
@@ -476,7 +555,7 @@ def getModelGivenInputHelper(reader,
         print '{0} model has f1: {1:4f}'.format(
             name_prefix, measurer(pred_dev, dev_y) * 100)
     else:
-        train_scores, dev_scores, test_scores = Trainer.trainModel(
+        res = Trainer.trainModel(
             model,
             input_train,
             train_y_cat,
@@ -536,6 +615,6 @@ def getModelHelper(reader,
         input_test,
         test_y,
         measurer=measurer)
-    model.save_weights('optimizer/saved_models/{0}{1:.2f}.hd5'.format(
-        name_prefix, best_dev_score * 100))
+    model.save_weights('optimizer/saved_models/{0}{1:.2f}-{2:.2f}.hd5'.format(
+        name_prefix, best_dev_score * 100, best_test_score * 100))
     return best_train_score, best_dev_score, best_test_score, best_epoch

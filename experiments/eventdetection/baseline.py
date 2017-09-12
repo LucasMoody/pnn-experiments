@@ -82,6 +82,45 @@ def buildAndTrainAceEDModel(learning_params=None):
         name_prefix='ace_',
         learning_params=learning_params)
 
+def dataset_filter_creator(label_filter):
+    def contains_labels(sentence):
+        return reduce(lambda result, word: result or label_filter(word[1]), sentence, False)
+
+    def containsOnlyOs(sentence):
+        return reduce(lambda result, word: result and word[1] == 'O', sentence, True)
+
+    def dataset_filter(dataset):
+        return filter(
+            lambda sentence: containsOnlyOs(sentence) or contains_labels(sentence),
+            dataset)
+    def dataset_wo_Os_filter(dataset):
+        return filter(
+            lambda sentence: contains_labels(sentence),
+            dataset)
+    return dataset_filter,dataset_wo_Os_filter
+
+def buildAndTrainAceOnlyContactsEDModel(learning_params=None):
+    def label_filter(label):
+        return 'Meet' in label or 'Phone-Write' in label
+    def reader(window_size, word2Idx, case2Idx):
+        dataset_filter, dataset_wo_Os_filter = dataset_filter_creator(label_filter)
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
+    return buildBaselineModel(
+        reader,
+        name_prefix='ace_only_contacts_',
+        learning_params=learning_params)
+
+def buildAndTrainAceOnlyMovementEDModel(learning_params=None):
+    def label_filter(label):
+        return 'Transport' in label
+    def reader(window_size, word2Idx, case2Idx):
+        dataset_filter, dataset_wo_Os_filter = dataset_filter_creator(label_filter)
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
+    return buildBaselineModel(
+        reader,
+        name_prefix='ace_only_movement_',
+        learning_params=learning_params)
+
 
 def buildAndTrainTacEDModel(learning_params=None):
     return buildBaselineModel(
@@ -123,6 +162,15 @@ def run_baseline_exp_with_fixed_params():
         if 'ace' in config.tasks:
             ExperimentHelper.run_build_model('ace', 'baseline', fixed_params,
                                              buildAndTrainAceEDModel, 'f1',
+                                             'none')
+        if 'ace_only_contacts' in config.tasks:
+            ExperimentHelper.run_build_model('ace_only_contacts', 'baseline', fixed_params,
+                                             buildAndTrainAceOnlyContactsEDModel, 'f1',
+                                             'none')
+
+        if 'ace_only_movement' in config.tasks:
+            ExperimentHelper.run_build_model('ace_only_movement', 'baseline', fixed_params,
+                                             buildAndTrainAceOnlyMovementEDModel, 'f1',
                                              'none')
 
         if 'ecb' in config.tasks:

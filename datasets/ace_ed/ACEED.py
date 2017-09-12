@@ -61,7 +61,25 @@ def dataset_filter(dataset, label_filter):
     return filter(lambda sentence: reduce(lambda result, word: result and label_filter(word[1]), sentence, True),
                   dataset)
 
-def readFilteredDataset(windowSize, word2Idx, case2Idx, label_filter):
+'''def dataset_in_filter(dataset, label_filter):
+    return filter(lambda sentence: reduce(lambda result, word: result or label_filter(word[1]), sentence, False),
+                  dataset)
+
+def change_in_neutral_label(dataset, label_filter):
+    return map(lambda sentence: map(lambda word: 'O' if not label_filter(word[1]) else word[1], sentence), dataset)
+
+def label_filter(label):
+    return 'Transport' in label
+'''
+
+def change_in_neutral_label(dataset, label_filter):
+    return map(lambda sentence: map(lambda word: [word[0],'O'] if not label_filter(word[1]) else word, sentence), dataset)
+
+def readFilteredDataset(windowSize, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter=None):
+    if dataset_wo_Os_filter == None:
+        filter2 = dataset_filter
+    else:
+        filter2 = dataset_wo_Os_filter
 
     # Read in data
     print "Read in data and create matrices"
@@ -70,20 +88,17 @@ def readFilteredDataset(windowSize, word2Idx, case2Idx, label_filter):
     events_test_sentences = GermEvalReader.readFile(events_testFile, word_position, label_position)
 
     # exclude all Contact labels as they are badly annotated
-    '''events_train_sentences = filter(lambda s: not reduce(lambda result, word: result or label_filter(word[label_position]), s, False),
-                                    events_train_sentences)
-    events_dev_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[label_position], s, False),
-                                  events_dev_sentences)
-    events_test_sentences = filter(lambda s: not reduce(lambda result, word: result or 'Contact' in word[label_position], s, False),
-                                   events_test_sentences)'''
+    events_train_sentences = filter2(events_train_sentences)
+    events_dev_sentences = dataset_filter(events_dev_sentences)
+    events_test_sentences = dataset_filter(events_test_sentences)
 
-    events_train_sentences = dataset_filter(events_train_sentences, label_filter)
-    events_dev_sentences = dataset_filter(events_dev_sentences, label_filter)
-    events_test_sentences = dataset_filter(events_test_sentences, label_filter)
+    # change all labels which are are not focused into the neutral label
+    events_train_sentences = change_in_neutral_label(events_train_sentences, label_filter)
+    events_dev_sentences = change_in_neutral_label(events_dev_sentences, label_filter)
+    events_test_sentences = change_in_neutral_label(events_test_sentences, label_filter)
 
     # Label mapping for ED
-    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDict(events_trainFile, label_position,
-                                                                     label_filter)
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDictSimple(events_train_sentences)
 
     # Create numpy arrays
     events_train_x, events_train_case_x, events_train_y = GermEvalReader.createNumpyArrayWithCasing(
