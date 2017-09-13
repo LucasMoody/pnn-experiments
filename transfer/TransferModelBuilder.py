@@ -37,4 +37,10 @@ def buildTransferModels(input_layers, inputs, params, config):
 
     if 'ace_wo_justice' in config:
         transfer_models.append(OptimizedModels.getAceWoJusticeModelGivenInput(input_layers, inputs, params))
+
+    if 'tac_newswire' in config:
+        transfer_models.append(OptimizedModels.getTacNewswireEDModelGivenInput(input_layers, inputs, params))
+
+    if 'tac_forum' in config:
+        transfer_models.append(OptimizedModels.getTacForumEDModelGivenInput(input_layers, inputs, params))
     return transfer_models

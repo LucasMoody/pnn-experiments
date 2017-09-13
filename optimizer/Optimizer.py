@@ -76,6 +76,12 @@ def run_optimizer_with_fixed_params():
         if 'tac' in config.tasks:
             run_build_model('tac', fixed_params, OptimizedModels.getTacEDModel, 'f1')
 
+        if 'tac_newswire' in config.tasks:
+            run_build_model('tac_newswire', fixed_params, OptimizedModels.getTacNewswireEDModel, 'f1')
+
+        if 'tac_forum' in config.tasks:
+            run_build_model('tac_forum', fixed_params, OptimizedModels.getTacForumEDModel, 'f1')
+
         if 'tempeval' in config.tasks:
             run_build_model('tempeval', fixed_params, OptimizedModels.getTempevalEDModel, 'f1')
 

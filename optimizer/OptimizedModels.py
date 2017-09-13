@@ -29,6 +29,8 @@ ace_wo_contacts_model_path = 'optimizer/saved_models/ace_without_contacts_62.58-
 ace_wo_justice_model_path = 'optimizer/saved_models/ace_without_justice_62.34-55.20.hd5'
 ace_wo_movement_model_path = 'optimizer/saved_models/ace_without_movement_60.77-47.27.hd5'
 ace_wo_business_model_path = 'optimizer/saved_models/ace_without_business_61.69-57.32.hd5'
+tac_newswire_ed_model_path = 'optimizer/saved_models/tac_newswire_13.66-14.19.hd5'
+tac_forum_ed_model_path = 'optimizer/saved_models/tac_forum_20.23-22.84.hd5'
 
 fixed_params_pos = {
     'update_word_embeddings': False,
@@ -312,6 +314,23 @@ def getTacEDModel(learning_params=None):
                           name_prefix='tac_',
                           learning_params=learning_params)
 
+def reader_domain_creator(domain):
+    def reader(window_size, word2Idx, case2Idx):
+        return TACED.readDomainDataset(window_size, word2Idx, case2Idx, domain)
+    return reader
+
+def getTacNewswireEDModel(learning_params=None):
+    return getModelHelper(reader_domain_creator('newswire'),
+                          Measurer.create_compute_BIOf1,
+                          name_prefix='tac_newswire_',
+                          learning_params=learning_params)
+
+def getTacForumEDModel(learning_params=None):
+    return getModelHelper(reader_domain_creator('forum'),
+                          Measurer.create_compute_BIOf1,
+                          name_prefix='tac_forum_',
+                          learning_params=learning_params)
+
 
 def getTempevalEDModel(learning_params=None):
     return getModelHelper(TempevalED.readDataset,
@@ -500,6 +519,33 @@ def getTacEDModelGivenInput(input_layers,
         learning_params=learning_params,
         model_path=tac_ed_model_path)
 
+def getTacNewswireEDModelGivenInput(input_layers,
+                            inputs,
+                            learning_params=None,
+                            window_size=None,
+                            use_existing_model=True):
+    return getModelGivenInputHelper(
+        reader_domain_creator('newswire'),
+        input_layers,
+        inputs,
+        Measurer.create_compute_BIOf1,
+        name_prefix='tac_newswire_ed_',
+        learning_params=learning_params,
+        model_path=tac_newswire_ed_model_path)
+
+def getTacForumEDModelGivenInput(input_layers,
+                            inputs,
+                            learning_params=None,
+                            window_size=None,
+                            use_existing_model=True):
+    return getModelGivenInputHelper(
+        reader_domain_creator('forum'),
+        input_layers,
+        inputs,
+        Measurer.create_compute_BIOf1,
+        name_prefix='tac_forum_ed_',
+        learning_params=learning_params,
+        model_path=tac_forum_ed_model_path)
 
 def getTempevalEDModelGivenInput(input_layers,
                                  inputs,
