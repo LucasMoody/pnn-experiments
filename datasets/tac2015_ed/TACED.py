@@ -81,6 +81,46 @@ def readDataset(windowSize, word2Idx, case2Idx):
     events_dicts = [word2Idx, case2Idx, events_label2Idx, events_idx2Label]
     return [events_input_train, events_train_y_cat], [events_input_dev, events_dev_y], [events_input_test, events_test_y], events_dicts
 
+def readDomainDataset(windowSize, word2Idx, case2Idx, domain):
+
+    # Read in data
+    print "Read in data and create matrices"
+    events_train_sentences = GermEvalReader.readFilesSplitDomain(events_trainFile, word_position, label_position, domain)
+    events_dev_sentences = GermEvalReader.readFilesSplitDomain(events_devFile, word_position, label_position, domain)
+    events_test_sentences = GermEvalReader.readFilesSplitDomain(events_testFile, word_position, label_position, domain)
+
+    # exclude all Contact labels as they are badly annotated
+    events_train_sentences = dataset_filter(events_train_sentences, label_filter)
+    events_dev_sentences = dataset_filter(events_dev_sentences, label_filter)
+    events_test_sentences = dataset_filter(events_test_sentences, label_filter)
+
+    #Label mapping for ED
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDictSimple([events_train_sentences, events_dev_sentences, events_test_sentences])
+
+    return convert_to_input(events_train_sentences, events_dev_sentences, events_test_sentences, windowSize, word2Idx, events_label2Idx, events_idx2Label, case2Idx)
+
+def convert_to_input(train, dev, test, window, word2Idx, label2Idx, idx2Label, case2Idx):
+    # Create numpy arrays
+    train_x, train_case_x, train_y = GermEvalReader.createNumpyArrayWithCasing(
+        train, window, word2Idx, label2Idx, case2Idx)
+    dev_x, case_x, dev_y = GermEvalReader.createNumpyArrayWithCasing(dev,
+                                                                                              window, word2Idx,
+                                                                                              label2Idx,
+                                                                                              case2Idx)
+    test_x, test_case_x, test_y = GermEvalReader.createNumpyArrayWithCasing(test,
+                                                                                                 window,
+                                                                                                 word2Idx,
+                                                                                                 label2Idx,
+                                                                                                 case2Idx)
+    input_train = [train_x, train_case_x]
+    input_dev = [dev_x, case_x]
+    input_test = [test_x, test_case_x]
+
+    train_y_cat = np_utils.to_categorical(train_y, len(label2Idx))
+
+    events_dicts = [word2Idx, case2Idx, label2Idx, idx2Label]
+    return [input_train, train_y_cat], [input_dev, dev_y], [input_test, test_y], events_dicts
+
 def readDatasetExt(windowSize, word2Idx, case2Idx):
     # load data
     train_sentences = GermEvalReader.readFileExt(trainFileExt)

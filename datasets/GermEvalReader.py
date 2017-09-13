@@ -29,6 +29,28 @@ def readFile(filepath, wordPosition, tagPosition, max_sentences=-1):
 
     return sentences
 
+def readFilesSplitDomain(filepath, wordPosition, tagPosition, domain):
+    sentence = []
+    domain_sentences = {}
+    for line in open(filepath):
+        line = line.strip()
+        splits = line.split()
+
+        if len(line) == 0 or line[0] == '#' or splits[wordPosition].upper() == '-DOCSTART-':
+            if len(line) > 0 and line[0] == '#':
+                cur_domain = splits[-1]
+                if cur_domain not in domain_sentences:
+                    domain_sentences[cur_domain] = []
+
+            if len(sentence) > 0:
+                domain_sentences[cur_domain].append(sentence)
+                sentence = []
+            continue
+
+        sentence.append([splits[wordPosition], splits[tagPosition]])
+
+    return domain_sentences[domain]
+
 def readFileExt(filepath, max_sentences=-1):
     sentences = []
     sentence = []
@@ -233,13 +255,14 @@ def getLabelDict(trainFile, tagPosition=3, label_filter = lambda label: True):
 
     return label2Idx, idx2Label
 
-def getLabelDictSimple(dataset):
+def getLabelDictSimple(datasets):
     label2Idx = {}
-    for sentence in dataset:
-        for word in sentence:
-            label = word[1]
-            if label not in label2Idx:
-                label2Idx[label] = len(label2Idx)
+    for dataset in datasets:
+        for sentence in dataset:
+            for word in sentence:
+                label = word[1]
+                if label not in label2Idx:
+                    label2Idx[label] = len(label2Idx)
     idx2Label = {v: k for k, v in label2Idx.items()}
 
     return label2Idx, idx2Label

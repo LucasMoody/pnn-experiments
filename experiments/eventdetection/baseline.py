@@ -137,6 +137,23 @@ def buildAndTrainTacEDModel(learning_params=None):
         name_prefix='tac_',
         learning_params=learning_params)
 
+def reader_domain_creator(domain):
+    def reader(window_size, word2Idx, case2Idx):
+        return TACED.readDomainDataset(window_size, word2Idx, case2Idx, domain)
+    return reader
+
+def buildAndTrainTacNewswireEDModel(learning_params=None):
+    return buildBaselineModel(
+        reader_domain_creator('newswire'),
+        name_prefix='tac_newswire_',
+        learning_params=learning_params)
+
+def buildAndTrainTacForumEDModel(learning_params=None):
+    return buildBaselineModel(
+        reader_domain_creator('forum'),
+        name_prefix='tac_forum_',
+        learning_params=learning_params)
+
 
 def buildAndTrainTempevalEDModel(learning_params=None):
     return buildBaselineModel(
@@ -200,6 +217,16 @@ def run_baseline_exp_with_fixed_params():
         if 'tac' in config.tasks:
             ExperimentHelper.run_build_model('tac', 'baseline', fixed_params,
                                              buildAndTrainTacEDModel, 'f1',
+                                             'none')
+
+        if 'tac_newswire' in config.tasks:
+            ExperimentHelper.run_build_model('tac_newswire', 'baseline', fixed_params,
+                                             buildAndTrainTacNewswireEDModel, 'f1',
+                                             'none')
+
+        if 'tac_forum' in config.tasks:
+            ExperimentHelper.run_build_model('tac_forum', 'baseline', fixed_params,
+                                             buildAndTrainTacForumEDModel, 'f1',
                                              'none')
 
         if 'tempeval' in config.tasks:
