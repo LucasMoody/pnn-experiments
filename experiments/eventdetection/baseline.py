@@ -1,5 +1,6 @@
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
 from datasets.ace_ed import ACEED
+from datasets.ace_ed import LabelFilter as ACELabelFilter
 from datasets.tac2015_ed import TACED
 from datasets.tempeval3_ed import TempevalED
 from datasets.ecbplus_ed import ECBPlusED
@@ -99,26 +100,34 @@ def dataset_filter_creator(label_filter):
             dataset)
     return dataset_filter,dataset_wo_Os_filter
 
-def buildAndTrainAceOnlyContactsEDModel(learning_params=None):
-    def label_filter(label):
-        return 'Meet' in label or 'Phone-Write' in label
+def reader_creator(label_filter):
     def reader(window_size, word2Idx, case2Idx):
-        dataset_filter, dataset_wo_Os_filter = dataset_filter_creator(label_filter)
+        dataset_filter, dataset_wo_Os_filter =  dataset_filter_creator(label_filter)
         return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
+    return reader
+
+def buildAndTrainAceOnlyContactsEDModel(learning_params=None):
     return buildBaselineModel(
-        reader,
+        reader_creator(ACELabelFilter.only_contacts_label_filter),
         name_prefix='ace_only_contacts_',
         learning_params=learning_params)
 
 def buildAndTrainAceOnlyMovementEDModel(learning_params=None):
-    def label_filter(label):
-        return 'Transport' in label
-    def reader(window_size, word2Idx, case2Idx):
-        dataset_filter, dataset_wo_Os_filter = dataset_filter_creator(label_filter)
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
     return buildBaselineModel(
-        reader,
+        reader_creator(ACELabelFilter.only_movement_label_filter),
         name_prefix='ace_only_movement_',
+        learning_params=learning_params)
+
+def buildAndTrainAceOnlyBusinessEDModel(learning_params=None):
+    return buildBaselineModel(
+        reader_creator(ACELabelFilter.only_business_label_filter),
+        name_prefix='ace_only_business_',
+        learning_params=learning_params)
+
+def buildAndTrainAceOnlyJusticeEDModel(learning_params=None):
+    return buildBaselineModel(
+        reader_creator(ACELabelFilter.only_justice_label_filter),
+        name_prefix='ace_only_justice_',
         learning_params=learning_params)
 
 
@@ -171,6 +180,16 @@ def run_baseline_exp_with_fixed_params():
         if 'ace_only_movement' in config.tasks:
             ExperimentHelper.run_build_model('ace_only_movement', 'baseline', fixed_params,
                                              buildAndTrainAceOnlyMovementEDModel, 'f1',
+                                             'none')
+
+        if 'ace_only_justice' in config.tasks:
+            ExperimentHelper.run_build_model('ace_only_justice', 'baseline', fixed_params,
+                                             buildAndTrainAceOnlyJusticeEDModel, 'f1',
+                                             'none')
+
+        if 'ace_only_business' in config.tasks:
+            ExperimentHelper.run_build_model('ace_only_business', 'baseline', fixed_params,
+                                             buildAndTrainAceOnlyBusinessEDModel, 'f1',
                                              'none')
 
         if 'ecb' in config.tasks:

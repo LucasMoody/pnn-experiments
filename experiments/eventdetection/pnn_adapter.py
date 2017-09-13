@@ -1,5 +1,6 @@
 from embeddings.dependency_based_word_embeddings import DependencyBasedWordEmbeddings as Embeddings
 from datasets.ace_ed import ACEED
+from datasets.ace_ed import LabelFilter as ACELabelFilter
 from datasets.ecbplus_ed import ECBPlusED
 from datasets.tac2015_ed import TACED
 from datasets.tempeval3_ed import TempevalED
@@ -108,27 +109,37 @@ def dataset_filter_creator(label_filter):
             dataset)
     return dataset_filter,dataset_wo_Os_filter
 
-def buildAndTrainAceOnlyContactsModel(learning_params=None, config=[]):
-    def label_filter(label):
-        return 'Meet' in label or 'Phone-Write' in label
+def reader_creator(label_filter):
     def reader(window_size, word2Idx, case2Idx):
         dataset_filter, dataset_wo_Os_filter =  dataset_filter_creator(label_filter)
         return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
+    return reader
+
+def buildAndTrainAceOnlyContactsModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(
-        reader,
+        reader_creator(ACELabelFilter.only_contacts_label_filter),
         'ace_only_contacts_',
         learning_params=learning_params,
         config=config)
 
 def buildAndTrainAceOnlyMovementModel(learning_params=None, config=[]):
-    def label_filter(label):
-        return 'Transport' in label
-    def reader(window_size, word2Idx, case2Idx):
-        dataset_filter, dataset_wo_Os_filter =  dataset_filter_creator(label_filter)
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter, dataset_wo_Os_filter)
     return buildAndTrainPNNModel(
-        reader,
+        reader_creator(ACELabelFilter.only_movement_label_filter),
         'ace_only_movement_',
+        learning_params=learning_params,
+        config=config)
+
+def buildAndTrainAceOnlyBusinessModel(learning_params=None, config=[]):
+    return buildAndTrainPNNModel(
+        reader_creator(ACELabelFilter.only_business_label_filter),
+        'ace_only_business_',
+        learning_params=learning_params,
+        config=config)
+
+def buildAndTrainAceOnlyJusticeModel(learning_params=None, config=[]):
+    return buildAndTrainPNNModel(
+        reader_creator(ACELabelFilter.only_justice_label_filter),
+        'ace_only_justice_',
         learning_params=learning_params,
         config=config)
 
@@ -190,10 +201,19 @@ def run_pnn_exp_with_fixed_params():
             runAceOnlyContactsExp(fixed_params, ['ecb'])
 
         if 'ace_only_movement' in config.tasks:
-            runAceOnlyMovementExp(fixed_params, ['ace_wo_contacts'])
+            runAceOnlyMovementExp(fixed_params, ['ace_wo_movement'])
             runAceOnlyMovementExp(fixed_params, ['tempeval'])
             runAceOnlyMovementExp(fixed_params, ['ecb'])
-            #runAceOnlyMovementExp(fixed_params, ['ace_wo_movement'])
+
+        if 'ace_only_business' in config.tasks:
+            runAceOnlyBusinessExp(fixed_params, ['ace_wo_business'])
+            runAceOnlyBusinessExp(fixed_params, ['tempeval'])
+            runAceOnlyBusinessExp(fixed_params, ['ecb'])
+
+        if 'ace_only_justice' in config.tasks:
+            runAceOnlyJusticeExp(fixed_params, ['ace_wo_justice'])
+            runAceOnlyJusticeExp(fixed_params, ['tempeval'])
+            runAceOnlyJusticeExp(fixed_params, ['ecb'])
 
         if 'tac' in config.tasks:
             #runTacExp(fixed_params, ['ace', 'ecb', 'tempeval'])
@@ -250,6 +270,24 @@ def runAceOnlyMovementExp(params, config):
         'pnn_adapter_' + adapter_size,
         params,
         buildAndTrainAceOnlyMovementModel,
+        'f1',
+        transfer_config=config)
+
+def runAceOnlyBusinessExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ace_only_business',
+        'pnn_adapter_' + adapter_size,
+        params,
+        buildAndTrainAceOnlyBusinessModel,
+        'f1',
+        transfer_config=config)
+
+def runAceOnlyJusticeExp(params, config):
+    ExperimentHelper.run_build_model(
+        'ace_only_justice',
+        'pnn_adapter_' + adapter_size,
+        params,
+        buildAndTrainAceOnlyJusticeModel,
         'f1',
         transfer_config=config)
 

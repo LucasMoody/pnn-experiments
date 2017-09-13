@@ -3,6 +3,7 @@ from datasets.universal_dependencies_pos import UDPos
 import datasets.conll_ner.CoNLLNer as CoNLLNer
 import datasets.conll_chunking.CoNLLChunking as CoNLLChunking
 from datasets.ace_ed import ACEED
+from datasets.ace_ed import LabelFilter as ACELabelFilter
 from datasets.tac2015_ed import TACED
 from datasets.tempeval3_ed import TempevalED
 from datasets.ecbplus_ed import ECBPlusED
@@ -25,7 +26,9 @@ tac_ed_model_path = 'optimizer/saved_models/tac_57.75.hd5'
 ecb_ed_model_path = 'optimizer/saved_models/ecbplus_ed_78.20.hd5'
 tempeval_ed_model_path = 'optimizer/saved_models/tempeval_ed_82.65.hd5'
 ace_wo_contacts_model_path = 'optimizer/saved_models/ace_without_contacts_62.58-49.62.hd5'
-ace_wo_movement_model_path = 'optimizer/saved_models/ace_without_movement_65.92.hd5'
+ace_wo_justice_model_path = 'optimizer/saved_models/ace_without_justice_62.34-55.20.hd5'
+ace_wo_movement_model_path = 'optimizer/saved_models/ace_without_movement_60.77-47.27.hd5'
+ace_wo_business_model_path = 'optimizer/saved_models/ace_without_business_61.69-57.32.hd5'
 
 fixed_params_pos = {
     'update_word_embeddings': False,
@@ -271,54 +274,32 @@ def getAceWoContactsEDModel(learning_params=None):
                           learning_params=learning_params)
 
 def getAceWoContactsEDModel(learning_params=None):
-    def label_filter(label):
-        return not ('Meet' in label or 'Phone-Write' in label)
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_contacts_label_filter, dataset_filter_creator(ACELabelFilter.wo_contacts_label_filter))
     return getModelHelper(reader,
                           Measurer.create_compute_BIOf1,
                           name_prefix='ace_without_contacts_',
                           learning_params=learning_params)
 
 def getAceWoBusinessEDModel(learning_params=None):
-    def label_filter(label):
-        return not ('Declare-Bankruptcy' in label or 'End-Org' in label or 'Merge-Org' in label or 'Start-Org' in label)
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_business_label_filter, dataset_filter_creator(ACELabelFilter.wo_business_label_filter))
     return getModelHelper(reader,
                           Measurer.create_compute_BIOf1,
                           name_prefix='ace_without_business_',
                           learning_params=learning_params)
 
 def getAceWoJusticeEDModel(learning_params=None):
-    def label_filter(label):
-        return not ('Acquit' in label
-                    or 'Appeal' in label
-                    or 'Arrest-Jail' in label
-                    or 'Charge-Indict' in label
-                    or 'Convict' in label
-                    or 'Appeal' in label
-                    or 'Execute' in label
-                    or 'Fine' in label
-                    or 'Pardon' in label
-                    or 'Release-Parole' in label
-                    or 'Sentence' in label
-                    or 'Sue' in label
-                    or 'Trial-Hearing' in label
-                    or 'Extradite' in label)
-
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_justice_label_filter, dataset_filter_creator(ACELabelFilter.wo_justice_label_filter))
     return getModelHelper(reader,
                           Measurer.create_compute_BIOf1,
                           name_prefix='ace_without_justice_',
                           learning_params=learning_params)
 
 def getAceWoMovementEDModel(learning_params=None):
-    def label_filter(label):
-        return 'Transport' not in label
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_movement_label_filter, dataset_filter_creator(ACELabelFilter.wo_movement_label_filter))
     return getModelHelper(reader,
                           Measurer.create_compute_BIOf1,
                           name_prefix='ace_without_movement_',
@@ -431,10 +412,8 @@ def getAceWoContactsModelGivenInput(input_layers,
                             learning_params=None,
                             window_size=None,
                             use_existing_model=True):
-    def label_filter(label):
-        return not ('Meet' in label or 'Phone-Write' in label)
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_contacts_label_filter, dataset_filter_creator(ACELabelFilter.wo_contacts_label_filter))
     return getModelGivenInputHelper(
         reader,
         input_layers,
@@ -449,10 +428,8 @@ def getAceWoMovementModelGivenInput(input_layers,
                             learning_params=None,
                             window_size=None,
                             use_existing_model=True):
-    def label_filter(label):
-        return not ('Transport' in label)
     def reader(window_size, word2Idx, case2Idx):
-        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, label_filter, dataset_filter_creator(label_filter))
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_movement_label_filter, dataset_filter_creator(ACELabelFilter.wo_movement_label_filter))
     return getModelGivenInputHelper(
         reader,
         input_layers,
@@ -462,6 +439,37 @@ def getAceWoMovementModelGivenInput(input_layers,
         learning_params=learning_params,
         model_path=ace_wo_movement_model_path)
 
+def getAceWoBusinessModelGivenInput(input_layers,
+                            inputs,
+                            learning_params=None,
+                            window_size=None,
+                            use_existing_model=True):
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_business_label_filter, dataset_filter_creator(ACELabelFilter.wo_business_label_filter))
+    return getModelGivenInputHelper(
+        reader,
+        input_layers,
+        inputs,
+        Measurer.create_compute_BIOf1,
+        name_prefix='ace_wo_business_',
+        learning_params=learning_params,
+        model_path=ace_wo_business_model_path)
+
+def getAceWoJusticeModelGivenInput(input_layers,
+                            inputs,
+                            learning_params=None,
+                            window_size=None,
+                            use_existing_model=True):
+    def reader(window_size, word2Idx, case2Idx):
+        return ACEED.readFilteredDataset(window_size, word2Idx, case2Idx, ACELabelFilter.wo_justice_label_filter, dataset_filter_creator(ACELabelFilter.wo_justice_label_filter))
+    return getModelGivenInputHelper(
+        reader,
+        input_layers,
+        inputs,
+        Measurer.create_compute_BIOf1,
+        name_prefix='ace_wo_justice_',
+        learning_params=learning_params,
+        model_path=ace_wo_justice_model_path)
 
 def getEcbEDModelGivenInput(input_layers,
                             inputs,

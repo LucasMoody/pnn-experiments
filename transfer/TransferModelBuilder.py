@@ -31,4 +31,10 @@ def buildTransferModels(input_layers, inputs, params, config):
 
     if 'ace_wo_movement' in config:
         transfer_models.append(OptimizedModels.getAceWoMovementModelGivenInput(input_layers, inputs, params))
+
+    if 'ace_wo_business' in config:
+        transfer_models.append(OptimizedModels.getAceWoBusinessModelGivenInput(input_layers, inputs, params))
+
+    if 'ace_wo_justice' in config:
+        transfer_models.append(OptimizedModels.getAceWoJusticeModelGivenInput(input_layers, inputs, params))
     return transfer_models
