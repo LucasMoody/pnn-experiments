@@ -98,7 +98,7 @@ def readFilteredDataset(windowSize, word2Idx, case2Idx, label_filter, dataset_fi
     events_test_sentences = change_in_neutral_label(events_test_sentences, label_filter)
 
     # Label mapping for ED
-    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDictSimple(events_train_sentences)
+    events_label2Idx, events_idx2Label = GermEvalReader.getLabelDictSimple([events_train_sentences])
 
     # Create numpy arrays
     events_train_x, events_train_case_x, events_train_y = GermEvalReader.createNumpyArrayWithCasing(
