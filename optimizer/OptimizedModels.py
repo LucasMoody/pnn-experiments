@@ -29,8 +29,8 @@ ace_wo_contacts_model_path = 'optimizer/saved_models/ace_without_contacts_62.58-
 ace_wo_justice_model_path = 'optimizer/saved_models/ace_without_justice_62.34-55.20.hd5'
 ace_wo_movement_model_path = 'optimizer/saved_models/ace_without_movement_60.77-47.27.hd5'
 ace_wo_business_model_path = 'optimizer/saved_models/ace_without_business_61.69-57.32.hd5'
-tac_newswire_ed_model_path = 'optimizer/saved_models/tac_newswire_13.66-14.19.hd5'
-tac_forum_ed_model_path = 'optimizer/saved_models/tac_forum_20.23-22.84.hd5'
+tac_newswire_ed_model_path = 'optimizer/saved_models/tac_newswire_49.80-45.12.hd5'
+tac_forum_ed_model_path = 'optimizer/saved_models/tac_forum_45.33-45.47.hd5'
 
 fixed_params_pos = {
     'update_word_embeddings': False,
