@@ -107,6 +107,25 @@ def buildAndTrainTacModel(learning_params=None, config=[]):
         learning_params=learning_params,
         config=config)
 
+def reader_domain_creator(domain):
+    def reader(window_size, word2Idx, case2Idx):
+        return TACED.readDomainDataset(window_size, word2Idx, case2Idx, domain)
+    return reader
+
+def buildAndTrainTacNewswireModel(learning_params=None, config=[]):
+    return buildAndTrainPNNModel(
+        reader_domain_creator('newswire'),
+        'tac_newswire_',
+        learning_params=learning_params,
+        config=config)
+
+def buildAndTrainTacForumModel(learning_params=None, config=[]):
+    return buildAndTrainPNNModel(
+        reader_domain_creator('forum'),
+        'tac_forum_',
+        learning_params=learning_params,
+        config=config)
+
 
 def buildAndTrainTempevalModel(learning_params=None, config=[]):
     return buildAndTrainPNNModel(
@@ -149,6 +168,12 @@ def run_pnn_exp_with_fixed_params():
             runTacExp(fixed_params, ['ecb'])
             runTacExp(fixed_params, ['ace'])
             runTacExp(fixed_params, ['tempeval'])
+
+        if 'tac_newswire' in config.tasks:
+            runTacNewswireExp(fixed_params, ['tac_forum'])
+
+        if 'tac_forum' in config.tasks:
+            runTacForumExp(fixed_params, ['tac_newswire'])
 
         if 'tempeval' in config.tasks:
             '''runTempevalExp(fixed_params, ['ace', 'ecb', 'tac'])
@@ -194,6 +219,24 @@ def runTacExp(params, config):
         'pnn',
         params,
          buildAndTrainTacModel,
+        'f1',
+        transfer_config=config)
+
+def runTacNewswireExp(params, config):
+    ExperimentHelper.run_build_model(
+        'tac_newswire',
+        'pnn',
+        params,
+         buildAndTrainTacNewswireModel,
+        'f1',
+        transfer_config=config)
+
+def runTacForumExp(params, config):
+    ExperimentHelper.run_build_model(
+        'tac_forum',
+        'pnn',
+        params,
+         buildAndTrainTacForumModel,
         'f1',
         transfer_config=config)
 
