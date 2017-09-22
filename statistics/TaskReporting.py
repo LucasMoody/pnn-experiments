@@ -67,13 +67,13 @@ current_metric = avgAndStdFunc
 
 def get_results_for_task(df, task, source_tasks, aggfuncs, minSize, maxSize, pnn_arch=['pnn'], suffix=''):
     multitask_transfer_spec = map(lambda t: '-'.join(sorted(t.split('-') + [task])),source_tasks)
-    tmp = df[(df.score_dev != 0) & (df.task == task) & (df.transfer.isin(source_tasks + ['none'] + multitask_transfer_spec)) & (df['sample'] >= minSize) & (df['sample'] <= maxSize) & (df['exp'].isin(['baseline','finetuning','pipeline','multitask'] + pnn_arch))]
+    tmp = df[(df.score_dev != 0) & (df.task == task) & (df.transfer.isin(source_tasks + ['none'] + multitask_transfer_spec)) & (df['sample'] >= minSize) & (df['sample'] <= 1000000) & (df['exp'].isin(['baseline','finetuning','pipeline','multitask'] + pnn_arch))]
     print 'Target task: {0}, source tasks: {1}, metric: {2}\n\n'.format(task, source_tasks, ','.join(map(lambda func: func.__name__,aggfuncs)))
     res = pd.pivot_table(tmp, index=['exp', 'transfer'], columns='sample', values='score_test', aggfunc=aggfuncs)
     #print pd.pivot_table(tmp, index=['exp'], columns='sample', values='score_test', aggfunc=aggfunc)
     print res
     print '\n---------------------------------------------------\n'
-    res.to_csv('/Users/lucas/Documents/Uni/Masterarbeit/Event_Nugget_Detection/Thesis/results/' + task + suffix + '.csv', encoding='utf-8')
+    #res.to_csv('/Users/lucas/Documents/Uni/Masterarbeit/Event_Nugget_Detection/Thesis/results/' + task + suffix + '.csv', encoding='utf-8')
 
 def compare_methods(df, sample, aggfuncs):
     tmp = df[(df.score_dev != 0) & (df['sample'] == sample) & (-df['exp'].isin(['baseline','finetuning','pipeline','multitask']))]
@@ -101,7 +101,13 @@ get_results_for_task(df_all, 'chunking', ['pos', 'ner', 'ner-pos'], [current_met
 #get_results_for_task(df_test, 'tac', ['ace'], np.max)
 #get_results_for_task(df_test, 'ace', ['tac'], np.median)
 
-get_results_for_task(df_scenario, 'ace_only_contacts', ['ace_wo_contacts', 'ecb', 'tempeval'], [current_metric], 1000, 30000, ['pnn_adapter_10', 'pnn_adapter_50', 'pnn_adapter_100'])
+get_results_for_task(df_scenario, 'ace_only_contacts', ['ace_wo_contacts', 'ecb', 'tempeval'], [current_metric], 1000, 30000, ['pnn_adapter_10', 'pnn_adapter_50', 'pnn_adapter_100', 'pnn', 'pnn_simple_adapter_10', 'pnn_simple_adapter_50', 'pnn_simple_adapter_100', 'pnn_simple'])
+get_results_for_task(df_scenario, 'ace_only_business', ['ace_wo_business', 'ecb', 'tempeval'], [current_metric], 1000, 30000, ['pnn_adapter_10', 'pnn_adapter_50', 'pnn_adapter_100', 'pnn', 'pnn_simple_adapter_10', 'pnn_simple_adapter_50', 'pnn_simple_adapter_100', 'pnn_simple'])
+get_results_for_task(df_scenario, 'ace_only_justice', ['ace_wo_justice', 'ecb', 'tempeval'], [current_metric], 1000, 30000, ['pnn_adapter_10', 'pnn_adapter_50', 'pnn_adapter_100', 'pnn', 'pnn_simple_adapter_10', 'pnn_simple_adapter_50', 'pnn_simple_adapter_100', 'pnn_simple'])
+get_results_for_task(df_scenario, 'ace_only_movement', ['ace_wo_movement', 'ecb', 'tempeval'], [current_metric], 1000, 30000, ['pnn_adapter_10', 'pnn_adapter_50', 'pnn_adapter_100', 'pnn', 'pnn_simple_adapter_10', 'pnn_simple_adapter_50', 'pnn_simple_adapter_100', 'pnn_simple'])
+
+get_results_for_task(df_scenario, 'tac_newswire', ['tac_forum'], [current_metric], 5000, 30000, ['pnn_adapter_10', 'pnn_adapter_50', 'pnn_adapter_100', 'pnn'])
+get_results_for_task(df_scenario, 'tac_forum', ['tac_newswire'], [current_metric], 5000, 100000, ['pnn_adapter_10', 'pnn_adapter_50', 'pnn_adapter_100', 'pnn'])
 
 res = compare_methods(df_all, 10000, current_metric)
 res.to_csv('/Users/lucas/Documents/Uni/Masterarbeit/Event_Nugget_Detection/Thesis/results/pnn_comp.csv', encoding='utf-8')
