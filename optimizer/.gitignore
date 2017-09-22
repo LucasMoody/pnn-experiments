@@ -1,1 +1,15 @@
 saved_models/
+!saved_models/best_wsj_pos_96.09.hd5
+!saved_models/best_ud_pos_94.29.hd5
+!saved_models/best_ner_87.94.hd5
+!saved_models/best_chunking_90.71.hd5
+!saved_models/ace_ed_64.12.hd5
+!saved_models/tac_57.75.hd5
+!saved_models/ecbplus_ed_78.20.hd5
+!saved_models/tempeval_ed_82.65.hd5
+!saved_models/ace_without_contacts_62.58-49.62.hd5
+!saved_models/ace_without_justice_62.34-55.20.hd5
+!saved_models/ace_without_movement_60.77-47.27.hd5
+!saved_models/ace_without_business_61.69-57.32.hd5
+!saved_models/tac_newswire_49.80-45.12.hd5
+!saved_models/tac_forum_45.33-45.47.hd5
