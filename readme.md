@@ -1,4 +1,4 @@
-#Transfer Learning with Progressive Neural Networks for Event Detection
+# Transfer Learning with Progressive Neural Networks for Event Detection
 
 ## Requirements 
 * To run the code, you need Python 2.7, Theano (tested on Theano 0.8.2) and Keras (tested on 1.1.2)
